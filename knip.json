@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/test/server-only-stub.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}"
+  ],
+  "ignoreDependencies": ["tailwindcss", "tw-animate-css"],
+  "rules": {
+    "enumMembers": "off"
+  }
+}

@@ -1,0 +1,164 @@
+.wordpress-content {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: hsl(var(--foreground) / 0.86);
+  overflow-wrap: break-word;
+}
+
+.wordpress-content > * + * {
+  margin-top: 1.4em;
+}
+
+.wordpress-content h2,
+.wordpress-content h3,
+.wordpress-content h4 {
+  color: hsl(var(--foreground));
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-top: 2.2em;
+}
+
+.wordpress-content h2 {
+  font-size: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);
+}
+
+.wordpress-content h3 {
+  font-size: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+}
+
+.wordpress-content h4 {
+  font-size: 1.125rem;
+}
+
+.wordpress-content a {
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--brand));
+  text-underline-offset: 0.2em;
+}
+
+.wordpress-content a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.wordpress-content strong {
+  color: hsl(var(--foreground));
+  font-weight: 600;
+}
+
+.wordpress-content ul,
+.wordpress-content ol {
+  padding-left: 1.4em;
+}
+
+.wordpress-content ul {
+  list-style: disc;
+}
+
+.wordpress-content ol {
+  list-style: decimal;
+}
+
+.wordpress-content li + li {
+  margin-top: 0.5em;
+}
+
+.wordpress-content li::marker {
+  color: hsl(var(--muted-foreground));
+}
+
+.wordpress-content blockquote {
+  border-left: 2px solid hsl(var(--foreground) / 0.3);
+  padding-left: 1.25em;
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 1.375rem;
+  line-height: 1.5;
+  color: hsl(var(--foreground));
+}
+
+.wordpress-content img,
+.wordpress-content video,
+.wordpress-content iframe {
+  max-width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
+
+.wordpress-content iframe {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+.wordpress-content figure {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.wordpress-content figcaption {
+  margin-top: 0.75em;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+}
+
+.wordpress-content code {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.875em;
+  background: hsl(var(--foreground) / 0.08);
+  border-radius: 6px;
+  padding: 0.15em 0.4em;
+}
+
+.wordpress-content pre {
+  overflow-x: auto;
+  border-radius: 16px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  padding: 1.25em;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.wordpress-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.wordpress-content hr {
+  border: 0;
+  border-top: 1px solid hsl(var(--border));
+  margin: 3em 0;
+}
+
+.wordpress-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  display: block;
+  overflow-x: auto;
+}
+
+.wordpress-content th,
+.wordpress-content td {
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 0.75em 1em 0.75em 0;
+  text-align: left;
+}
+
+.wordpress-content th {
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
+
+.wordpress-content .aligncenter {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wordpress-content .wp-block-image,
+.wordpress-content .wp-block-embed {
+  margin-top: 2.25em;
+  margin-bottom: 2.25em;
+}
