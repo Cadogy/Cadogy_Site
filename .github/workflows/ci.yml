@@ -18,6 +18,8 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
       NEXT_PUBLIC_APP_URL: https://www.cadogy.com
       NEXT_PUBLIC_WP_API_URL: https://wp.cadogy.com/wp-json/wp/v2
+      MONGODB_URI: mongodb://127.0.0.1:27017/ci
+      BETTER_AUTH_SECRET: ci-placeholder-secret-not-used-at-runtime
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

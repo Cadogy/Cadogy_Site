@@ -4,7 +4,7 @@
 
 **The website, client portal and billing platform behind [cadogy.com](https://cadogy.com).**
 
-[![CI](https://github.com/Cadogy/Cadogy_Site_2025/actions/workflows/ci.yml/badge.svg)](https://github.com/Cadogy/Cadogy_Site_2025/actions/workflows/ci.yml)
+[![CI](https://github.com/Cadogy/Cadogy_Site/actions/workflows/ci.yml/badge.svg)](https://github.com/Cadogy/Cadogy_Site/actions/workflows/ci.yml)
 ![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![React 19](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
@@ -129,8 +129,8 @@ We treat security as part of the product, not a final checklist.
 **Requirements:** Node 24 (see `.nvmrc`), npm, and a MongoDB database. Stripe, Resend and Turnstile are optional for local development.
 
 ```bash
-git clone https://github.com/Cadogy/Cadogy_Site_2025.git
-cd Cadogy_Site_2025
+git clone https://github.com/Cadogy/Cadogy_Site.git
+cd Cadogy_Site
 nvm use
 npm ci
 cp .env.example .env.local   # then fill in the values
