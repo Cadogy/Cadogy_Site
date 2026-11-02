@@ -3,22 +3,16 @@
 import { useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { authClient, humanCheckHeaders } from "@/features/auth/client"
 import { Loader2 } from "lucide-react"
-import { signIn } from "next-auth/react"
 
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { HumanCheck } from "@/components/security/human-check"
 
-import { resendVerificationAction } from "../server/actions"
 import { FormAlert } from "./auth-card"
-
-const ERROR_MESSAGES: Record<string, string> = {
-  InvalidCredentials: "Incorrect email or password.",
-  EmailNotVerified: "Please verify your email address before signing in.",
-  VerificationFailed: "We couldn't verify you're human. Please try again.",
-}
+import { authErrorMessage } from "./auth-errors"
 
 export function LoginForm({
   callbackPath,
@@ -28,61 +22,40 @@ export function LoginForm({
   turnstileSiteKey: string | undefined
 }) {
   const router = useRouter()
-  const [email, setEmail] = useState("")
   const [turnstileToken, setTurnstileToken] = useState("")
   const [checkKey, setCheckKey] = useState(0)
   const [pending, setPending] = useState(false)
-  const [errorCode, setErrorCode] = useState<string | null>(null)
-  const [resent, setResent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     setPending(true)
-    setErrorCode(null)
-    setResent(false)
+    setError(null)
 
-    const result = await signIn("credentials", {
-      email: String(form.get("email") ?? ""),
-      password: String(form.get("password") ?? ""),
-      turnstileToken,
-      redirect: false,
-    })
+    const result = await authClient.signIn.email(
+      {
+        email: String(form.get("email") ?? ""),
+        password: String(form.get("password") ?? ""),
+      },
+      { headers: humanCheckHeaders(turnstileToken) }
+    )
 
-    if (result?.ok && !result.error) {
+    if (!result.error) {
       router.replace(callbackPath)
       router.refresh()
       return
     }
 
     setPending(false)
-    setErrorCode(result?.error ?? "InvalidCredentials")
+    setError(authErrorMessage(result.error))
     setTurnstileToken("")
     setCheckKey((key) => key + 1)
   }
 
-  const handleResend = async () => {
-    await resendVerificationAction(email)
-    setResent(true)
-  }
-
   return (
     <form onSubmit={handleSubmit} className="grid gap-5" noValidate>
-      {errorCode ? (
-        <FormAlert>
-          {ERROR_MESSAGES[errorCode] ?? ERROR_MESSAGES.InvalidCredentials}
-        </FormAlert>
-      ) : null}
-      {errorCode === "EmailNotVerified" && !resent ? (
-        <Button type="button" variant="outline" onClick={handleResend}>
-          Resend verification email
-        </Button>
-      ) : null}
-      {resent ? (
-        <FormAlert tone="success">
-          If that account needs verifying, check your inbox for a new link.
-        </FormAlert>
-      ) : null}
+      {error ? <FormAlert>{error}</FormAlert> : null}
 
       <Field id="email" label="Email">
         {(control) => (
@@ -92,8 +65,6 @@ export function LoginForm({
             type="email"
             autoComplete="email"
             required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
           />
         )}
       </Field>

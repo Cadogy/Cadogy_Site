@@ -5,18 +5,19 @@ import { AuthCard, FormAlert } from "@/features/account/components/auth-card"
 
 export const metadata: Metadata = { title: "Choose a new password" }
 
-type Props = { searchParams: Promise<{ token?: string }> }
+type Props = { searchParams: Promise<{ token?: string; error?: string }> }
 
 export default async function ResetPasswordPage({ searchParams }: Props) {
-  const { token } = await searchParams
+  const { token, error } = await searchParams
   return (
     <AuthCard title="Choose a new password">
-      {token ? (
+      {token && !error ? (
         <ResetPasswordForm token={token} />
       ) : (
         <div className="grid gap-4">
           <FormAlert>
-            This reset link is incomplete. Please request a new one.
+            This reset link is invalid or has expired. Please request a new
+            one.
           </FormAlert>
           <Link
             href="/forgot-password"

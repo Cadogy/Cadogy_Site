@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-import { requireAdmin, requireUser } from "@/lib/auth/session"
+import { requirePermission, requireSession } from "@/features/auth/server/session"
 
 import { parseMoneyInput } from "../domain/format"
 import type { Result } from "../domain/invoice"
@@ -49,7 +49,7 @@ export async function saveCatalogItemAction(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const input = {
     name: text(formData, "name"),
     description: text(formData, "description"),
@@ -71,7 +71,7 @@ export async function setCatalogItemArchivedAction(
   itemId: string,
   archived: boolean
 ) {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = archived
     ? await billingEngine.archiveCatalogItem(itemId)
     : await billingEngine.restoreCatalogItem(itemId)
@@ -84,7 +84,7 @@ export async function addAddOnAction(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billingEngine.addAddOn(clientId, {
     catalogItemId: optionalText(formData, "catalogItemId"),
     name: optionalText(formData, "name"),
@@ -103,7 +103,7 @@ export async function updateAddOnAction(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billingEngine.updateAddOn(addOnId, {
     quantity: whole(formData, "quantity"),
     unitAmount: money(formData, "price"),
@@ -127,7 +127,7 @@ export async function setAddOnStatusAction(
   addOnId: string,
   status: AddOnStatus
 ) {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billingEngine.setAddOnStatus(addOnId, status)
   refresh(clientId)
   return toState(result, STATUS_MESSAGES[status])
@@ -138,7 +138,7 @@ export async function addChargeAction(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billingEngine.addCharge(clientId, {
     description: text(formData, "description"),
     unitAmount: money(formData, "price"),
@@ -149,7 +149,7 @@ export async function addChargeAction(
 }
 
 export async function voidChargeAction(clientId: string, chargeId: string) {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billingEngine.voidCharge(chargeId)
   refresh(clientId)
   return toState(result, "Charge removed.")
@@ -159,7 +159,7 @@ export async function invoiceChargesAction(
   clientId: string,
   chargeIds: readonly string[] | "all"
 ): Promise<ActionState> {
-  const admin = await requireAdmin()
+  const admin = await requirePermission("billing:write")
   const result = await billingEngine.invoiceCharges(
     clientId,
     chargeIds,
@@ -178,7 +178,7 @@ export async function invoiceChargesAction(
 }
 
 export async function setAutoBillAction(clientId: string, autoBill: boolean) {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billing.setAutoBill(clientId, autoBill)
   refresh(clientId)
   return toState(
@@ -190,7 +190,7 @@ export async function setAutoBillAction(clientId: string, autoBill: boolean) {
 }
 
 export async function removeCardAction(clientId: string) {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billing.removeCard(clientId)
   refresh(clientId)
   return toState(result, "Saved card removed. Autopay is off.")
@@ -206,7 +206,7 @@ export async function saveBillingSettingsAction(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const taxPercent = Number(text(formData, "taxPercent") || 0)
   const result = await billingEngine.saveSettings({
     paymentInstructions: text(formData, "paymentInstructions"),
@@ -219,7 +219,7 @@ export async function saveBillingSettingsAction(
 }
 
 export async function runBillingNowAction(): Promise<ActionState> {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const summary = await billingEngine.runBilling()
   refresh()
   return {
@@ -240,7 +240,7 @@ const UNAVAILABLE: ActionState = {
 export async function payInvoicesAction(
   invoiceIds: readonly string[]
 ): Promise<ActionState> {
-  const user = await requireUser("/dashboard/billing")
+  const user = await requireSession("/dashboard/billing")
   if (!isStripeConfigured()) return UNAVAILABLE
   const prepared = await billingEngine.preparePayment(user.email, invoiceIds)
   if (!prepared.ok) return { ok: false, message: prepared.error }
@@ -250,7 +250,7 @@ export async function payInvoicesAction(
 export async function saveCardForAutopayAction(
   clientId: string
 ): Promise<ActionState> {
-  const user = await requireUser("/dashboard/billing")
+  const user = await requireSession("/dashboard/billing")
   if (!isStripeConfigured()) return UNAVAILABLE
   const client = (await billing.ownsClient(user.email, clientId))
     ? await billing.getClient(clientId)
@@ -263,7 +263,7 @@ export async function setPortalAutopayAction(
   clientId: string,
   enabled: boolean
 ): Promise<ActionState> {
-  const user = await requireUser("/dashboard/billing")
+  const user = await requireSession("/dashboard/billing")
   const result = await billing.setPortalAutopay(user.email, clientId, enabled)
   refresh(clientId)
   return toState(
@@ -277,7 +277,7 @@ export async function setPortalAutopayAction(
 export async function removePortalCardAction(
   clientId: string
 ): Promise<ActionState> {
-  const user = await requireUser("/dashboard/billing")
+  const user = await requireSession("/dashboard/billing")
   if (!(await billing.ownsClient(user.email, clientId)))
     return { ok: false, message: "Account not found." }
   const result = await billing.removeCard(clientId)

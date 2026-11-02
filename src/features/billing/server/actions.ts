@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-import { requireAdmin } from "@/lib/auth/session"
+import { requirePermission } from "@/features/auth/server/session"
 
 import { parseMoneyInput } from "../domain/format"
 import type { Result } from "../domain/invoice"
@@ -58,7 +58,7 @@ export async function saveClientAction(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const input = clientFromForm(formData)
   const result = clientId
     ? await billing.updateClient(clientId, input)
@@ -73,7 +73,7 @@ export async function setClientArchivedAction(
   clientId: string,
   archived: boolean
 ) {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = archived
     ? await billing.archiveClient(clientId)
     : await billing.restoreClient(clientId)
@@ -82,7 +82,7 @@ export async function setClientArchivedAction(
 }
 
 export async function createDraftAction(clientId: string): Promise<void> {
-  const admin = await requireAdmin()
+  const admin = await requirePermission("billing:write")
   const result = await billing.createDraft({ clientId }, admin.id)
   if (!result.ok) throw new Error(result.error)
   refreshBilling()
@@ -93,7 +93,7 @@ export async function saveDraftAction(
   invoiceId: string,
   draft: unknown
 ): Promise<ActionState> {
-  const admin = await requireAdmin()
+  const admin = await requirePermission("billing:write")
   const result = await billing.updateDraftInvoice(invoiceId, draft, admin.id)
   refreshBilling(invoiceId)
   return toState(result, "Draft saved.")
@@ -103,7 +103,7 @@ export async function issueInvoiceAction(
   invoiceId: string,
   draft: unknown
 ): Promise<ActionState> {
-  const admin = await requireAdmin()
+  const admin = await requirePermission("billing:write")
   const saved = await billing.updateDraftInvoice(invoiceId, draft, admin.id)
   if (!saved.ok) return { ok: false, message: saved.error }
   const result = await billing.issue(invoiceId, admin.id)
@@ -112,7 +112,7 @@ export async function issueInvoiceAction(
 }
 
 export async function deleteDraftAction(invoiceId: string) {
-  await requireAdmin()
+  await requirePermission("billing:write")
   const result = await billing.deleteDraft(invoiceId)
   if (!result.ok)
     return { ok: false, message: result.error } satisfies ActionState
@@ -125,7 +125,7 @@ export async function recordPaymentAction(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const admin = await requireAdmin()
+  const admin = await requirePermission("billing:write")
   const amount = parseMoneyInput(text(formData, "amount"))
   if (amount === null || amount <= 0)
     return { ok: false, message: "Enter a valid amount." }
@@ -156,7 +156,7 @@ export async function invoiceCommandAction(
   invoiceId: string,
   command: keyof typeof INVOICE_COMMANDS
 ): Promise<ActionState> {
-  const admin = await requireAdmin()
+  const admin = await requirePermission("billing:write")
   const { run, success } = INVOICE_COMMANDS[command]
   const result = await run(invoiceId, admin.id)
   refreshBilling(invoiceId)
@@ -164,7 +164,7 @@ export async function invoiceCommandAction(
 }
 
 export async function duplicateInvoiceAction(invoiceId: string) {
-  const admin = await requireAdmin()
+  const admin = await requirePermission("billing:write")
   const result = await billing.duplicate(invoiceId, admin.id)
   if (!result.ok)
     return { ok: false, message: result.error } satisfies ActionState

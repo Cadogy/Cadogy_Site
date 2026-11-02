@@ -4,13 +4,13 @@ import {
   ProfileForm,
 } from "@/features/account/components/settings-forms"
 
-import { requireUser } from "@/lib/auth/session"
+import { requireSession } from "@/features/auth/server/session"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Settings" }
 
 export default async function SettingsPage() {
-  const user = await requireUser("/dashboard/settings")
+  const user = await requireSession("/dashboard/settings")
   return (
     <>
       <PortalPageHeader

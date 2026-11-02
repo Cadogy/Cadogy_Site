@@ -6,8 +6,13 @@ import { SiteHeader } from "./site-header"
 
 const session = vi.hoisted(() => ({ status: "unauthenticated" as string }))
 
-vi.mock("next-auth/react", () => ({
-  useSession: () => ({ status: session.status, data: null }),
+vi.mock("@/features/auth/client", () => ({
+  authClient: {
+    useSession: () => ({
+      data: session.status === "authenticated" ? { user: { id: "u_1" } } : null,
+      isPending: false,
+    }),
+  },
 }))
 vi.mock("next/navigation", () => ({ usePathname: () => "/services" }))
 

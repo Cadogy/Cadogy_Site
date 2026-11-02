@@ -16,7 +16,7 @@ import {
 } from "../domain/schema"
 import { InquiryModel, RateLimitModel } from "./models"
 
-export const formSecret = () => env.FORM_SIGNING_SECRET ?? env.NEXTAUTH_SECRET
+export const formSecret = () => env.FORM_SIGNING_SECRET ?? env.BETTER_AUTH_SECRET
 
 const hitRateLimit = async (key: string, windowMs: number) => {
   await connectToDatabase()

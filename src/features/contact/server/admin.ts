@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { isValidObjectId } from "mongoose"
 
-import { requireAdmin } from "@/lib/auth/session"
+import { requirePermission } from "@/features/auth/server/session"
 import { connectToDatabase } from "@/lib/mongodb"
 
 import {
@@ -23,7 +23,7 @@ const toInquiry = ({ _id, ...rest }: InquiryDoc): StoredInquiry => ({
 export async function listInquiries(
   status?: InquiryStatus
 ): Promise<StoredInquiry[]> {
-  await requireAdmin()
+  await requirePermission("inquiries:read")
   await connectToDatabase()
   const docs = await InquiryModel.find(
     status ? { status } : { status: { $ne: "spam" } }
@@ -38,7 +38,7 @@ export async function updateInquiryStatusAction(
   id: string,
   status: InquiryStatus
 ) {
-  await requireAdmin()
+  await requirePermission("inquiries:write")
   if (!isValidObjectId(id) || !INQUIRY_STATUSES.includes(status)) return
   await connectToDatabase()
   await InquiryModel.updateOne({ _id: id }, { $set: { status } })

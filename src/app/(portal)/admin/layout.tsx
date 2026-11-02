@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/auth/session"
+import { requireStaff } from "@/features/auth/server/session"
 import { PortalShell } from "@/components/portal/portal-shell"
 
 const nav = [
@@ -17,7 +17,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await requireAdmin()
+  const user = await requireStaff()
   return (
     <PortalShell area="Admin" nav={nav} user={user}>
       {children}

@@ -1,32 +1,41 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { VerifyEmailForm } from "@/features/account/components/account-forms"
 import { AuthCard, FormAlert } from "@/features/account/components/auth-card"
+
+import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = { title: "Verify your email" }
 
-type Props = { searchParams: Promise<{ token?: string }> }
+type Props = { searchParams: Promise<{ error?: string }> }
 
 export default async function VerifyEmailPage({ searchParams }: Props) {
-  const { token } = await searchParams
+  const { error } = await searchParams
+  if (error) {
+    return (
+      <AuthCard
+        title="This link didn't work"
+        description="Verification links expire after 24 hours and can only be used once."
+      >
+        <div className="grid gap-4">
+          <FormAlert>
+            Sign in with your email and password and we&apos;ll send you a
+            fresh link.
+          </FormAlert>
+          <Button asChild size="lg">
+            <Link href="/login">Sign in</Link>
+          </Button>
+        </div>
+      </AuthCard>
+    )
+  }
   return (
     <AuthCard
-      title="Verify your email"
-      description="Confirm this is your email address to finish setting up your account."
+      title="Your email is verified"
+      description="Your account is ready."
     >
-      {token ? (
-        <VerifyEmailForm token={token} />
-      ) : (
-        <div className="grid gap-4">
-          <FormAlert>This verification link is incomplete.</FormAlert>
-          <Link
-            href="/login"
-            className="text-sm font-medium underline underline-offset-4"
-          >
-            Sign in to request a new one
-          </Link>
-        </div>
-      )}
+      <Button asChild size="lg">
+        <Link href="/dashboard">Go to your dashboard</Link>
+      </Button>
     </AuthCard>
   )
 }

@@ -58,19 +58,19 @@ The code is **source-available, not open source**. Read it, learn from it and re
 
 ## Tech stack
 
-| Layer          | Choice                                                                   |
-| -------------- | ------------------------------------------------------------------------ |
-| Framework      | [Next.js 16](https://nextjs.org) (App Router, Server Actions, Turbopack) |
-| UI             | React 19, Tailwind CSS 4, Radix primitives, Geist and Instrument Serif   |
-| Language       | TypeScript in strict mode, Zod at every trust boundary                   |
-| Data           | MongoDB with Mongoose                                                    |
-| Auth           | NextAuth (credentials, JWT sessions, email verification)                 |
-| Payments       | Stripe Checkout, saved cards and off-session payments                    |
-| Email          | Resend                                                                   |
-| Bot protection | Cloudflare Turnstile                                                     |
-| Content        | Headless WordPress REST API                                              |
-| Testing        | Vitest, Testing Library, happy-dom                                       |
-| Hosting        | Vercel (including Vercel Cron)                                           |
+| Layer          | Choice                                                                     |
+| -------------- | -------------------------------------------------------------------------- |
+| Framework      | [Next.js 16](https://nextjs.org) (App Router, Server Actions, Turbopack)   |
+| UI             | React 19, Tailwind CSS 4, Radix primitives, Geist and Instrument Serif     |
+| Language       | TypeScript in strict mode, Zod at every trust boundary                     |
+| Data           | MongoDB with Mongoose                                                      |
+| Auth           | Better Auth (database sessions, roles and permissions, email verification) |
+| Payments       | Stripe Checkout, saved cards and off-session payments                      |
+| Email          | Resend                                                                     |
+| Bot protection | Cloudflare Turnstile                                                       |
+| Content        | Headless WordPress REST API                                                |
+| Testing        | Vitest, Testing Library, happy-dom                                         |
+| Hosting        | Vercel (including Vercel Cron)                                             |
 
 ## Architecture
 
@@ -114,7 +114,7 @@ src/
 
 We treat security as part of the product, not a final checklist.
 
-- **Server-side authorization.** Every Server Action and admin query re-checks the session and role. The request proxy is a convenience, not the boundary.
+- **Server-side authorization.** Every Server Action and admin query checks a named permission against a database-backed session, so role changes and revocations apply on the next request. A test fails the build if an action ships without a check.
 - **Same-origin checks.** State-changing API routes reject cross-origin requests. Stripe webhooks verify signatures instead.
 - **Bot protection.** Public forms use Cloudflare Turnstile, which fails closed in production. They also use a honeypot, signed timing tokens, rate limits and content checks.
 - **No account enumeration.** Sign-in, sign-up and password-reset responses never reveal whether an account exists.
@@ -137,21 +137,22 @@ cp .env.example .env.local   # then fill in the values
 npm run dev                  # http://localhost:3000
 ```
 
-To make yourself an admin, register an account and set `role: "admin"` on your user document once. From then on, promote others from `/admin/users`.
+Set `OWNER_EMAIL` to your email, then register and verify that address. Your account becomes the owner automatically. From then on, manage roles from `/admin/users`.
 
 ### Environment variables
 
-| Variable                                                 | Required      | Purpose                                     |
-| -------------------------------------------------------- | ------------- | ------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`, `NEXTAUTH_URL`                    | Yes           | Public site URL                             |
-| `NEXTAUTH_SECRET`                                        | Yes           | Session signing (`openssl rand -base64 32`) |
-| `MONGODB_URI`                                            | Yes           | Database connection                         |
-| `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_NOTIFY_EMAIL`     | For email     | Transactional email and admin notifications |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | In production | Bot protection on public forms              |
-| `FORM_SIGNING_SECRET`                                    | Recommended   | Signs contact-form timing tokens            |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`             | For payments  | Online payment, saved cards, autopay        |
-| `CRON_SECRET`                                            | For billing   | Authenticates the daily billing run         |
-| `NEXT_PUBLIC_WP_API_URL`                                 | No            | WordPress API (defaults to wp.cadogy.com)   |
+| Variable                                                 | Required      | Purpose                                                      |
+| -------------------------------------------------------- | ------------- | ------------------------------------------------------------ |
+| `NEXT_PUBLIC_APP_URL`, `BETTER_AUTH_URL`                 | Yes           | Public site URL                                              |
+| `BETTER_AUTH_SECRET`                                     | Yes           | Signs sessions and tokens (`openssl rand -base64 32`)        |
+| `OWNER_EMAIL`                                            | Recommended   | The first verified account with this email becomes the owner |
+| `MONGODB_URI`                                            | Yes           | Database connection                                          |
+| `RESEND_API_KEY`, `FROM_EMAIL`, `ADMIN_NOTIFY_EMAIL`     | For email     | Transactional email and admin notifications                  |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | In production | Bot protection on public forms                               |
+| `FORM_SIGNING_SECRET`                                    | Recommended   | Signs contact-form timing tokens                             |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`             | For payments  | Online payment, saved cards, autopay                         |
+| `CRON_SECRET`                                            | For billing   | Authenticates the daily billing run                          |
+| `NEXT_PUBLIC_WP_API_URL`                                 | No            | WordPress API (defaults to wp.cadogy.com)                    |
 
 Without Stripe keys, invoicing still works and the online payment options are simply hidden. Without Resend, emails are logged instead of sent.
 

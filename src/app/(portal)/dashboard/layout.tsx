@@ -1,4 +1,4 @@
-import { requireUser } from "@/lib/auth/session"
+import { requireSession } from "@/features/auth/server/session"
 import { PortalShell } from "@/components/portal/portal-shell"
 
 const nav = [
@@ -13,7 +13,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await requireUser()
+  const user = await requireSession()
   return (
     <PortalShell area="Client" nav={nav} user={user}>
       {children}

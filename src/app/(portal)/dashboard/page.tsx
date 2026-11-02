@@ -7,14 +7,14 @@ import type { Currency } from "@/features/billing/domain/schema"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import { billing } from "@/features/billing/server/billing"
 
-import { requireUser } from "@/lib/auth/session"
+import { requireSession } from "@/features/auth/server/session"
 import { Button } from "@/components/ui/button"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Overview" }
 
 export default async function DashboardPage() {
-  const user = await requireUser()
+  const user = await requireSession()
   const invoices = await billing.listForPortalUser(user.email)
   const now = new Date()
 

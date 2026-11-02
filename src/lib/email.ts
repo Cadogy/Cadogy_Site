@@ -61,25 +61,37 @@ const sendActionEmail = ({
     text: `${intro}\n\n${cta}: ${url}\n\n${outro}`,
   })
 
-export const sendVerificationEmail = (email: string, token: string) =>
+export const sendVerificationEmail = (email: string, url: string) =>
   sendActionEmail({
     to: email,
     subject: "Verify your email address",
     intro:
-      "Confirm your email address to finish setting up your Cadogy client account.",
-    url: `${env.NEXT_PUBLIC_APP_URL}/verify-email?token=${encodeURIComponent(token)}`,
+      "Confirm your email address to finish setting up your Cadogy account. This link expires in 24 hours.",
+    url,
     cta: "Verify email",
     outro: "If you didn't create an account, you can ignore this email.",
   })
 
-export const sendPasswordResetEmail = (email: string, token: string) =>
+export const sendPasswordResetEmail = (email: string, url: string) =>
   sendActionEmail({
     to: email,
     subject: "Reset your password",
     intro:
       "We received a request to reset the password for your Cadogy account. This link expires in one hour.",
-    url: `${env.NEXT_PUBLIC_APP_URL}/reset-password?token=${encodeURIComponent(token)}`,
+    url,
     cta: "Reset password",
     outro:
       "If you didn't request this, you can ignore this email. Your password won't change.",
+  })
+
+export const sendExistingAccountNotice = (email: string) =>
+  sendActionEmail({
+    to: email,
+    subject: "Someone tried to create an account with your email",
+    intro:
+      "Someone just tried to register a Cadogy account with this email address. You already have an account, so nothing was created.",
+    url: `${env.NEXT_PUBLIC_APP_URL}/login`,
+    cta: "Sign in",
+    outro:
+      "If this was you, sign in or reset your password from the sign-in page. If it wasn't, you can ignore this email.",
   })

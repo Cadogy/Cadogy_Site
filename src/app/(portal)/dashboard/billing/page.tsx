@@ -18,7 +18,7 @@ import {
 } from "@/features/billing/server/engine-actions"
 import { isStripeConfigured } from "@/features/billing/server/stripe"
 
-import { requireUser } from "@/lib/auth/session"
+import { requireSession } from "@/features/auth/server/session"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Billing" }
@@ -26,7 +26,7 @@ export const metadata: Metadata = { title: "Billing" }
 type Props = { searchParams: Promise<{ payment?: string; card?: string }> }
 
 export default async function ClientBillingPage({ searchParams }: Props) {
-  const user = await requireUser("/dashboard/billing")
+  const user = await requireSession("/dashboard/billing")
   const { payment, card } = await searchParams
   const now = new Date()
   const [invoices, accounts] = await Promise.all([

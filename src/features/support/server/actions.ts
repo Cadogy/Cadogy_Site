@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-import { requireAdmin, requireUser } from "@/lib/auth/session"
+import { requirePermission, requireSession } from "@/features/auth/server/session"
 
 import {
   TICKET_STATUSES,
@@ -29,7 +29,7 @@ export async function openTicketAction(
   _previous: TicketActionState,
   formData: FormData
 ): Promise<TicketActionState> {
-  const user = await requireUser("/dashboard/tickets/new")
+  const user = await requireSession("/dashboard/tickets/new")
   const result = await support.open(user, Object.fromEntries(formData))
   if (!result.ok) return { ok: false, message: result.error }
   refresh()
@@ -44,8 +44,8 @@ export async function replyToTicketAction(
 ): Promise<TicketActionState> {
   const author =
     as === "admin"
-      ? await requireAdmin()
-      : await requireUser(`/dashboard/tickets/${ticketId}`)
+      ? await requirePermission("support:write")
+      : await requireSession(`/dashboard/tickets/${ticketId}`)
   const result = await support.reply(
     author,
     ticketId,
@@ -62,7 +62,7 @@ export async function setTicketStatusAction(
   ticketId: string,
   status: TicketStatus
 ) {
-  await requireAdmin()
+  await requirePermission("support:write")
   if (!TICKET_STATUSES.includes(status)) return
   await support.setStatus(ticketId, status)
   refresh(ticketId)

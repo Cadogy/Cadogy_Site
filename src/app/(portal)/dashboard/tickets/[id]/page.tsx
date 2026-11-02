@@ -5,7 +5,7 @@ import { TicketStatusBadge } from "@/features/support/components/ticket-status-b
 import { TicketThread } from "@/features/support/components/ticket-thread"
 import { support } from "@/features/support/server/support"
 
-import { requireUser } from "@/lib/auth/session"
+import { requireSession } from "@/features/auth/server/session"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Support request" }
@@ -14,7 +14,7 @@ type Props = { params: Promise<{ id: string }> }
 
 export default async function TicketPage({ params }: Props) {
   const { id } = await params
-  const user = await requireUser(`/dashboard/tickets/${id}`)
+  const user = await requireSession(`/dashboard/tickets/${id}`)
   const ticket = await support.getForUser(user.id, id)
   if (!ticket) notFound()
 

@@ -1,14 +1,13 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { findUserContact } from "@/features/auth/server/database"
 import {
   ReplyForm,
   TicketStatusSelect,
 } from "@/features/support/components/ticket-forms"
 import { TicketThread } from "@/features/support/components/ticket-thread"
 import { support } from "@/features/support/server/support"
-import { User } from "@/models/User"
 
-import { connectToDatabase } from "@/lib/mongodb"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Ticket" }
@@ -19,8 +18,7 @@ export default async function AdminTicketPage({ params }: Props) {
   const { id } = await params
   const ticket = await support.get(id)
   if (!ticket) notFound()
-  await connectToDatabase()
-  const client = await User.findById(ticket.userId).lean()
+  const client = await findUserContact(ticket.userId)
 
   return (
     <div className="max-w-3xl">

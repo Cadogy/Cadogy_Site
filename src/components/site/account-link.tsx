@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useSession } from "next-auth/react"
+import { authClient } from "@/features/auth/client"
+
 
 import { cn } from "@/lib/utils"
 
@@ -12,8 +13,8 @@ export function AccountLink({
   className?: string
   onNavigate?: () => void
 }) {
-  const { status } = useSession()
-  const signedIn = status === "authenticated"
+  const { data: session } = authClient.useSession()
+  const signedIn = Boolean(session)
   return (
     <Link
       href={signedIn ? "/dashboard" : "/login"}

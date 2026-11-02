@@ -1,8 +1,9 @@
 import "server-only"
 
 import { Ticket, type TicketDoc } from "@/models/Ticket"
-import { User } from "@/models/User"
 import { isValidObjectId } from "mongoose"
+
+import { findUserContact } from "@/features/auth/server/database"
 
 import { env } from "@/env"
 import { sendEmail } from "@/lib/email"
@@ -44,7 +45,7 @@ const notify = async ({ kind, ticket, from }: TicketNotification) => {
   const toTeam = kind === "team"
   const recipient = toTeam
     ? env.ADMIN_NOTIFY_EMAIL
-    : (await User.findById(ticket.userId).lean())?.email
+    : (await findUserContact(ticket.userId))?.email
   if (!recipient) return
 
   const path = toTeam

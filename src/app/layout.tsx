@@ -2,7 +2,6 @@ import "@/styles/globals.css"
 
 import type { Metadata, Viewport } from "next"
 import { Instrument_Serif } from "next/font/google"
-import { AppProviders } from "@/providers/app-providers"
 import { GeistMono } from "geist/font/mono"
 import { GeistSans } from "geist/font/sans"
 
@@ -66,7 +65,7 @@ export default function RootLayout({
       className={cn(GeistSans.variable, GeistMono.variable, serif.variable)}
     >
       <body className="min-h-dvh bg-background font-sans">
-        <AppProviders>{children}</AppProviders>
+        {children}
       </body>
     </html>
   )

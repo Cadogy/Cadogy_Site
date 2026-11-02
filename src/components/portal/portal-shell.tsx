@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
-import { signOut } from "next-auth/react"
+import { authClient } from "@/features/auth/client"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -32,6 +32,13 @@ export function PortalShell({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const signOut = async () => {
+    await authClient.signOut()
+    router.replace("/")
+    router.refresh()
+  }
 
   const links = (orientation: "row" | "column") =>
     nav.map((item) => {
@@ -74,7 +81,7 @@ export function PortalShell({
           <Button
             variant="ghost"
             className="mt-2 -ml-3 text-muted-foreground"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={signOut}
           >
             <LogOut className="size-4" aria-hidden="true" />
             Sign out
@@ -95,7 +102,7 @@ export function PortalShell({
               variant="ghost"
               size="icon"
               aria-label="Sign out"
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={signOut}
             >
               <LogOut className="size-5" aria-hidden="true" />
             </Button>

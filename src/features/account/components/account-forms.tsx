@@ -14,24 +14,18 @@ import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { HumanCheck } from "@/components/security/human-check"
 
-import type { AccountResult } from "../application/account-service"
 import {
   registerAction,
   requestPasswordResetAction,
   resetPasswordAction,
-  verifyEmailAction,
-} from "../server/actions"
+  type AccountAction,
+} from "./auth-actions"
 import { FormAlert } from "./auth-card"
 
-type Action = (
-  previous: AccountResult | null,
-  formData: FormData
-) => Promise<AccountResult>
-
 const PASSWORD_HINT =
-  "At least 10 characters, with upper- and lowercase letters and a number."
+  "At least 12 characters. A short phrase of a few words works well."
 
-const useAccountAction = (action: Action) => {
+const useAccountAction = (action: AccountAction) => {
   const [result, dispatch, pending] = useActionState(action, null)
   const submit =
     (extra: Record<string, string> = {}) =>
@@ -90,6 +84,11 @@ export function RegisterForm({
       noValidate
     >
       {formError ? <FormAlert>{formError}</FormAlert> : null}
+      <Field id="name" label="Name" error={fieldError("name")}>
+        {(control) => (
+          <Input {...control} name="name" autoComplete="name" required />
+        )}
+      </Field>
       <Field id="email" label="Email" error={fieldError("email")}>
         {(control) => (
           <Input
@@ -216,31 +215,6 @@ export function ResetPasswordForm({ token }: { token: string }) {
         )}
       </Field>
       <SubmitButton pending={pending}>Update password</SubmitButton>
-    </form>
-  )
-}
-
-export function VerifyEmailForm({ token }: { token: string }) {
-  const { result, pending, submit, formError } =
-    useAccountAction(verifyEmailAction)
-
-  if (result?.ok) {
-    return (
-      <div className="grid gap-5">
-        <FormAlert tone="success">
-          Your email is verified. You can sign in now.
-        </FormAlert>
-        <Button asChild size="lg">
-          <Link href="/login">Sign in</Link>
-        </Button>
-      </div>
-    )
-  }
-
-  return (
-    <form onSubmit={submit({ token })} className="grid gap-5">
-      {formError ? <FormAlert>{formError}</FormAlert> : null}
-      <SubmitButton pending={pending}>Verify my email</SubmitButton>
     </form>
   )
 }

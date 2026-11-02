@@ -4,7 +4,9 @@ import { z } from "zod"
 export const env = createEnv({
   server: {
     MONGODB_URI: z.string().min(1),
-    NEXTAUTH_SECRET: z.string().min(1),
+    BETTER_AUTH_SECRET: z.string().min(32),
+    BETTER_AUTH_URL: z.url().optional(),
+    OWNER_EMAIL: z.email().optional(),
     RESEND_API_KEY: z.string().min(1).optional(),
     FROM_EMAIL: z.string().min(1).default("Cadogy <hello@cadogy.com>"),
     ADMIN_NOTIFY_EMAIL: z.email().default("hello@cadogy.com"),

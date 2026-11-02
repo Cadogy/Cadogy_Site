@@ -1,13 +1,10 @@
 // @vitest-environment node
 import { NextRequest } from "next/server"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
-const getToken = vi.fn()
-vi.mock("next-auth/jwt", () => ({
-  getToken: (...args: unknown[]) => getToken(...args),
-}))
+import { proxy } from "./proxy"
 
-const { proxy } = await import("./proxy")
+const SESSION_COOKIE = "cadogy.session_token=signed-token-value"
 
 const call = (
   path: string,
@@ -20,58 +17,33 @@ const call = (
     })
   )
 
-const signedInAs = (role: "user" | "admin" | null) =>
-  getToken.mockResolvedValue(role ? { sub: "u1", role } : null)
+const passesThrough = (response: Response) =>
+  response.headers.get("x-middleware-next") === "1"
 
 describe("proxy", () => {
-  beforeEach(() => {
-    getToken.mockReset()
+  it("lets public pages through", async () => {
+    expect(passesThrough(await call("/who-we-are"))).toBe(true)
   })
 
-  it("lets public pages through without a session lookup", async () => {
-    const response = await call("/who-we-are")
-    expect(response.headers.get("x-middleware-next")).toBe("1")
-    expect(getToken).not.toHaveBeenCalled()
-  })
+  it.each(["/dashboard/billing", "/admin/billing/clients"])(
+    "sends visitors without a session from %s to sign in and back",
+    async (path) => {
+      const response = await call(path)
+      expect(response.status).toBe(307)
+      const location = new URL(response.headers.get("location") ?? "")
+      expect(location.pathname).toBe("/login")
+      expect(location.searchParams.get("callbackUrl")).toBe(path)
+    }
+  )
 
-  it("redirects anonymous visitors from the portal to login with a return path", async () => {
-    signedInAs(null)
-    const response = await call("/dashboard/invoices")
-    expect(response.status).toBe(307)
-    const location = new URL(response.headers.get("location") ?? "")
-    expect(location.pathname).toBe("/login")
-    expect(location.searchParams.get("callbackUrl")).toBe("/dashboard/invoices")
-  })
-
-  it("keeps non-admins out of the admin area", async () => {
-    signedInAs("user")
-    const response = await call("/admin/billing")
-    expect(response.status).toBe(307)
-    expect(new URL(response.headers.get("location") ?? "").pathname).toBe(
-      "/dashboard"
-    )
-  })
-
-  it("lets admins into the admin area", async () => {
-    signedInAs("admin")
-    const response = await call("/admin/billing")
-    expect(response.headers.get("x-middleware-next")).toBe("1")
-  })
-
-  it("answers 401 JSON for anonymous calls to session APIs", async () => {
-    signedInAs(null)
-    const response = await call("/api/dashboard/tickets")
-    expect(response.status).toBe(401)
-  })
-
-  it("answers 403 for non-admin calls to admin APIs", async () => {
-    signedInAs("user")
-    const response = await call("/api/admin/invoices")
-    expect(response.status).toBe(403)
+  it("leaves role checks to the pages once a session cookie is present", async () => {
+    const headers = { cookie: SESSION_COOKIE }
+    expect(passesThrough(await call("/dashboard", { headers }))).toBe(true)
+    expect(passesThrough(await call("/admin/users", { headers }))).toBe(true)
   })
 
   it("rejects cross-origin state-changing API calls", async () => {
-    const response = await call("/api/contact", {
+    const response = await call("/api/auth/sign-in/email", {
       method: "POST",
       headers: { origin: "https://evil.example" },
     })
@@ -79,15 +51,19 @@ describe("proxy", () => {
   })
 
   it("accepts same-origin state-changing API calls", async () => {
-    const response = await call("/api/contact", {
+    const response = await call("/api/auth/sign-in/email", {
       method: "POST",
       headers: { origin: "https://cadogy.com" },
     })
-    expect(response.headers.get("x-middleware-next")).toBe("1")
+    expect(passesThrough(response)).toBe(true)
   })
 
   it("exempts the Stripe webhook from the origin check", async () => {
     const response = await call("/api/webhooks/stripe", { method: "POST" })
-    expect(response.headers.get("x-middleware-next")).toBe("1")
+    expect(passesThrough(response)).toBe(true)
+  })
+
+  it("lets the billing cron through to its own secret check", async () => {
+    expect(passesThrough(await call("/api/cron/billing"))).toBe(true)
   })
 })

@@ -7,14 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
-import type { AccountResult } from "../application/account-service"
-import { changePasswordAction, updateNameAction } from "../server/actions"
+import {
+  changePasswordAction,
+  updateNameAction,
+  type AccountAction,
+} from "./auth-actions"
 import { FormAlert } from "./auth-card"
-
-type Action = (
-  previous: AccountResult | null,
-  formData: FormData
-) => Promise<AccountResult>
 
 function SettingsForm({
   action,
@@ -23,7 +21,7 @@ function SettingsForm({
   children,
   resetOnSuccess = false,
 }: {
-  action: Action
+  action: AccountAction
   success: string
   submitLabel: string
   children: (
@@ -124,7 +122,7 @@ export function ChangePasswordForm() {
           <Field
             id="password"
             label="New password"
-            hint="At least 10 characters, with upper- and lowercase letters and a number."
+            hint="At least 12 characters. Changing it signs you out on your other devices."
             error={fieldError("password")}
           >
             {(control) => (
