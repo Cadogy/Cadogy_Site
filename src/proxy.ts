@@ -5,7 +5,7 @@ import { isSameOriginRequest } from "@/lib/security/request-origin"
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"])
 const ORIGIN_CHECK_EXEMPT = ["/api/webhooks/"]
-const SIGNED_IN_AREAS = ["/dashboard", "/admin"]
+const SIGNED_IN_AREAS = ["/dashboard", "/admin", "/account"]
 
 const isUnder = (pathname: string, base: string) =>
   pathname === base || pathname.startsWith(`${base}/`)

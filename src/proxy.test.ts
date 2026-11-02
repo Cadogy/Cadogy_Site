@@ -25,7 +25,11 @@ describe("proxy", () => {
     expect(passesThrough(await call("/who-we-are"))).toBe(true)
   })
 
-  it.each(["/dashboard/billing", "/admin/billing/clients"])(
+  it.each([
+    "/dashboard/billing",
+    "/admin/billing/clients",
+    "/account/security",
+  ])(
     "sends visitors without a session from %s to sign in and back",
     async (path) => {
       const response = await call(path)
