@@ -1,6 +1,10 @@
 export type SecurityEventType =
   | "sign_in"
+  | "sign_in_backup_code"
+  | "sign_in_passkey"
   | "sign_in_failed"
+  | "two_factor_failed"
+  | "account_locked"
   | "sign_up"
   | "sign_out"
   | "email_verified"
@@ -9,11 +13,15 @@ export type SecurityEventType =
   | "password_changed"
   | "session_revoked"
   | "sessions_revoked"
+  | "two_factor_enabled"
+  | "two_factor_disabled"
+  | "backup_codes_regenerated"
+  | "passkey_added"
+  | "passkey_removed"
   | "role_changed"
   | "owner_bootstrapped"
 
 const ON_SUCCESS: Record<string, SecurityEventType> = {
-  "/sign-in/email": "sign_in",
   "/sign-up/email": "sign_up",
   "/sign-out": "sign_out",
   "/verify-email": "email_verified",
@@ -23,23 +31,56 @@ const ON_SUCCESS: Record<string, SecurityEventType> = {
   "/revoke-session": "session_revoked",
   "/revoke-sessions": "sessions_revoked",
   "/revoke-other-sessions": "sessions_revoked",
+  "/two-factor/disable": "two_factor_disabled",
+  "/two-factor/generate-backup-codes": "backup_codes_regenerated",
+  "/passkey/verify-registration": "passkey_added",
+  "/passkey/delete-passkey": "passkey_removed",
+}
+
+const ON_NEW_SESSION: Record<string, SecurityEventType> = {
+  "/sign-in/email": "sign_in",
+  "/two-factor/verify-totp": "sign_in",
+  "/two-factor/verify-backup-code": "sign_in_backup_code",
+  "/passkey/verify-authentication": "sign_in_passkey",
+}
+
+const WHILE_SIGNED_IN: Record<string, SecurityEventType> = {
+  "/two-factor/verify-totp": "two_factor_enabled",
 }
 
 const ON_FAILURE: Record<string, SecurityEventType> = {
   "/sign-in/email": "sign_in_failed",
+  "/two-factor/verify-totp": "two_factor_failed",
+  "/two-factor/verify-backup-code": "two_factor_failed",
 }
+
+const SESSION_CREATING_PATHS = new Set(Object.keys(ON_NEW_SESSION))
 
 export const eventForAuthRequest = ({
   path,
   ok,
+  newSession,
+  signedIn,
 }: {
   readonly path: string
   readonly ok: boolean
-}): SecurityEventType | null => (ok ? ON_SUCCESS : ON_FAILURE)[path] ?? null
+  readonly newSession: boolean
+  readonly signedIn: boolean
+}): SecurityEventType | null => {
+  if (!ok) return ON_FAILURE[path] ?? null
+  if (signedIn && WHILE_SIGNED_IN[path]) return WHILE_SIGNED_IN[path]
+  if (newSession) return ON_NEW_SESSION[path] ?? ON_SUCCESS[path] ?? null
+  if (SESSION_CREATING_PATHS.has(path)) return null
+  return ON_SUCCESS[path] ?? null
+}
 
 const LABELS: Record<SecurityEventType, string> = {
   sign_in: "Signed in",
+  sign_in_backup_code: "Signed in with a backup code",
+  sign_in_passkey: "Signed in with a passkey",
   sign_in_failed: "Failed sign-in attempt",
+  two_factor_failed: "Wrong two-factor code entered",
+  account_locked: "Password sign-in locked after failed attempts",
   sign_up: "Account created",
   sign_out: "Signed out",
   email_verified: "Email verified",
@@ -48,6 +89,11 @@ const LABELS: Record<SecurityEventType, string> = {
   password_changed: "Password changed",
   session_revoked: "Signed out a device",
   sessions_revoked: "Signed out other devices",
+  two_factor_enabled: "Two-factor authentication turned on",
+  two_factor_disabled: "Two-factor authentication turned off",
+  backup_codes_regenerated: "New backup codes created",
+  passkey_added: "Passkey added",
+  passkey_removed: "Passkey removed",
   role_changed: "Role changed",
   owner_bootstrapped: "Became owner",
 }

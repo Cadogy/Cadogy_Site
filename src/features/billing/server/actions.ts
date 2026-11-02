@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-
 import { requirePermission } from "@/features/auth/server/session"
 
 import { parseMoneyInput } from "../domain/format"

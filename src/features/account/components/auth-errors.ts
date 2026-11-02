@@ -15,6 +15,20 @@ const MESSAGES: Record<string, string> = {
   INVALID_PASSWORD: "Your current password is incorrect.",
   INVALID_TOKEN: "This link is invalid or has expired. Request a new one.",
   SESSION_EXPIRED: "For your security, please sign in again to do this.",
+  SESSION_NOT_FRESH:
+    "For your security, sign out and sign in again, then try this within 10 minutes.",
+  INVALID_CODE:
+    "That code didn't work. Check that your device's clock is correct and try again.",
+  INVALID_BACKUP_CODE:
+    "That backup code didn't work, or it's already been used.",
+  INVALID_TWO_FACTOR_COOKIE: "Your sign-in timed out. Please start again.",
+  TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE:
+    "Too many wrong codes. Please sign in again.",
+  AUTH_CANCELLED: "Passkey sign-in was cancelled.",
+  AUTHENTICATION_FAILED:
+    "That passkey didn't work. Try again or use your password.",
+  REGISTRATION_CANCELLED: "Adding the passkey was cancelled.",
+  PREVIOUSLY_REGISTERED: "This passkey is already on your account.",
 }
 
 export const authErrorMessage = (error: AuthError) => {

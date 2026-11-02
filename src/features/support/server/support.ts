@@ -1,9 +1,8 @@
 import "server-only"
 
+import { findUserContact } from "@/features/auth/server/database"
 import { Ticket, type TicketDoc } from "@/models/Ticket"
 import { isValidObjectId } from "mongoose"
-
-import { findUserContact } from "@/features/auth/server/database"
 
 import { env } from "@/env"
 import { sendEmail } from "@/lib/email"

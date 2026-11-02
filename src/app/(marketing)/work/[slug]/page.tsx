@@ -70,7 +70,7 @@ export default async function CaseStudyPage({ params }: Props) {
         </header>
 
         <div className="px-3 md:px-4">
-          <div className="relative aspect-4/5 overflow-hidden rounded-[20px] bg-card sm:hidden">
+          <div className="relative aspect-3/4 overflow-hidden rounded-[20px] bg-card sm:hidden">
             <Image
               src={study.mobileImage}
               alt={`${study.name} homepage`}
@@ -78,10 +78,10 @@ export default async function CaseStudyPage({ params }: Props) {
               priority
               sizes="100vw"
               quality={85}
-              className="object-cover object-top"
+              className="object-cover object-left-top"
             />
           </div>
-          <div className="relative hidden aspect-16/7 overflow-hidden rounded-[20px] bg-card sm:block">
+          <div className="relative hidden aspect-video overflow-hidden rounded-[20px] bg-card sm:block">
             <Image
               src={study.image}
               alt={`${study.name} homepage`}

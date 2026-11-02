@@ -1,9 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { requirePermission } from "@/features/auth/server/session"
 import { isValidObjectId } from "mongoose"
 
-import { requirePermission } from "@/features/auth/server/session"
 import { connectToDatabase } from "@/lib/mongodb"
 
 import {

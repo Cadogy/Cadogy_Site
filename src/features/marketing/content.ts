@@ -21,7 +21,6 @@ export type CaseStudy = {
   readonly role: string
   readonly image: string
   readonly mobileImage: string
-  readonly cover: string
   readonly challenge: readonly string[]
   readonly promises: readonly string[]
   readonly capabilities: readonly {
@@ -168,9 +167,8 @@ export const caseStudies: readonly CaseStudy[] = [
     summary:
       "A two-sided marketplace for in-game items, accounts and currency, with buyer protection built into every order.",
     role: "Product, engineering and operations — designed, built and run in-house.",
-    image: "/images/studio/playerbay.webp",
-    mobileImage: "/images/studio/playerbay-mobile.webp",
-    cover: "/images/studio/playerbay-cover.webp",
+    image: "/images/studio/playerbay-case-study.webp",
+    mobileImage: "/images/studio/playerbay-case-study-mobile.webp",
     challenge: [
       "Digital-goods marketplaces live or die on trust. Buyers need to know they'll receive what they paid for, sellers need to know they'll get paid, and the platform has to resolve problems fairly when something goes wrong.",
       "PlayerBay needed the full machinery of a modern marketplace — listings, checkout, payouts, messaging and disputes — built to handle real money from day one.",

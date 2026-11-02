@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useEffect, useEffectEvent, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { authClient, humanCheckHeaders } from "@/features/auth/client"
-import { Loader2 } from "lucide-react"
+import { KeyRound, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
@@ -27,6 +27,30 @@ export function LoginForm({
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const finish = () => {
+    router.replace(callbackPath)
+    router.refresh()
+  }
+
+  const signInWithPasskey = async (autoFill = false) => {
+    const result = await authClient.signIn.passkey({ autoFill })
+    if (!result.error) return finish()
+    if (!autoFill) setError(authErrorMessage(result.error))
+  }
+
+  const offerPasskeyAutofill = useEffectEvent(() => {
+    void signInWithPasskey(true)
+  })
+
+  useEffect(() => {
+    const conditional =
+      globalThis.PublicKeyCredential?.isConditionalMediationAvailable
+    if (!conditional) return
+    void conditional.call(PublicKeyCredential).then((available) => {
+      if (available) offerPasskeyAutofill()
+    })
+  }, [])
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
@@ -42,9 +66,13 @@ export function LoginForm({
     )
 
     if (!result.error) {
-      router.replace(callbackPath)
-      router.refresh()
-      return
+      if (result.data && "twoFactorRedirect" in result.data) {
+        router.push(
+          `/login/verify?callbackUrl=${encodeURIComponent(callbackPath)}`
+        )
+        return
+      }
+      return finish()
     }
 
     setPending(false)
@@ -63,7 +91,7 @@ export function LoginForm({
             {...control}
             name="email"
             type="email"
-            autoComplete="email"
+            autoComplete="username webauthn"
             required
           />
         )}
@@ -99,6 +127,22 @@ export function LoginForm({
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
         ) : null}
         Sign in
+      </Button>
+
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <span className="h-px flex-1 bg-border" aria-hidden="true" />
+        or
+        <span className="h-px flex-1 bg-border" aria-hidden="true" />
+      </div>
+
+      <Button
+        type="button"
+        size="lg"
+        variant="outline"
+        onClick={() => void signInWithPasskey()}
+      >
+        <KeyRound className="size-4" aria-hidden="true" />
+        Sign in with a passkey
       </Button>
     </form>
   )

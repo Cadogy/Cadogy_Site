@@ -1,11 +1,13 @@
 import "server-only"
 
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
+import { passkey } from "@better-auth/passkey"
 import { betterAuth } from "better-auth"
 import { APIError, createAuthMiddleware } from "better-auth/api"
 import { nextCookies } from "better-auth/next-js"
 import { admin } from "better-auth/plugins/admin"
 import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned"
+import { twoFactor } from "better-auth/plugins/two-factor"
 
 import { env } from "@/env"
 import {
@@ -15,6 +17,7 @@ import {
 } from "@/lib/email"
 import { verifyTurnstile } from "@/lib/security/turnstile"
 
+import { sessionAssurance, upgradesSession } from "../domain/assurance"
 import { TURNSTILE_HEADER } from "../domain/http"
 import { shouldBecomeOwner } from "../domain/roles"
 import { eventForAuthRequest } from "../domain/security-events"
@@ -26,11 +29,18 @@ import {
   userObjectId,
   users,
 } from "./database"
+import { lockout } from "./lockout"
 import { securityLog } from "./security-log"
 
 const isProduction = process.env.NODE_ENV === "production"
 const MINUTE = 60
 const DAY = 24 * 60 * MINUTE
+
+const baseURL = env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_APP_URL
+const siteOrigin = new URL(baseURL).origin
+const siteHost = new URL(baseURL).hostname
+const passkeyRpId =
+  siteHost === "localhost" ? "localhost" : siteHost.replace(/^www\./, "")
 
 const HUMAN_CHECK_PATHS = new Set([
   "/sign-up/email",
@@ -38,31 +48,80 @@ const HUMAN_CHECK_PATHS = new Set([
   "/request-password-reset",
 ])
 
+const LOCKED_MESSAGE =
+  "Too many failed attempts. Password sign-in is paused for 15 minutes. You can still sign in with a passkey or reset your password."
+
 const requestIp = (headers: Headers | undefined) =>
   headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ||
   headers?.get("x-real-ip") ||
   ""
 
-const requireHuman = createAuthMiddleware(async (ctx) => {
-  if (!HUMAN_CHECK_PATHS.has(ctx.path)) return
-  const token = ctx.headers?.get(TURNSTILE_HEADER) ?? ""
-  if (!(await verifyTurnstile(token, requestIp(ctx.headers))))
-    throw new APIError("BAD_REQUEST", {
-      message: "We couldn't verify you're human. Please try again.",
-    })
+const signInEmail = (body: unknown) =>
+  typeof body === "object" &&
+  body !== null &&
+  "email" in body &&
+  typeof body.email === "string"
+    ? body.email
+    : ""
+
+const beforeRequest = createAuthMiddleware(async (ctx) => {
+  if (HUMAN_CHECK_PATHS.has(ctx.path)) {
+    const token = ctx.headers?.get(TURNSTILE_HEADER) ?? ""
+    if (!(await verifyTurnstile(token, requestIp(ctx.headers))))
+      throw new APIError("BAD_REQUEST", {
+        message: "We couldn't verify you're human. Please try again.",
+      })
+  }
+  if (ctx.path === "/sign-in/email") {
+    const email = signInEmail(ctx.body)
+    if (email && (await lockout.isLocked(email)))
+      throw new APIError("TOO_MANY_REQUESTS", { message: LOCKED_MESSAGE })
+  }
 })
 
-const recordSecurityEvent = createAuthMiddleware(async (ctx) => {
-  const ok = !(ctx.context.returned instanceof APIError)
-  const type = eventForAuthRequest({ path: ctx.path, ok })
+const trackPasswordAttempt = async (
+  path: string,
+  body: unknown,
+  ok: boolean
+) => {
+  if (path !== "/sign-in/email") return
+  const email = signInEmail(body)
+  if (!email) return
+  if (ok) await lockout.clear(email)
+  else await lockout.recordFailure(email)
+}
+
+const upgradeCurrentSession = async (token: string | undefined) => {
+  if (!token) return
+  await authDb
+    .collection("session")
+    .updateOne({ token }, { $set: { assurance: "multi" } })
+}
+
+const afterRequest = createAuthMiddleware(async (ctx) => {
+  const returned = ctx.context.returned
+  const ok = !(returned instanceof APIError)
+  const locked =
+    returned instanceof APIError && returned.message === LOCKED_MESSAGE
+  if (!locked) await trackPasswordAttempt(ctx.path, ctx.body, ok)
+
+  const newSession = ctx.context.newSession
+  if (ok && !newSession && upgradesSession(ctx.path))
+    await upgradeCurrentSession(ctx.context.session?.session.token)
+
+  const type = eventForAuthRequest({
+    path: ctx.path,
+    ok,
+    newSession: Boolean(newSession),
+    signedIn: Boolean(ctx.context.session),
+  })
   if (!type) return
-  const userId =
-    ctx.context.newSession?.user.id ?? ctx.context.session?.user.id ?? null
+  const userId = newSession?.user.id ?? ctx.context.session?.user.id ?? null
   await securityLog.record({
     type,
     actorId: userId,
     targetId: userId,
-    detail: ok ? undefined : "Wrong email or password",
+    detail: ok ? undefined : locked ? "Blocked while locked" : undefined,
     ip: requestIp(ctx.headers),
     userAgent: ctx.headers?.get("user-agent") ?? "",
   })
@@ -95,9 +154,15 @@ const promoteOwnerIfConfigured = async (user: {
   })
 }
 
+const userHasTwoFactor = async (userId: string) => {
+  const id = userObjectId(userId)
+  const user = id ? await users().findOne({ _id: id }) : null
+  return Boolean(user?.twoFactorEnabled)
+}
+
 export const auth = betterAuth({
   appName: "Cadogy",
-  baseURL: env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_APP_URL,
+  baseURL,
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [env.NEXT_PUBLIC_APP_URL],
   database: mongodbAdapter(
@@ -131,6 +196,13 @@ export const auth = betterAuth({
     expiresIn: 7 * DAY,
     updateAge: DAY,
     freshAge: 10 * MINUTE,
+    additionalFields: {
+      assurance: {
+        type: "string",
+        defaultValue: "single",
+        input: false,
+      },
+    },
   },
   rateLimit: {
     enabled: isProduction,
@@ -144,6 +216,9 @@ export const auth = betterAuth({
       "/send-verification-email": { window: 15 * MINUTE, max: 3 },
       "/reset-password": { window: 15 * MINUTE, max: 5 },
       "/change-password": { window: 15 * MINUTE, max: 5 },
+      "/two-factor/verify-totp": { window: MINUTE, max: 5 },
+      "/two-factor/verify-backup-code": { window: MINUTE, max: 5 },
+      "/passkey/verify-authentication": { window: MINUTE, max: 10 },
     },
   },
   advanced: {
@@ -152,8 +227,8 @@ export const auth = betterAuth({
     ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] },
   },
   hooks: {
-    before: requireHuman,
-    after: recordSecurityEvent,
+    before: beforeRequest,
+    after: afterRequest,
   },
   databaseHooks: {
     user: {
@@ -161,6 +236,19 @@ export const auth = betterAuth({
         after: async (user) => {
           await promoteOwnerIfConfigured(user)
         },
+      },
+    },
+    session: {
+      create: {
+        before: async (session, ctx) => ({
+          data: {
+            ...session,
+            assurance: sessionAssurance({
+              path: ctx?.path,
+              userHasTwoFactor: await userHasTwoFactor(session.userId),
+            }),
+          },
+        }),
       },
     },
   },
@@ -171,6 +259,8 @@ export const auth = betterAuth({
       defaultRole: "client",
       adminRoles: ["owner", "admin"],
     }),
+    twoFactor({ issuer: "Cadogy" }),
+    passkey({ rpID: passkeyRpId, rpName: "Cadogy", origin: siteOrigin }),
     haveIBeenPwned({
       enabled: isProduction,
       customPasswordCompromisedMessage:

@@ -17,6 +17,8 @@ const user = (overrides: Partial<SessionUser> = {}): SessionUser => ({
   email: "ada@example.com",
   name: "Ada",
   role: "client",
+  assurance: "multi",
+  hasSecondFactor: true,
   ...overrides,
 })
 
@@ -81,5 +83,41 @@ describe("auth guards", () => {
         guardsFor(null).requirePermission("billing:read", "/admin")
       )
     ).toBe("/login?callbackUrl=%2Fadmin")
+  })
+
+  it("sends staff without a second factor to set one up", async () => {
+    const guards = guardsFor(
+      user({ role: "admin", assurance: "single", hasSecondFactor: false })
+    )
+
+    expect(await redirectOf(guards.requirePermission("billing:read"))).toBe(
+      "/account/security?required=two-factor"
+    )
+    expect(await redirectOf(guards.requireStaff())).toBe(
+      "/account/security?required=two-factor"
+    )
+  })
+
+  it("asks staff who signed in with one factor to sign in again", async () => {
+    const guards = guardsFor(
+      user({ role: "owner", assurance: "single", hasSecondFactor: true })
+    )
+
+    expect(
+      await redirectOf(guards.requirePermission("users:read", "/admin/users"))
+    ).toBe("/login?reauth=1&callbackUrl=%2Fadmin%2Fusers")
+  })
+
+  it("never asks clients or staff in their own portal for a second factor", async () => {
+    await expect(
+      guardsFor(
+        user({ assurance: "single", hasSecondFactor: false })
+      ).requirePermission("portal:self")
+    ).resolves.toMatchObject({ role: "client" })
+    await expect(
+      guardsFor(
+        user({ role: "admin", assurance: "single", hasSecondFactor: false })
+      ).requireSession()
+    ).resolves.toMatchObject({ role: "admin" })
   })
 })

@@ -8,10 +8,12 @@ import { safeCallbackPath } from "@/lib/auth/safe-redirect"
 
 export const metadata: Metadata = { title: "Sign in" }
 
-type Props = { searchParams: Promise<{ callbackUrl?: string; error?: string }> }
+type Props = {
+  searchParams: Promise<{ callbackUrl?: string; error?: string; reauth?: string }>
+}
 
 export default async function LoginPage({ searchParams }: Props) {
-  const { callbackUrl, error } = await searchParams
+  const { callbackUrl, error, reauth } = await searchParams
   return (
     <AuthCard
       title="Sign in"
@@ -28,6 +30,14 @@ export default async function LoginPage({ searchParams }: Props) {
         </>
       }
     >
+      {reauth ? (
+        <div className="mb-5">
+          <FormAlert tone="success">
+            The studio needs a stronger sign-in. Sign in with your passkey, or
+            with your password and authentication code.
+          </FormAlert>
+        </div>
+      ) : null}
       {error ? (
         <div className="mb-5">
           <FormAlert>Please sign in again to continue.</FormAlert>

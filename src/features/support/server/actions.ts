@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-
-import { requirePermission, requireSession } from "@/features/auth/server/session"
+import {
+  requirePermission,
+  requireSession,
+} from "@/features/auth/server/session"
 
 import {
   TICKET_STATUSES,

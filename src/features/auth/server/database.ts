@@ -26,6 +26,7 @@ type UserRecord = {
   readonly role?: string
   readonly emailVerified: boolean
   readonly banned?: boolean
+  readonly twoFactorEnabled?: boolean
   readonly createdAt: Date
 }
 

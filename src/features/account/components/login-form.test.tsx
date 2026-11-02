@@ -3,12 +3,17 @@ import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const signInEmail = vi.hoisted(() => vi.fn())
-const navigation = vi.hoisted(() => ({ replace: vi.fn(), refresh: vi.fn() }))
+const signInPasskey = vi.hoisted(() => vi.fn())
+const navigation = vi.hoisted(() => ({
+  replace: vi.fn(),
+  push: vi.fn(),
+  refresh: vi.fn(),
+}))
 
 vi.mock("next/navigation", () => ({ useRouter: () => navigation }))
 vi.mock("@/components/security/human-check", () => ({ HumanCheck: () => null }))
 vi.mock("@/features/auth/client", () => ({
-  authClient: { signIn: { email: signInEmail } },
+  authClient: { signIn: { email: signInEmail, passkey: signInPasskey } },
   humanCheckHeaders: (token: string) => ({ "x-turnstile-token": token }),
 }))
 
@@ -26,7 +31,9 @@ const failWith = (error: { code?: string; message?: string; status: number }) =>
 describe("LoginForm", () => {
   beforeEach(() => {
     signInEmail.mockReset()
+    signInPasskey.mockReset()
     navigation.replace.mockReset()
+    navigation.push.mockReset()
   })
 
   it("signs in with the human check token and returns to the requested page", async () => {
@@ -98,5 +105,50 @@ describe("LoginForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn't verify you're human."
     )
+  })
+
+  it("sends people with two-factor on to the code step", async () => {
+    signInEmail.mockResolvedValue({
+      data: { twoFactorRedirect: true },
+      error: null,
+    })
+    const user = userEvent.setup()
+    render(
+      <LoginForm callbackPath="/admin/users" turnstileSiteKey={undefined} />
+    )
+
+    await submit(user)
+
+    expect(navigation.push).toHaveBeenCalledWith(
+      "/login/verify?callbackUrl=%2Fadmin%2Fusers"
+    )
+    expect(navigation.replace).not.toHaveBeenCalled()
+  })
+
+  it("signs in with a passkey", async () => {
+    signInPasskey.mockResolvedValue({ data: { session: {} }, error: null })
+    const user = userEvent.setup()
+    render(<LoginForm callbackPath="/admin" turnstileSiteKey={undefined} />)
+
+    await user.click(
+      screen.getByRole("button", { name: "Sign in with a passkey" })
+    )
+
+    expect(navigation.replace).toHaveBeenCalledWith("/admin")
+  })
+
+  it("explains a cancelled passkey prompt", async () => {
+    signInPasskey.mockResolvedValue({
+      data: null,
+      error: { code: "AUTH_CANCELLED", status: 400 },
+    })
+    const user = userEvent.setup()
+    render(<LoginForm callbackPath="/admin" turnstileSiteKey={undefined} />)
+
+    await user.click(
+      screen.getByRole("button", { name: "Sign in with a passkey" })
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/cancelled/)
   })
 })

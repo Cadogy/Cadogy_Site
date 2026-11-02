@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
 import { createRoleService } from "@/features/auth/application/role-service"
+import { isFreshSession } from "@/features/auth/domain/assurance"
 import { ROLES, toRole, type Role } from "@/features/auth/domain/permissions"
 import { auth } from "@/features/auth/server/auth"
 import { userObjectId, users } from "@/features/auth/server/database"
@@ -75,6 +76,16 @@ export async function changeRoleAction(
   nextRole: string
 ): Promise<RoleActionState> {
   const actor = await requirePermission("users:assign-roles", "/admin/users")
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (
+    !session ||
+    !isFreshSession(new Date(session.session.createdAt), new Date())
+  )
+    return {
+      ok: false,
+      message:
+        "For your security, role changes need a sign-in from the last 10 minutes. Sign out, sign back in and try again.",
+    }
   const role = ROLES.find((candidate) => candidate === nextRole)
   if (!role) return { ok: false, message: "Choose a valid role." }
   const result = await roles.changeRole({

@@ -2,35 +2,62 @@ import { describe, expect, it } from "vitest"
 
 import { eventForAuthRequest, securityEventLabel } from "./security-events"
 
+const success = (path: string, newSession = false, signedIn = false) =>
+  eventForAuthRequest({ path, ok: true, newSession, signedIn })
+
+const failure = (path: string) =>
+  eventForAuthRequest({ path, ok: false, newSession: false, signedIn: false })
+
 describe("eventForAuthRequest", () => {
   it.each([
-    ["/sign-in/email", true, "sign_in"],
-    ["/sign-in/email", false, "sign_in_failed"],
-    ["/sign-up/email", true, "sign_up"],
-    ["/sign-out", true, "sign_out"],
-    ["/verify-email", true, "email_verified"],
-    ["/request-password-reset", true, "password_reset_requested"],
-    ["/reset-password", true, "password_reset"],
-    ["/change-password", true, "password_changed"],
-    ["/revoke-session", true, "session_revoked"],
-    ["/revoke-sessions", true, "sessions_revoked"],
-    ["/revoke-other-sessions", true, "sessions_revoked"],
-  ] as const)("logs %s (ok: %s) as %s", (path, ok, type) => {
-    expect(eventForAuthRequest({ path, ok })).toBe(type)
+    ["/sign-up/email", "sign_up"],
+    ["/sign-out", "sign_out"],
+    ["/verify-email", "email_verified"],
+    ["/request-password-reset", "password_reset_requested"],
+    ["/reset-password", "password_reset"],
+    ["/change-password", "password_changed"],
+    ["/revoke-session", "session_revoked"],
+    ["/revoke-sessions", "sessions_revoked"],
+    ["/revoke-other-sessions", "sessions_revoked"],
+    ["/two-factor/disable", "two_factor_disabled"],
+    ["/two-factor/generate-backup-codes", "backup_codes_regenerated"],
+    ["/passkey/verify-registration", "passkey_added"],
+    ["/passkey/delete-passkey", "passkey_removed"],
+  ] as const)("logs a successful %s as %s", (path, type) => {
+    expect(success(path)).toBe(type)
   })
 
-  it("ignores failed attempts other than sign-in", () => {
-    expect(
-      eventForAuthRequest({ path: "/change-password", ok: false })
-    ).toBeNull()
-    expect(
-      eventForAuthRequest({ path: "/reset-password", ok: false })
-    ).toBeNull()
+  it("logs a sign-in only once a session exists", () => {
+    expect(success("/sign-in/email", true)).toBe("sign_in")
+    expect(success("/sign-in/email", false)).toBeNull()
+    expect(success("/two-factor/verify-totp", true)).toBe("sign_in")
+    expect(success("/two-factor/verify-backup-code", true)).toBe(
+      "sign_in_backup_code"
+    )
+    expect(success("/passkey/verify-authentication", true)).toBe(
+      "sign_in_passkey"
+    )
   })
 
-  it("ignores routine requests", () => {
-    expect(eventForAuthRequest({ path: "/get-session", ok: true })).toBeNull()
-    expect(eventForAuthRequest({ path: "/update-user", ok: true })).toBeNull()
+  it("logs verifying a code while signed in as turning on two-factor", () => {
+    expect(success("/two-factor/verify-totp", true, true)).toBe(
+      "two_factor_enabled"
+    )
+    expect(success("/two-factor/verify-totp", false, true)).toBe(
+      "two_factor_enabled"
+    )
+  })
+
+  it("logs failed password and code attempts", () => {
+    expect(failure("/sign-in/email")).toBe("sign_in_failed")
+    expect(failure("/two-factor/verify-totp")).toBe("two_factor_failed")
+    expect(failure("/two-factor/verify-backup-code")).toBe("two_factor_failed")
+  })
+
+  it("ignores other failures and routine requests", () => {
+    expect(failure("/change-password")).toBeNull()
+    expect(success("/get-session")).toBeNull()
+    expect(success("/update-user")).toBeNull()
   })
 })
 
@@ -41,6 +68,11 @@ describe("securityEventLabel", () => {
     expect(securityEventLabel("sessions_revoked")).toBe(
       "Signed out other devices"
     )
-    expect(securityEventLabel("role_changed")).toBe("Role changed")
+    expect(securityEventLabel("account_locked")).toBe(
+      "Password sign-in locked after failed attempts"
+    )
+    expect(securityEventLabel("two_factor_enabled")).toBe(
+      "Two-factor authentication turned on"
+    )
   })
 })

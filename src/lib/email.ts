@@ -95,3 +95,15 @@ export const sendExistingAccountNotice = (email: string) =>
     outro:
       "If this was you, sign in or reset your password from the sign-in page. If it wasn't, you can ignore this email.",
   })
+
+export const sendAccountLockedNotice = (email: string) =>
+  sendActionEmail({
+    to: email,
+    subject: "We paused password sign-in on your account",
+    intro:
+      "There were 10 failed attempts to sign in to your Cadogy account with a password in the last 15 minutes, so we've paused password sign-in for 15 minutes.",
+    url: `${env.NEXT_PUBLIC_APP_URL}/forgot-password`,
+    cta: "Reset your password",
+    outro:
+      "If this was you, wait 15 minutes and try again, or sign in with a passkey. If it wasn't, reset your password now.",
+  })

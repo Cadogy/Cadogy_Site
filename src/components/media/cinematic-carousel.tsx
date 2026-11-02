@@ -122,10 +122,10 @@ export function CinematicCarousel({
                   alt={slide.alt}
                   fill
                   priority={index === 0}
-                  sizes="(min-width: 1024px) 1px, 100vw"
+                  sizes="(min-width: 1024px) 1px, 110vw"
                   quality={85}
                   className={cn(
-                    "object-cover object-top lg:hidden",
+                    "object-cover object-left-top lg:hidden",
                     IMAGE_MOTION
                   )}
                 />

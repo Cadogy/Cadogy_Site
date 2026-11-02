@@ -48,8 +48,9 @@ export default async function HomePage() {
       ? [
           {
             id: `work-${featured.slug}`,
-            image: featured.cover,
-            alt: `${featured.name} marketplace artwork`,
+            image: featured.image,
+            mobileImage: featured.mobileImage,
+            alt: `${featured.name} marketplace homepage`,
             meta: `Case study · ${featured.category}`,
             title: featured.name,
             description: featured.summary,
