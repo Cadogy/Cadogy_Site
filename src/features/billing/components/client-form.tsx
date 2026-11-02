@@ -67,36 +67,6 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
             />
           )}
         </Field>
-        <Field
-          id="ccEmails"
-          label="CC emails"
-          optional
-          hint="Separate with commas."
-        >
-          {(control) => (
-            <Input
-              {...control}
-              name="ccEmails"
-              defaultValue={client?.ccEmails.join(", ")}
-            />
-          )}
-        </Field>
-        <Field
-          id="portalUserEmail"
-          label="Portal login email"
-          optional
-          hint="If the client signs in with a different email than the billing email."
-          className="sm:col-span-2"
-        >
-          {(control) => (
-            <Input
-              {...control}
-              name="portalUserEmail"
-              type="email"
-              defaultValue={client?.portalUserEmail}
-            />
-          )}
-        </Field>
       </div>
 
       <fieldset className="grid gap-5 sm:grid-cols-2">

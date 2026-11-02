@@ -55,7 +55,6 @@ export const clientInputSchema = z.object({
   name: z.string().trim().min(1).max(200),
   company: z.string().trim().max(200).default(""),
   email: email,
-  ccEmails: z.array(email).max(5).default([]),
   address: addressSchema.default({
     line1: "",
     line2: "",
@@ -68,7 +67,12 @@ export const clientInputSchema = z.object({
   currency: z.enum(CURRENCIES).default("USD"),
   defaultTermsDays: z.number().int().min(0).max(120).default(15),
   notes: z.string().trim().max(2_000).default(""),
-  portalUserEmail: z.union([email, z.literal("")]).default(""),
+})
+
+export const contactInputSchema = z.object({
+  email: email,
+  name: z.string().trim().max(120).default(""),
+  role: z.enum(["billing", "viewer"]),
 })
 
 export const invoiceDraftInputSchema = z.object({

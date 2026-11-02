@@ -2,6 +2,12 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ClientArchiveButton } from "@/features/billing/components/client-archive-button"
 import { ClientBilling } from "@/features/billing/components/client-billing"
+import { ContactsManager } from "@/features/billing/components/contacts-manager"
+import {
+  inviteClientContactAction,
+  removeClientContactAction,
+  setClientContactRoleAction,
+} from "@/features/billing/server/team-actions"
 import { ClientForm } from "@/features/billing/components/client-form"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
 import { createDraftAction } from "@/features/billing/server/actions"
@@ -51,6 +57,23 @@ export default async function ClientPage({ params }: Props) {
           pending={pending}
           catalog={catalog}
         />
+        <section aria-labelledby="client-team" className="border-t pt-8">
+          <h2 id="client-team" className="mb-1 font-semibold">
+            Team
+          </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Everyone at {client.company || client.name} who can sign in to the
+            portal. Billing contacts receive every invoice.
+          </p>
+          <ContactsManager
+            primary={{ email: client.email, name: client.name }}
+            contacts={client.contacts}
+            canManage
+            onInvite={inviteClientContactAction.bind(null, client.id)}
+            onRoleChange={setClientContactRoleAction.bind(null, client.id)}
+            onRemove={removeClientContactAction.bind(null, client.id)}
+          />
+        </section>
         <section aria-labelledby="client-invoices" className="border-t pt-8">
           <h2 id="client-invoices" className="mb-4 font-semibold">
             Invoices

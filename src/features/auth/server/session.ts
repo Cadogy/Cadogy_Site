@@ -36,3 +36,5 @@ export const { requireSession, requirePermission, requireStaff } = createGuards(
 
 export const isImpersonating = async () =>
   Boolean((await getSessionUser())?.impersonatedBy)
+
+export const optionalSessionUser = getSessionUser

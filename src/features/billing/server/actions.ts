@@ -37,9 +37,6 @@ const clientFromForm = (formData: FormData) => ({
   name: text(formData, "name"),
   company: text(formData, "company"),
   email: text(formData, "email"),
-  ccEmails: text(formData, "ccEmails")
-    .split(/[,\s]+/)
-    .filter(Boolean),
   address: {
     line1: text(formData, "line1"),
     line2: text(formData, "line2"),
@@ -52,7 +49,6 @@ const clientFromForm = (formData: FormData) => ({
   currency: text(formData, "currency") || "USD",
   defaultTermsDays: Number(text(formData, "defaultTermsDays") || 15),
   notes: text(formData, "notes"),
-  portalUserEmail: text(formData, "portalUserEmail"),
 })
 
 export async function saveClientAction(

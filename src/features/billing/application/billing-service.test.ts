@@ -390,4 +390,150 @@ describe("billing service", () => {
 
     expect(accounts.map((account) => account.id)).toEqual([client.id])
   })
+
+  describe("client teams", () => {
+    const staff = { kind: "staff" as const, id: ADMIN }
+
+    it("lets staff add contacts, and lets viewers see invoices", async () => {
+      const { service } = setup()
+      const { client, draft } = await draftFor(service)
+      expectOk(await service.issue(draft.id, ADMIN))
+
+      expectOk(
+        await service.addContact(
+          client.id,
+          { email: "Lead@Analytical.example", name: "Lead", role: "viewer" },
+          staff
+        )
+      )
+
+      const visible = await service.listForPortalUser("lead@analytical.example")
+      expect(visible.map((invoice) => invoice.id)).toEqual([draft.id])
+      expect(
+        await service.portalRoleFor("lead@analytical.example", client.id)
+      ).toBe("viewer")
+    })
+
+    it("sends invoices to billing contacts but not viewers", async () => {
+      const { service, notifier } = setup()
+      const { client, draft } = await draftFor(service)
+      expectOk(
+        await service.addContact(
+          client.id,
+          { email: "ap@analytical.example", name: "AP", role: "billing" },
+          staff
+        )
+      )
+      expectOk(
+        await service.addContact(
+          client.id,
+          { email: "lead@analytical.example", name: "Lead", role: "viewer" },
+          staff
+        )
+      )
+
+      expectOk(await service.issue(draft.id, ADMIN))
+
+      expect(notifier.sent.at(-1)?.recipients).toEqual([
+        "billing@analytical.example",
+        "ap@analytical.example",
+      ])
+    })
+
+    it("lets billing contacts manage the team, but not viewers", async () => {
+      const { service } = setup()
+      const client = expectOk(await service.createClient(clientInput))
+      expectOk(
+        await service.addContact(
+          client.id,
+          { email: "lead@analytical.example", name: "Lead", role: "viewer" },
+          { kind: "contact", email: clientInput.email }
+        )
+      )
+
+      expect(
+        await service.addContact(
+          client.id,
+          { email: "eve@example.com", name: "Eve", role: "billing" },
+          { kind: "contact", email: "lead@analytical.example" }
+        )
+      ).toEqual({
+        ok: false,
+        error: "Only billing contacts can manage the team.",
+      })
+    })
+
+    it("keeps autopay and saved cards with billing contacts", async () => {
+      const { service } = setup()
+      const client = expectOk(await service.createClient(clientInput))
+      expectOk(await service.saveCard(client.id, savedCard))
+      expectOk(
+        await service.addContact(
+          client.id,
+          { email: "lead@analytical.example", name: "Lead", role: "viewer" },
+          staff
+        )
+      )
+
+      expect(
+        await service.setPortalAutopay(
+          "lead@analytical.example",
+          client.id,
+          false
+        )
+      ).toEqual({
+        ok: false,
+        error: "Only billing contacts can manage autopay and cards.",
+      })
+      expectOk(
+        await service.setPortalAutopay(clientInput.email, client.id, false)
+      )
+    })
+
+    it("removes access as soon as a contact is removed", async () => {
+      const { service } = setup()
+      const client = expectOk(await service.createClient(clientInput))
+      expectOk(
+        await service.addContact(
+          client.id,
+          { email: "lead@analytical.example", name: "Lead", role: "viewer" },
+          staff
+        )
+      )
+
+      expectOk(
+        await service.removeContact(client.id, "lead@analytical.example", staff)
+      )
+
+      expect(
+        await service.portalRoleFor("lead@analytical.example", client.id)
+      ).toBeNull()
+    })
+  })
+
+  it("re-sends an issued invoice to the billing contacts and logs it", async () => {
+    const { service, notifier } = setup()
+    const { draft } = await draftFor(service)
+    expectOk(await service.issue(draft.id, ADMIN))
+
+    const resent = expectOk(await service.resendInvoice(draft.id, ADMIN))
+
+    expect(notifier.sent.map((message) => message.kind)).toEqual([
+      "issued",
+      "issued",
+    ])
+    expect(resent.events.filter((event) => event.type === "sent")).toHaveLength(
+      2
+    )
+  })
+
+  it("doesn't send drafts or voided invoices", async () => {
+    const { service } = setup()
+    const { draft } = await draftFor(service)
+
+    expect(await service.resendInvoice(draft.id, ADMIN)).toEqual({
+      ok: false,
+      error: "Only open invoices can be sent.",
+    })
+  })
 })

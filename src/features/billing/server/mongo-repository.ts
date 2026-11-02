@@ -18,13 +18,18 @@ const toClient = ({ _id, ...rest }: BillingClientDoc): BillingClient => ({
   name: rest.name,
   company: rest.company,
   email: rest.email,
-  ccEmails: rest.ccEmails,
   address: rest.address,
   taxId: rest.taxId,
   currency: rest.currency,
   defaultTermsDays: rest.defaultTermsDays,
   notes: rest.notes,
-  portalUserEmail: rest.portalUserEmail,
+  contacts: (rest.contacts ?? []).map((contact) => ({
+    email: contact.email,
+    name: contact.name ?? "",
+    role: contact.role,
+    addedAt: contact.addedAt,
+    addedBy: contact.addedBy ?? null,
+  })),
   archivedAt: rest.archivedAt ?? null,
   autoBill: rest.autoBill ?? true,
   autopay: {
@@ -128,7 +133,7 @@ export const mongoBillingRepository: BillingRepository = {
   }),
   findClientsByEmail: withDatabase(async (email) => {
     const docs = await BillingClientModel.find({
-      $or: [{ email }, { portalUserEmail: email }],
+      $or: [{ email }, { "contacts.email": email }],
     }).lean<BillingClientDoc[]>()
     return docs.map(toClient)
   }),

@@ -13,7 +13,7 @@ describe("portalNavigation", () => {
     expect(labels("client")).toEqual([
       {
         group: "My account",
-        items: ["Dashboard", "Billing", "Support", "Account"],
+        items: ["Dashboard", "Billing", "Team", "Support", "Account"],
       },
     ])
   })
@@ -35,7 +35,7 @@ describe("portalNavigation", () => {
       },
       {
         group: "My account",
-        items: ["Dashboard", "Billing", "Support", "Account"],
+        items: ["Dashboard", "Billing", "Team", "Support", "Account"],
       },
     ])
   })

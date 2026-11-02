@@ -262,9 +262,9 @@ export async function saveCardForAutopayAction(
   const user = await requireSession("/dashboard/billing")
   if (user.impersonatedBy) return IMPERSONATING
   if (!isStripeConfigured()) return UNAVAILABLE
-  const client = (await billing.ownsClient(user.email, clientId))
-    ? await billing.getClient(clientId)
-    : null
+  const allowed = await billing.requireBillingContact(user.email, clientId)
+  if (!allowed.ok) return { ok: false, message: allowed.error }
+  const client = await billing.getClient(clientId)
   if (!client) return { ok: false, message: "Account not found." }
   redirect(await createCardSetupCheckout(client))
 }
@@ -290,8 +290,8 @@ export async function removePortalCardAction(
 ): Promise<ActionState> {
   const user = await requireSession("/dashboard/billing")
   if (user.impersonatedBy) return IMPERSONATING
-  if (!(await billing.ownsClient(user.email, clientId)))
-    return { ok: false, message: "Account not found." }
+  const allowed = await billing.requireBillingContact(user.email, clientId)
+  if (!allowed.ok) return { ok: false, message: allowed.error }
   const result = await billing.removeCard(clientId)
   refresh(clientId)
   return toState(result, "Card removed. Autopay is off.")

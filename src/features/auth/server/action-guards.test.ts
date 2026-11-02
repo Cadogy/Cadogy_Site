@@ -5,7 +5,11 @@ import { describe, expect, it } from "vitest"
 
 const SRC = path.resolve(import.meta.dirname, "../../..")
 
-const PUBLIC_ACTIONS = new Set(["startCheckoutAction", "submitInquiry"])
+const PUBLIC_ACTIONS = new Set([
+  "startCheckoutAction",
+  "submitInquiry",
+  "decideInvoiceAccessAction",
+])
 
 const GUARD = /\b(requireSession|requirePermission|requireStaff)\(/
 

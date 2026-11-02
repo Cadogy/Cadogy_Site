@@ -10,6 +10,7 @@ import type {
   StoredAddOn,
 } from "../application/engine-ports"
 import type { BillingClient } from "../application/ports"
+import { CONTACT_ROLES } from "../domain/contacts"
 import { INVOICE_EVENT_TYPES, type Invoice } from "../domain/invoice"
 import { ADD_ON_STATUSES, BILLING_INTERVALS } from "../domain/recurring"
 import { CURRENCIES, INVOICE_STATUSES, PAYMENT_METHODS } from "../domain/schema"
@@ -49,17 +50,25 @@ const billingClientSchema = new Schema(
     name: { type: String, required: true },
     company: { type: String, default: "" },
     email: { type: String, required: true, lowercase: true, index: true },
-    ccEmails: { type: [String], default: [] },
     address: { type: addressSchema, default: () => ({}) },
     taxId: { type: String, default: "" },
     currency: { type: String, enum: CURRENCIES, default: "USD" },
     defaultTermsDays: { type: Number, default: 15 },
     notes: { type: String, default: "" },
-    portalUserEmail: {
-      type: String,
-      default: "",
-      lowercase: true,
-      index: true,
+    contacts: {
+      type: [
+        new Schema(
+          {
+            email: { type: String, required: true, lowercase: true },
+            name: { type: String, default: "" },
+            role: { type: String, enum: CONTACT_ROLES, required: true },
+            addedAt: { type: Date, required: true },
+            addedBy: { type: String, default: null },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
     },
     archivedAt: { type: Date, default: null },
     autoBill: { type: Boolean, default: true },
@@ -89,6 +98,8 @@ const billingClientSchema = new Schema(
   },
   { timestamps: true }
 )
+
+billingClientSchema.index({ "contacts.email": 1 })
 
 const invoiceSchema = new Schema(
   {

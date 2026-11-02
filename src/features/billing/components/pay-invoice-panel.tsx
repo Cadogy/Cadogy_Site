@@ -35,7 +35,7 @@ export function PayInvoicePanel({
     })
 
   return (
-    <aside className="print-hidden grid gap-4 rounded-2xl border bg-card p-5 sm:p-6 lg:sticky lg:top-6">
+    <aside className="print-hidden grid gap-4 rounded-2xl border bg-card p-5 sm:p-6">
       {status === "paid" ? (
         <div className="flex items-start gap-3">
           <CheckCircle2

@@ -1,7 +1,7 @@
 "use client"
 
 import { startTransition, useActionState, useState, useTransition } from "react"
-import { Copy, Loader2, Printer } from "lucide-react"
+import { Copy, Loader2, Printer, Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -23,6 +23,7 @@ import {
   recordPaymentAction,
   type ActionState,
 } from "../server/actions"
+import { resendInvoiceAction } from "../server/team-actions"
 
 const METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
   stripe: "Card (Stripe)",
@@ -178,10 +179,22 @@ export function InvoiceActions({
       ) : null}
       <Button variant="outline" onClick={copyLink}>
         <Copy className="size-4" aria-hidden="true" />
-        Copy client link
+        Copy payment link
       </Button>
       {open ? (
         <>
+          <Button
+            variant="outline"
+            disabled={pending}
+            onClick={() =>
+              startCommand(async () =>
+                setFeedback(await resendInvoiceAction(invoiceId))
+              )
+            }
+          >
+            <Send className="size-4" aria-hidden="true" />
+            Email to billing contacts
+          </Button>
           <Button
             variant="outline"
             disabled={pending}

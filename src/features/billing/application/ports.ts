@@ -1,3 +1,4 @@
+import type { Contact } from "../domain/contacts"
 import type { Invoice } from "../domain/invoice"
 import type { ClientInput, InvoiceStatus } from "../domain/schema"
 
@@ -20,6 +21,7 @@ export type BillingClient = ClientInput & {
   readonly archivedAt: Date | null
   readonly autoBill: boolean
   readonly autopay: AutopaySettings
+  readonly contacts: readonly Contact[]
 }
 
 type NewInvoice = Omit<Invoice, "id">

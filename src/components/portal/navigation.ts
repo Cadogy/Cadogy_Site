@@ -75,6 +75,11 @@ const GROUPS: readonly PortalNavGroup[] = [
         permission: "portal:self",
       },
       {
+        label: "Team",
+        href: "/dashboard/team",
+        permission: "portal:self",
+      },
+      {
         label: "Support",
         href: "/dashboard/tickets",
         permission: "portal:self",

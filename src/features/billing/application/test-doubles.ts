@@ -30,7 +30,9 @@ export const createInMemoryBillingRepository = (): BillingRepository => {
       ),
     findClientsByEmail: async (email) =>
       [...clients.values()].filter(
-        (client) => client.email === email || client.portalUserEmail === email
+        (client) =>
+          client.email === email ||
+          client.contacts.some((contact) => contact.email === email)
       ),
     insertInvoice: async (invoice) => {
       const stored = { ...invoice, id: id("inv") }

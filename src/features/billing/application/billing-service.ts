@@ -1,4 +1,12 @@
 import {
+  addContact as addContactTo,
+  billingRecipients,
+  changeContactRole,
+  contactRoleFor,
+  removeContact as removeContactFrom,
+  type ContactRole,
+} from "../domain/contacts"
+import {
   fail,
   ok,
   type ClientSnapshot,
@@ -17,6 +25,7 @@ import {
 import { formatInvoiceNumber, invoiceCounterKey } from "../domain/numbering"
 import {
   clientInputSchema,
+  contactInputSchema,
   invoiceDraftInputSchema,
   paymentInputSchema,
   type Currency,
@@ -34,6 +43,10 @@ import type {
 
 const DAY_MS = 86_400_000
 const VIEW_DEBOUNCE_MS = 60 * 60 * 1000
+
+export type TeamActor =
+  | { readonly kind: "staff"; readonly id: string }
+  | { readonly kind: "contact"; readonly email: string }
 
 type Dependencies = {
   readonly repository: BillingRepository
@@ -68,10 +81,7 @@ const snapshotOf = (client: BillingClient): ClientSnapshot => ({
   taxId: client.taxId,
 })
 
-const recipientsOf = (client: BillingClient) => [
-  client.email,
-  ...client.ccEmails,
-]
+const recipientsOf = (client: BillingClient) => billingRecipients(client)
 
 const addAmount = (
   totals: AmountsByCurrency,
@@ -153,6 +163,7 @@ export const createBillingService = ({
         archivedAt: null,
         autoBill: true,
         autopay: { enabled: false, card: null },
+        contacts: [],
       })
     )
   }
@@ -212,17 +223,74 @@ export const createBillingService = ({
   const clientsForPortalUser = (email: string) =>
     repository.findClientsByEmail(email.trim().toLowerCase())
 
-  const ownsClient = async (email: string, clientId: string) =>
-    (await clientsForPortalUser(email)).some((client) => client.id === clientId)
+  const portalRoleFor = async (
+    email: string,
+    clientId: string
+  ): Promise<ContactRole | null> => {
+    const client = await repository.findClient(clientId)
+    return client ? contactRoleFor(client, email) : null
+  }
+
+  const requireBillingContact = async (email: string, clientId: string) => {
+    const role = await portalRoleFor(email, clientId)
+    if (!role) return fail<null>("Client not found")
+    if (role !== "billing")
+      return fail<null>("Only billing contacts can manage autopay and cards.")
+    return ok(null)
+  }
 
   const setPortalAutopay = async (
     email: string,
     clientId: string,
     enabled: boolean
-  ): Promise<Result<BillingClient>> =>
-    (await ownsClient(email, clientId))
-      ? setAutopay(clientId, enabled)
-      : fail("Client not found")
+  ): Promise<Result<BillingClient>> => {
+    const allowed = await requireBillingContact(email, clientId)
+    return allowed.ok ? setAutopay(clientId, enabled) : allowed
+  }
+
+  const canManageTeam = async (actor: TeamActor, clientId: string) =>
+    actor.kind === "staff" ||
+    (await portalRoleFor(actor.email, clientId)) === "billing"
+
+  const changeTeam = async (
+    clientId: string,
+    actor: TeamActor,
+    change: (client: BillingClient) => Result<BillingClient["contacts"]>
+  ): Promise<Result<BillingClient>> => {
+    if (!(await canManageTeam(actor, clientId)))
+      return fail("Only billing contacts can manage the team.")
+    return updateClientBilling(clientId, (client) => {
+      const contacts = change(client)
+      return contacts.ok
+        ? ok({ ...client, contacts: contacts.value })
+        : contacts
+    })
+  }
+
+  const addContact = (clientId: string, input: unknown, actor: TeamActor) => {
+    const parsed = contactInputSchema.safeParse(input)
+    if (!parsed.success)
+      return Promise.resolve(fail<BillingClient>(firstIssue(parsed.error)))
+    return changeTeam(clientId, actor, (client) =>
+      addContactTo(client, parsed.data, {
+        at: clock(),
+        by: actor.kind === "staff" ? actor.id : actor.email,
+      })
+    )
+  }
+
+  const setContactRole = (
+    clientId: string,
+    email: string,
+    role: ContactRole,
+    actor: TeamActor
+  ) =>
+    changeTeam(clientId, actor, (client) =>
+      changeContactRole(client, email, role)
+    )
+
+  const removeContact = (clientId: string, email: string, actor: TeamActor) =>
+    changeTeam(clientId, actor, (client) => removeContactFrom(client, email))
 
   const createDraft = async (
     input: Partial<InvoiceDraftInput> & { clientId: string },
@@ -411,6 +479,25 @@ export const createBillingService = ({
     )
   }
 
+  const resendInvoice = async (
+    id: string,
+    actorId: string
+  ): Promise<Result<Invoice>> => {
+    const loaded = await loadInvoiceWithClient(id)
+    if (!loaded) return fail("Invoice not found")
+    if (loaded.invoice.status !== "open")
+      return fail("Only open invoices can be sent.")
+    return ok(
+      await notifyAndRecord(
+        loaded.invoice,
+        loaded.client,
+        "issued",
+        "sent",
+        actorId
+      )
+    )
+  }
+
   const notifyAutopayFailed = async (id: string) => {
     const loaded = await loadInvoiceWithClient(id)
     if (!loaded) return false
@@ -505,8 +592,12 @@ export const createBillingService = ({
     setAutoBill,
     setAutopay,
     setPortalAutopay,
-    ownsClient,
+    requireBillingContact,
+    portalRoleFor,
     clientsForPortalUser,
+    addContact,
+    setContactRole,
+    removeContact,
     getClient: repository.findClient,
     listClients: repository.listClients,
     createDraft,
@@ -519,6 +610,7 @@ export const createBillingService = ({
     markUncollectible: transition(markUncollectible),
     duplicate,
     sendReminder,
+    resendInvoice,
     notifyAutopayFailed,
     getInvoice: repository.findInvoice,
     getByPublicToken,

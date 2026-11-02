@@ -167,3 +167,49 @@ export const sendDeleteAccountConfirmation = (email: string, url: string) =>
     outro:
       "If you didn't ask for this, ignore this email and change your password.",
   })
+
+export const sendTeamInvite = (
+  email: string,
+  details: { readonly company: string; readonly role: "billing" | "viewer" }
+) =>
+  sendActionEmail({
+    to: email,
+    subject: `You now have access to ${details.company} on Cadogy`,
+    intro:
+      details.role === "billing"
+        ? `You've been added to ${details.company}'s Cadogy account as a billing contact. You'll receive invoices and can pay them, manage saved cards and invite your team.`
+        : `You've been added to ${details.company}'s Cadogy account. You can see invoices, statements and support requests.`,
+    url: `${env.NEXT_PUBLIC_APP_URL}/register`,
+    cta: "Sign in or create your account",
+    outro: `Use this email address (${email}) so everything appears automatically.`,
+  })
+
+export const sendAccessRequest = (
+  to: readonly string[],
+  details: {
+    readonly requester: string
+    readonly company: string
+    readonly invoiceNumber: string
+    readonly approveUrl: string
+  }
+) =>
+  sendEmail({
+    to,
+    subject: `${details.requester} asked to see ${details.company}'s invoices`,
+    html: emailLayout({
+      baseUrl: env.NEXT_PUBLIC_APP_URL,
+      preheader: `${details.requester} wants access to your Cadogy account.`,
+      body: `<p style="margin:0 0 16px;">${escapeHtml(`${details.requester} opened invoice ${details.invoiceNumber} and asked to add it to their Cadogy account. Approving lets them see ${details.company}'s invoices, statements and support requests as a viewer.`)}</p>${emailButton(details.approveUrl, "Review the request")}<p style="margin:0;color:#71717a;font-size:13px;">${escapeHtml("If you don't recognize this person, decline the request. The link expires in 7 days.")}</p>`,
+    }),
+    text: `${details.requester} asked to see ${details.company}'s invoices on Cadogy.\n\nReview the request: ${details.approveUrl}\n\nIf you don't recognize this person, decline it. The link expires in 7 days.`,
+  })
+
+export const sendAccessApproved = (email: string, company: string) =>
+  sendActionEmail({
+    to: email,
+    subject: `You now have access to ${company} on Cadogy`,
+    intro: `Your request was approved. ${company}'s invoices now appear in your Cadogy dashboard.`,
+    url: `${env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
+    cta: "Open your dashboard",
+    outro: "Questions? Just reply to this email.",
+  })

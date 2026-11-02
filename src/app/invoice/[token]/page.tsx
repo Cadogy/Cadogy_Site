@@ -1,5 +1,10 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { optionalSessionUser } from "@/features/auth/server/session"
+import {
+  InvoiceAccountPrompt,
+  type InvoiceAccountState,
+} from "@/features/billing/components/invoice-account-prompt"
 import { InvoiceDocument } from "@/features/billing/components/invoice-document"
 import { PayInvoicePanel } from "@/features/billing/components/pay-invoice-panel"
 import { formatDate, formatMoney } from "@/features/billing/domain/format"
@@ -7,6 +12,7 @@ import { displayStatus } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import { billing } from "@/features/billing/server/billing"
 import { isStripeConfigured } from "@/features/billing/server/stripe"
+import { requestInvoiceAccessAction } from "@/features/billing/server/team-actions"
 
 import { siteConfig } from "@/config/site"
 import { Logo } from "@/components/site/logo"
@@ -30,6 +36,12 @@ export default async function HostedInvoicePage({
   if (!found?.clientSnapshot) notFound()
 
   const invoice = await billing.markViewed(found)
+  const viewer = await optionalSessionUser()
+  const accountState: InvoiceAccountState = !viewer
+    ? "guest"
+    : (await billing.portalRoleFor(viewer.email, invoice.clientId))
+      ? "member"
+      : "outsider"
   const now = new Date()
   const status = displayStatus(invoice, now)
   const { amountDue } = calculateInvoiceTotals(invoice)
@@ -57,15 +69,22 @@ export default async function HostedInvoicePage({
           client={found.clientSnapshot}
           status={status}
         />
-        <PayInvoicePanel
-          token={token}
-          payable={payable}
-          onlinePaymentAvailable={isStripeConfigured()}
-          amountDueLabel={formatMoney(amountDue, invoice.currency)}
-          dueLabel={invoice.dueDate ? formatDate(invoice.dueDate) : null}
-          status={status}
-          paymentReturned={payment === "success"}
-        />
+        <div className="grid content-start gap-6 lg:sticky lg:top-6">
+          <PayInvoicePanel
+            token={token}
+            payable={payable}
+            onlinePaymentAvailable={isStripeConfigured()}
+            amountDueLabel={formatMoney(amountDue, invoice.currency)}
+            dueLabel={invoice.dueDate ? formatDate(invoice.dueDate) : null}
+            status={status}
+            paymentReturned={payment === "success"}
+          />
+          <InvoiceAccountPrompt
+            state={accountState}
+            invoicePath={`/invoice/${token}`}
+            onRequest={requestInvoiceAccessAction.bind(null, token)}
+          />
+        </div>
       </main>
     </div>
   )
