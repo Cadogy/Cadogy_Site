@@ -7,11 +7,13 @@ import { APIError, createAuthMiddleware } from "better-auth/api"
 import { nextCookies } from "better-auth/next-js"
 import { admin } from "better-auth/plugins/admin"
 import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned"
+import { magicLink } from "better-auth/plugins/magic-link"
 import { twoFactor } from "better-auth/plugins/two-factor"
 
 import { env } from "@/env"
 import {
   sendExistingAccountNotice,
+  sendMagicLinkEmail,
   sendPasswordResetEmail,
   sendVerificationEmail,
 } from "@/lib/email"
@@ -46,6 +48,7 @@ const HUMAN_CHECK_PATHS = new Set([
   "/sign-up/email",
   "/sign-in/email",
   "/request-password-reset",
+  "/sign-in/magic-link",
 ])
 
 const LOCKED_MESSAGE =
@@ -219,6 +222,8 @@ export const auth = betterAuth({
       "/two-factor/verify-totp": { window: MINUTE, max: 5 },
       "/two-factor/verify-backup-code": { window: MINUTE, max: 5 },
       "/passkey/verify-authentication": { window: MINUTE, max: 10 },
+      "/sign-in/magic-link": { window: 15 * MINUTE, max: 3 },
+      "/magic-link/verify": { window: MINUTE, max: 10 },
     },
   },
   advanced: {
@@ -260,6 +265,15 @@ export const auth = betterAuth({
       adminRoles: ["owner", "admin"],
     }),
     twoFactor({ issuer: "Cadogy" }),
+    magicLink({
+      expiresIn: 15 * MINUTE,
+      disableSignUp: true,
+      storeToken: "hashed",
+      sendMagicLink: async ({ email, url }) => {
+        if (await users().findOne({ email: email.trim().toLowerCase() }))
+          await sendMagicLinkEmail(email, url)
+      },
+    }),
     passkey({ rpID: passkeyRpId, rpName: "Cadogy", origin: siteOrigin }),
     haveIBeenPwned({
       enabled: isProduction,

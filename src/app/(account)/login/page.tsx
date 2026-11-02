@@ -8,8 +8,18 @@ import { safeCallbackPath } from "@/lib/auth/safe-redirect"
 
 export const metadata: Metadata = { title: "Sign in" }
 
+const LINK_ERRORS = new Set([
+  "INVALID_TOKEN",
+  "user_not_found",
+  "new_user_signup_disabled",
+])
+
 type Props = {
-  searchParams: Promise<{ callbackUrl?: string; error?: string; reauth?: string }>
+  searchParams: Promise<{
+    callbackUrl?: string
+    error?: string
+    reauth?: string
+  }>
 }
 
 export default async function LoginPage({ searchParams }: Props) {
@@ -40,7 +50,11 @@ export default async function LoginPage({ searchParams }: Props) {
       ) : null}
       {error ? (
         <div className="mb-5">
-          <FormAlert>Please sign in again to continue.</FormAlert>
+          <FormAlert>
+            {LINK_ERRORS.has(error)
+              ? "That sign-in link has expired or was already used. Request a new one below."
+              : "Please sign in again to continue."}
+          </FormAlert>
         </div>
       ) : null}
       <LoginForm

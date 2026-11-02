@@ -107,3 +107,15 @@ export const sendAccountLockedNotice = (email: string) =>
     outro:
       "If this was you, wait 15 minutes and try again, or sign in with a passkey. If it wasn't, reset your password now.",
   })
+
+export const sendMagicLinkEmail = (email: string, url: string) =>
+  sendActionEmail({
+    to: email,
+    subject: "Your Cadogy sign-in link",
+    intro:
+      "Use the button below to sign in to your Cadogy account. The link works once and expires in 15 minutes.",
+    url,
+    cta: "Sign in",
+    outro:
+      "If you didn't ask for this, you can ignore this email. No one can sign in without the link.",
+  })

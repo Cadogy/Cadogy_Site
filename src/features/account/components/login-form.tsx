@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { authClient, humanCheckHeaders } from "@/features/auth/client"
-import { KeyRound, Loader2 } from "lucide-react"
+import { KeyRound, Loader2, Mail } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
@@ -26,6 +26,8 @@ export function LoginForm({
   const [checkKey, setCheckKey] = useState(0)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState("")
+  const [linkSentTo, setLinkSentTo] = useState<string | null>(null)
 
   const finish = () => {
     router.replace(callbackPath)
@@ -36,6 +38,27 @@ export function LoginForm({
     const result = await authClient.signIn.passkey({ autoFill })
     if (!result.error) return finish()
     if (!autoFill) setError(authErrorMessage(result.error))
+  }
+
+  const sendSignInLink = async () => {
+    setError(null)
+    setLinkSentTo(null)
+    const address = email.trim()
+    if (!address) return setError("Enter your email to get a sign-in link.")
+    setPending(true)
+    const result = await authClient.signIn.magicLink(
+      {
+        email: address,
+        callbackURL: callbackPath,
+        errorCallbackURL: "/login",
+      },
+      { headers: humanCheckHeaders(turnstileToken) }
+    )
+    setPending(false)
+    setTurnstileToken("")
+    setCheckKey((key) => key + 1)
+    if (result.error) return setError(authErrorMessage(result.error))
+    setLinkSentTo(address)
   }
 
   const offerPasskeyAutofill = useEffectEvent(() => {
@@ -84,6 +107,12 @@ export function LoginForm({
   return (
     <form onSubmit={handleSubmit} className="grid gap-5" noValidate>
       {error ? <FormAlert>{error}</FormAlert> : null}
+      {linkSentTo ? (
+        <FormAlert tone="success">
+          If there&apos;s an account for {linkSentTo}, we&apos;ve sent a sign-in
+          link. It expires in 15 minutes.
+        </FormAlert>
+      ) : null}
 
       <Field id="email" label="Email">
         {(control) => (
@@ -92,6 +121,8 @@ export function LoginForm({
             name="email"
             type="email"
             autoComplete="username webauthn"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
             required
           />
         )}
@@ -143,6 +174,17 @@ export function LoginForm({
       >
         <KeyRound className="size-4" aria-hidden="true" />
         Sign in with a passkey
+      </Button>
+
+      <Button
+        type="button"
+        size="lg"
+        variant="ghost"
+        disabled={pending}
+        onClick={() => void sendSignInLink()}
+      >
+        <Mail className="size-4" aria-hidden="true" />
+        Email me a sign-in link
       </Button>
     </form>
   )

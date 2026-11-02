@@ -2,6 +2,8 @@ export type SecurityEventType =
   | "sign_in"
   | "sign_in_backup_code"
   | "sign_in_passkey"
+  | "sign_in_magic_link"
+  | "magic_link_requested"
   | "sign_in_failed"
   | "two_factor_failed"
   | "account_locked"
@@ -35,6 +37,7 @@ const ON_SUCCESS: Record<string, SecurityEventType> = {
   "/two-factor/generate-backup-codes": "backup_codes_regenerated",
   "/passkey/verify-registration": "passkey_added",
   "/passkey/delete-passkey": "passkey_removed",
+  "/sign-in/magic-link": "magic_link_requested",
 }
 
 const ON_NEW_SESSION: Record<string, SecurityEventType> = {
@@ -42,6 +45,7 @@ const ON_NEW_SESSION: Record<string, SecurityEventType> = {
   "/two-factor/verify-totp": "sign_in",
   "/two-factor/verify-backup-code": "sign_in_backup_code",
   "/passkey/verify-authentication": "sign_in_passkey",
+  "/magic-link/verify": "sign_in_magic_link",
 }
 
 const WHILE_SIGNED_IN: Record<string, SecurityEventType> = {
@@ -78,6 +82,8 @@ const LABELS: Record<SecurityEventType, string> = {
   sign_in: "Signed in",
   sign_in_backup_code: "Signed in with a backup code",
   sign_in_passkey: "Signed in with a passkey",
+  sign_in_magic_link: "Signed in with an email link",
+  magic_link_requested: "Sign-in link requested",
   sign_in_failed: "Failed sign-in attempt",
   two_factor_failed: "Wrong two-factor code entered",
   account_locked: "Password sign-in locked after failed attempts",

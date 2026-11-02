@@ -37,6 +37,8 @@ describe("eventForAuthRequest", () => {
     expect(success("/passkey/verify-authentication", true)).toBe(
       "sign_in_passkey"
     )
+    expect(success("/magic-link/verify", true)).toBe("sign_in_magic_link")
+    expect(success("/sign-in/magic-link", false)).toBe("magic_link_requested")
   })
 
   it("logs verifying a code while signed in as turning on two-factor", () => {
@@ -70,6 +72,9 @@ describe("securityEventLabel", () => {
     )
     expect(securityEventLabel("account_locked")).toBe(
       "Password sign-in locked after failed attempts"
+    )
+    expect(securityEventLabel("sign_in_magic_link")).toBe(
+      "Signed in with an email link"
     )
     expect(securityEventLabel("two_factor_enabled")).toBe(
       "Two-factor authentication turned on"

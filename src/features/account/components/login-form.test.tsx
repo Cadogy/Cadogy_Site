@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const signInEmail = vi.hoisted(() => vi.fn())
 const signInPasskey = vi.hoisted(() => vi.fn())
+const signInMagicLink = vi.hoisted(() => vi.fn())
 const navigation = vi.hoisted(() => ({
   replace: vi.fn(),
   push: vi.fn(),
@@ -13,7 +14,13 @@ const navigation = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({ useRouter: () => navigation }))
 vi.mock("@/components/security/human-check", () => ({ HumanCheck: () => null }))
 vi.mock("@/features/auth/client", () => ({
-  authClient: { signIn: { email: signInEmail, passkey: signInPasskey } },
+  authClient: {
+    signIn: {
+      email: signInEmail,
+      passkey: signInPasskey,
+      magicLink: signInMagicLink,
+    },
+  },
   humanCheckHeaders: (token: string) => ({ "x-turnstile-token": token }),
 }))
 
@@ -32,6 +39,7 @@ describe("LoginForm", () => {
   beforeEach(() => {
     signInEmail.mockReset()
     signInPasskey.mockReset()
+    signInMagicLink.mockReset()
     navigation.replace.mockReset()
     navigation.push.mockReset()
   })
@@ -150,5 +158,47 @@ describe("LoginForm", () => {
     )
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/cancelled/)
+  })
+
+  it("emails a sign-in link that returns to the requested page", async () => {
+    signInMagicLink.mockResolvedValue({ data: { status: true }, error: null })
+    const user = userEvent.setup()
+    render(
+      <LoginForm
+        callbackPath="/dashboard/billing"
+        turnstileSiteKey={undefined}
+      />
+    )
+
+    await user.type(screen.getByLabelText("Email"), "ada@example.com")
+    await user.click(
+      screen.getByRole("button", { name: "Email me a sign-in link" })
+    )
+
+    expect(signInMagicLink).toHaveBeenCalledWith(
+      {
+        email: "ada@example.com",
+        callbackURL: "/dashboard/billing",
+        errorCallbackURL: "/login",
+      },
+      { headers: { "x-turnstile-token": "" } }
+    )
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /If there's an account for ada@example.com/
+    )
+  })
+
+  it("asks for an email before sending a link", async () => {
+    const user = userEvent.setup()
+    render(<LoginForm callbackPath="/dashboard" turnstileSiteKey={undefined} />)
+
+    await user.click(
+      screen.getByRole("button", { name: "Email me a sign-in link" })
+    )
+
+    expect(signInMagicLink).not.toHaveBeenCalled()
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /enter your email/i
+    )
   })
 })
