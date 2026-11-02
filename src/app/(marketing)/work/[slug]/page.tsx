@@ -129,34 +129,102 @@ export default async function CaseStudyPage({ params }: Props) {
           </div>
         </section>
 
-        <section aria-labelledby="built-title" className="border-t">
+        <section aria-labelledby="glance-title" className="border-t">
           <div className="container-page section">
-            <h2 id="built-title" className="text-h2">
-              What we built
+            <h2 id="glance-title" className="text-h2">
+              At a glance
             </h2>
-            <div className="mt-14 grid border-t sm:grid-cols-2 lg:grid-cols-3">
-              {study.capabilities.map((capability) => (
-                <div key={capability.title} className="border-b py-8 sm:pr-8">
-                  <h3 className="text-h3">{capability.title}</h3>
-                  <p className="mt-3 max-w-sm text-pretty text-muted-foreground">
-                    {capability.body}
-                  </p>
+            <dl className="mt-12 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-5">
+              {study.facts.map((fact) => (
+                <div
+                  key={fact.label}
+                  className="flex flex-col-reverse gap-2 border-b py-6 pr-6 lg:border-b-0"
+                >
+                  <dt className="text-meta">{fact.label}</dt>
+                  <dd className="text-h1 tabular-nums">{fact.value}</dd>
                 </div>
               ))}
+            </dl>
+            <p className="mt-6 text-sm text-muted-foreground">
+              Counted from PlayerBay&apos;s production code and configuration.
+            </p>
+          </div>
+        </section>
+
+        <section aria-labelledby="flow-title" className="border-t">
+          <div className="container-page grid gap-10 section lg:grid-cols-12">
+            <div className="lg:col-span-4">
+              <h2 id="flow-title" className="text-h2">
+                How an order works
+              </h2>
+              <p className="mt-4 max-w-sm text-muted-foreground">
+                From checkout to payout, every step is designed so neither side
+                has to trust the other.
+              </p>
             </div>
-            <div className="mt-14">
-              <h3 className="text-meta">Technology</h3>
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {study.stack.map((tech) => (
-                  <li
-                    key={tech}
-                    className="rounded-full bg-foreground/8 px-4 py-2 text-sm"
-                  >
-                    {tech}
-                  </li>
+            <ol className="grid border-t lg:col-span-8">
+              {study.orderFlow.map((step, index) => (
+                <li
+                  key={step.title}
+                  className="grid gap-2 border-b py-6 sm:grid-cols-[4rem_12rem_1fr] sm:gap-6"
+                >
+                  <span className="text-meta tabular-nums" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="text-h3">{step.title}</h3>
+                  <p className="text-pretty text-muted-foreground">
+                    {step.body}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {study.chapters.map((chapter, index) => (
+          <section
+            key={chapter.title}
+            aria-labelledby={`chapter-${index}`}
+            className="border-t"
+          >
+            <div className="container-page grid gap-10 section lg:grid-cols-12">
+              <div className="lg:col-span-4">
+                <h2 id={`chapter-${index}`} className="text-h2">
+                  {chapter.title}
+                </h2>
+                <p className="mt-4 max-w-sm text-muted-foreground">
+                  {chapter.intro}
+                </p>
+              </div>
+              <div className="grid gap-x-10 border-t sm:grid-cols-2 lg:col-span-8">
+                {chapter.points.map((point) => (
+                  <div key={point.title} className="border-b py-6">
+                    <h3 className="text-h3">{point.title}</h3>
+                    <p className="mt-3 text-pretty text-muted-foreground">
+                      {point.body}
+                    </p>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
+          </section>
+        ))}
+
+        <section aria-labelledby="stack-title" className="border-t">
+          <div className="container-page section">
+            <h2 id="stack-title" className="text-h2">
+              Technology
+            </h2>
+            <ul className="mt-8 flex flex-wrap gap-2">
+              {study.stack.map((tech) => (
+                <li
+                  key={tech}
+                  className="rounded-full bg-foreground/8 px-4 py-2 text-sm"
+                >
+                  {tech}
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
       </article>

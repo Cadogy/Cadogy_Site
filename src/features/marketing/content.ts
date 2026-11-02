@@ -23,12 +23,17 @@ export type CaseStudy = {
   readonly mobileImage: string
   readonly challenge: readonly string[]
   readonly promises: readonly string[]
-  readonly capabilities: readonly {
+  readonly facts: readonly { readonly value: string; readonly label: string }[]
+  readonly orderFlow: readonly CaseStudyPoint[]
+  readonly chapters: readonly {
     readonly title: string
-    readonly body: string
+    readonly intro: string
+    readonly points: readonly CaseStudyPoint[]
   }[]
   readonly stack: readonly string[]
 }
+
+type CaseStudyPoint = { readonly title: string; readonly body: string }
 
 export const hero = {
   title: "We can build anything.",
@@ -165,13 +170,14 @@ export const caseStudies: readonly CaseStudy[] = [
     url: "https://playerbay.com",
     category: "Marketplace",
     summary:
-      "A two-sided marketplace for in-game items, accounts and currency, with buyer protection built into every order.",
+      "A two-sided marketplace where players buy and sell game accounts, items, in-game currency, keys and top-ups, with buyer protection on every order and a storefront in 25 languages.",
     role: "Product, engineering and operations — designed, built and run in-house.",
     image: "/images/studio/playerbay-case-study.webp",
     mobileImage: "/images/studio/playerbay-case-study-mobile.webp",
     challenge: [
       "Digital-goods marketplaces live or die on trust. Buyers need to know they'll receive what they paid for, sellers need to know they'll get paid, and the platform has to resolve problems fairly when something goes wrong.",
-      "PlayerBay needed the full machinery of a modern marketplace — listings, checkout, payouts, messaging and disputes — built to handle real money from day one.",
+      "Digital goods are also hard to protect. There's no tracking number for a game account, delivery can take seconds or hours depending on the game, and stolen cards are a constant risk. Every rule has to be easy for honest buyers and sellers without opening a door for fraud.",
+      "PlayerBay needed the full machinery of a modern marketplace — listings, checkout, payouts, messaging and disputes — built to handle real money from day one, for players all over the world.",
     ],
     promises: [
       "Paid only when you confirm",
@@ -179,41 +185,210 @@ export const caseStudies: readonly CaseStudy[] = [
       "Every seller verifies their ID",
       "Human support, 24/7",
     ],
-    capabilities: [
+    facts: [
+      { value: "25", label: "Languages" },
+      { value: "10", label: "Currencies" },
+      { value: "6", label: "Ways to pay" },
+      { value: "6", label: "Payout methods" },
+      { value: "2,100+", label: "Automated test files" },
+    ],
+    orderFlow: [
       {
-        title: "Escrow-style buyer protection",
-        body: "Funds are held until the buyer confirms delivery, with clear rules for release, refunds and disputes.",
+        title: "Checkout",
+        body: "The buyer pays by card, Apple Pay, Google Pay, Amazon Pay, Cash App or crypto. Stock is reserved the moment checkout starts, so two people can't buy the last item.",
       },
       {
-        title: "Payments and seller payouts",
-        body: "Card checkout, seller balances and payouts with idempotent processing and a full audit trail.",
+        title: "Payment confirmed",
+        body: "The payment event is verified at the edge, queued and processed exactly once. Riskier payments pause automatic delivery for a closer look.",
       },
       {
-        title: "Real-time messaging",
-        body: "Live order chat between buyers and sellers so deliveries happen quickly and on the record.",
+        title: "Delivery",
+        body: "Instant listings deliver automatically. Others are delivered by the seller in the order chat. Account details are encrypted, and every time they're viewed is logged.",
       },
       {
-        title: "Disputes and moderation",
-        body: "Structured dispute workflows and admin tooling so the team can resolve issues quickly and consistently.",
+        title: "Protection period",
+        body: "The buyer checks what they received while the money stays held. The protection period is set per game and category, and fixed on the order when it's placed.",
       },
       {
-        title: "Multi-language storefront",
-        body: "Localized routes and content so buyers and sellers can trade in their own language and currency.",
+        title: "Received",
+        body: "The buyer confirms receipt, or the order completes on its own when protection ends. Only then is the sale credited to the seller.",
       },
       {
-        title: "Production operations",
-        body: "Monitoring, error tracking, edge security and analytics so the platform stays fast and available.",
+        title: "Payout",
+        body: "Sellers withdraw their balance through Payoneer, SEPA, SWIFT, Skrill, Bitcoin or USDC.",
+      },
+    ],
+    chapters: [
+      {
+        title: "Trust and safety",
+        intro:
+          "Every promise on the storefront is enforced in code, not left to policy.",
+        points: [
+          {
+            title: "Money held until delivery",
+            body: "A seller is credited only after the buyer confirms receipt or the protection period ends. A sale can be held while a dispute or chargeback is open.",
+          },
+          {
+            title: "Structured disputes",
+            body: "Dispute reasons depend on what was bought. Both sides get clear deadlines to respond and add evidence, sellers can offer a partial refund or a replacement, and deadlines are enforced automatically around the clock.",
+          },
+          {
+            title: "Layered fraud controls",
+            body: "Payment risk scores, purchase velocity and device signals decide whether an order delivers instantly or waits for review. Chargebacks and early fraud warnings flow straight into the order.",
+          },
+          {
+            title: "Verified sellers",
+            body: "Sellers verify their identity before they can sell, as an individual or a company, including details of who owns the business.",
+          },
+          {
+            title: "Deals stay on the platform",
+            body: "Order chat blocks attempts to move a trade elsewhere, including email addresses and handles disguised with look-alike or hidden characters.",
+          },
+          {
+            title: "Modern sign-in",
+            body: "Passkeys, two-factor authentication, breached-password checks and one-click sign-in with Google, Discord, Facebook or Steam.",
+          },
+        ],
+      },
+      {
+        title: "Money and payments",
+        intro:
+          "Balances, fees and payouts are handled like the real money they are.",
+        points: [
+          {
+            title: "A ledger, not a balance field",
+            body: "Every change to a wallet or seller balance is a ledger entry written in a database transaction with its own idempotency key. Replaying an event changes nothing.",
+          },
+          {
+            title: "Webhooks at the edge",
+            body: "Payment events are verified by Cloudflare Workers, queued and processed once. Events that fail are kept so they can be replayed safely.",
+          },
+          {
+            title: "Terms fixed at checkout",
+            body: "Fee rates and the protection period are captured on each order when it's placed, so later changes never rewrite past sales.",
+          },
+          {
+            title: "Daily reconciliation",
+            body: "A daily check reads through the ledger looking for anything that doesn't add up, and records what it finds for the team to review.",
+          },
+          {
+            title: "Many ways to pay and get paid",
+            body: "Cards and wallets through Stripe, crypto through NOWPayments, and six payout methods so sellers can be paid wherever they are.",
+          },
+          {
+            title: "Rewards for buyers",
+            body: "Buyers earn part of every purchase back as wallet credit they can spend on their next order.",
+          },
+        ],
+      },
+      {
+        title: "Tools for sellers",
+        intro:
+          "Selling a hundred listings should take about as much effort as selling one.",
+        points: [
+          {
+            title: "Listing at scale",
+            body: "Drafts, bulk upload and editing from spreadsheets, exports, and bulk changes across many listings at once.",
+          },
+          {
+            title: "Instant delivery",
+            body: "Pools of game keys and gift-card codes, and accounts set up for automatic delivery, go out the moment payment clears.",
+          },
+          {
+            title: "Fees that reward growth",
+            body: "Seller fees step down in tiers as monthly sales grow, with a founding-seller program for early sellers.",
+          },
+          {
+            title: "A real-time inbox",
+            body: "Live chat per order with presence, reactions, attachments and edits, plus email digests of unread messages.",
+          },
+        ],
+      },
+      {
+        title: "Running the marketplace",
+        intro:
+          "A small team can run a large marketplace when the tools do the routine work.",
+        points: [
+          {
+            title: "One admin for everything",
+            body: "Around 50 admin areas cover users, seller verification, orders, disputes, finance, withdrawals, the game catalog, campaigns, SEO and translations.",
+          },
+          {
+            title: "Accountable staff access",
+            body: "Staff roles have named permissions. Sensitive actions need a fresh identity check, personal data is masked by default, and every staff action is recorded in an audit log.",
+          },
+          {
+            title: "AI-assisted review",
+            body: "Suspicious orders and accounts are summarized for reviewers with an AI assessment, and imported products are enriched automatically, so staff spend their time on decisions.",
+          },
+          {
+            title: "Work that runs itself",
+            body: "Scheduled jobs enforce dispute deadlines, release held deliveries, complete orders when protection ends and send reminders, on Vercel Cron and Cloudflare Workers.",
+          },
+        ],
+      },
+      {
+        title: "A global storefront",
+        intro:
+          "Players find PlayerBay in their own language, and pay in their own currency.",
+        points: [
+          {
+            title: "25 languages, 10 currencies",
+            body: "Every page is localized, with clean URLs (English has no prefix) and hreflang tags that match the sitemap exactly.",
+          },
+          {
+            title: "Built to be found",
+            body: "Per-language sitemaps, structured data for products, ratings and FAQs, a Google Merchant feed, and IndexNow so search engines hear about changes quickly.",
+          },
+          {
+            title: "Search that understands players",
+            body: "Full-text search across games and listings, with an AI-assisted mode for questions asked in plain language.",
+          },
+          {
+            title: "Fast on every connection",
+            body: "Cached pages, and images served as AVIF and WebP from PlayerBay's own CDN.",
+          },
+        ],
+      },
+      {
+        title: "Engineering quality",
+        intro:
+          "A codebase this size stays healthy only if it's easy to change safely.",
+        points: [
+          {
+            title: "Rules you can test",
+            body: "Order, payment and dispute rules are pure functions with their own tests. Over 2,100 test files cover the platform, including tests that walk whole dispute flows from start to finish.",
+          },
+          {
+            title: "A modular monolith",
+            body: "38 feature modules with clear boundaries — orders, payments, messaging, sellers and more — in one deployable app, plus a separate real-time server.",
+          },
+          {
+            title: "Hardened by default",
+            body: "Strict security headers, sanitized rich text, private file storage with signed links, bot protection on sign-up and sign-in, and rate limits that hold across servers.",
+          },
+          {
+            title: "Watched in production",
+            body: "Error tracking, product analytics and real-user performance monitoring show problems before players report them.",
+          },
+        ],
       },
     ],
     stack: [
       "Next.js",
+      "React",
       "TypeScript",
-      "Node.js",
-      "MongoDB",
-      "Redis",
-      "Socket.IO",
+      "MongoDB Atlas",
+      "Better Auth",
       "Stripe",
-      "Cloudflare",
+      "NOWPayments",
+      "Socket.IO",
+      "Cloudflare Workers",
+      "Cloudflare R2",
+      "Redis",
+      "Resend",
+      "PostHog",
+      "Sentry",
       "Vercel",
     ],
   },
