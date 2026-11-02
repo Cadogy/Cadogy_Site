@@ -17,7 +17,7 @@ const columns = [
     title: "Clients",
     links: [
       { label: "Start a project", href: "/contact" },
-      { label: "Client login", href: "/login" },
+      { label: "Sign in", href: "/login" },
     ],
   },
   {

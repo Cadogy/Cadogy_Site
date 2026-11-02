@@ -15,7 +15,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 
-import { AccountLink } from "./account-link"
+import { AccountControl, AccountLink } from "./account-link"
 import { Logo } from "./logo"
 import { NavLink } from "./nav-link"
 
@@ -107,7 +107,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center justify-end gap-1 lg:flex">
-          <AccountLink className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground" />
+          <AccountControl className="inline-flex min-h-11 items-center rounded-full px-4 text-sm text-muted-foreground transition-colors hover:text-foreground" />
           <Button asChild size="sm">
             <Link href="/contact">Start a project</Link>
           </Button>

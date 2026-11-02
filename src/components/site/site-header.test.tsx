@@ -9,12 +9,25 @@ const session = vi.hoisted(() => ({ status: "unauthenticated" as string }))
 vi.mock("@/features/auth/client", () => ({
   authClient: {
     useSession: () => ({
-      data: session.status === "authenticated" ? { user: { id: "u_1" } } : null,
+      data:
+        session.status === "authenticated"
+          ? {
+              user: {
+                id: "u_1",
+                name: "Ada Lovelace",
+                email: "ada@example.com",
+                role: "client",
+              },
+            }
+          : null,
       isPending: false,
     }),
   },
 }))
-vi.mock("next/navigation", () => ({ usePathname: () => "/services" }))
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/services",
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
+}))
 
 describe("SiteHeader", () => {
   beforeEach(() => {
@@ -34,24 +47,25 @@ describe("SiteHeader", () => {
     )
   })
 
-  it("offers a project call-to-action and a client login", () => {
+  it("offers a project call-to-action and a way to sign in", () => {
     render(<SiteHeader />)
     expect(
       screen.getAllByRole("link", { name: "Start a project" })[0]
     ).toHaveAttribute("href", "/contact")
-    expect(
-      screen.getAllByRole("link", { name: "Client login" })[0]
-    ).toHaveAttribute("href", "/login")
+    expect(screen.getAllByRole("link", { name: "Sign in" })[0]).toHaveAttribute(
+      "href",
+      "/login"
+    )
   })
 
-  it("points signed-in clients to their dashboard instead of login", () => {
+  it("shows signed-in visitors their account menu instead of sign in", () => {
     session.status = "authenticated"
     render(<SiteHeader />)
     expect(
-      screen.getAllByRole("link", { name: "Dashboard" })[0]
-    ).toHaveAttribute("href", "/dashboard")
+      screen.getByRole("button", { name: /account menu for Ada Lovelace/i })
+    ).toBeInTheDocument()
     expect(
-      screen.queryByRole("link", { name: "Client login" })
+      screen.queryByRole("link", { name: "Sign in" })
     ).not.toBeInTheDocument()
   })
 

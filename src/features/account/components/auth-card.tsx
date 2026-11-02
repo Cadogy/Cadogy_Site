@@ -10,16 +10,12 @@ export function AuthCard({
   footer?: React.ReactNode
 }) {
   return (
-    <div className="w-full max-w-md">
-      <div className="rounded-2xl border bg-card p-6 shadow-xs sm:p-8">
-        <h1 className="text-h3 text-2xl">{title}</h1>
-        {description ? (
-          <p className="mt-2 text-muted-foreground">{description}</p>
-        ) : null}
-        <div className="mt-6">{children}</div>
-      </div>
+    <div className="w-full max-w-sm">
+      <h1 className="text-h2">{title}</h1>
+      {description ? <p className="mt-3 text-lead">{description}</p> : null}
+      <div className="mt-8">{children}</div>
       {footer ? (
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        <div className="mt-8 border-t pt-6 text-sm text-muted-foreground">
           {footer}
         </div>
       ) : null}
@@ -39,8 +35,8 @@ export function FormAlert({
       role={tone === "error" ? "alert" : "status"}
       className={
         tone === "error"
-          ? "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-sm"
-          : "rounded-md border border-success/40 bg-success/10 px-3 py-2.5 text-sm"
+          ? "border-l-2 border-destructive py-1 pl-3 text-sm"
+          : "border-l-2 border-success py-1 pl-3 text-sm"
       }
     >
       {children}

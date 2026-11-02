@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { eventForAuthRequest } from "./security-events"
+import { eventForAuthRequest, securityEventLabel } from "./security-events"
 
 describe("eventForAuthRequest", () => {
   it.each([
@@ -31,5 +31,16 @@ describe("eventForAuthRequest", () => {
   it("ignores routine requests", () => {
     expect(eventForAuthRequest({ path: "/get-session", ok: true })).toBeNull()
     expect(eventForAuthRequest({ path: "/update-user", ok: true })).toBeNull()
+  })
+})
+
+describe("securityEventLabel", () => {
+  it("describes events in plain words", () => {
+    expect(securityEventLabel("sign_in")).toBe("Signed in")
+    expect(securityEventLabel("sign_in_failed")).toBe("Failed sign-in attempt")
+    expect(securityEventLabel("sessions_revoked")).toBe(
+      "Signed out other devices"
+    )
+    expect(securityEventLabel("role_changed")).toBe("Role changed")
   })
 })

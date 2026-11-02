@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Create a client account" }
 export default function RegisterPage() {
   return (
     <AuthCard
-      title="Create a client account"
+      title="Create your account"
       description="Use the email address your invoices are sent to and they will appear in your dashboard automatically."
       footer={
         <>

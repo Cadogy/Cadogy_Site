@@ -36,3 +36,20 @@ export const eventForAuthRequest = ({
   readonly path: string
   readonly ok: boolean
 }): SecurityEventType | null => (ok ? ON_SUCCESS : ON_FAILURE)[path] ?? null
+
+const LABELS: Record<SecurityEventType, string> = {
+  sign_in: "Signed in",
+  sign_in_failed: "Failed sign-in attempt",
+  sign_up: "Account created",
+  sign_out: "Signed out",
+  email_verified: "Email verified",
+  password_reset_requested: "Password reset requested",
+  password_reset: "Password reset",
+  password_changed: "Password changed",
+  session_revoked: "Signed out a device",
+  sessions_revoked: "Signed out other devices",
+  role_changed: "Role changed",
+  owner_bootstrapped: "Became owner",
+}
+
+export const securityEventLabel = (type: SecurityEventType) => LABELS[type]
