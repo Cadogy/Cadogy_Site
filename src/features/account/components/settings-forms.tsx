@@ -83,7 +83,7 @@ export function ProfileForm({ name, email }: { name: string; email: string }) {
           <Field
             id="email"
             label="Email"
-            hint="Contact us to change the email on your account."
+            hint="Change it in the section below."
           >
             {(control) => (
               <Input {...control} value={email} readOnly disabled />

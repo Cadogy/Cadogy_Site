@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet"
 import { Logo } from "@/components/site/logo"
 
+import { ImpersonationBanner } from "./impersonation-banner"
 import type { PortalNavGroup, PortalNavItem } from "./navigation"
 import { UserMenu } from "./user-menu"
 
@@ -109,44 +110,53 @@ function MobileMenu({ groups }: { groups: readonly PortalNavGroup[] }) {
 export function PortalShell({
   groups,
   user,
+  impersonating,
+  onStopImpersonating,
   children,
 }: {
   groups: readonly PortalNavGroup[]
   user: ShellUser
+  impersonating?: boolean
+  onStopImpersonating?: () => Promise<void>
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[256px_1fr]">
-      <aside className="sticky top-0 hidden h-dvh border-r lg:flex lg:flex-col">
-        <div className="flex h-16 shrink-0 items-center px-5">
-          <Logo href="/" />
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          <NavGroups groups={groups} label="Portal" />
-        </div>
-        <div className="border-t p-3">
-          <UserMenu user={user} variant="row" />
-        </div>
-      </aside>
-
-      <div className="min-w-0">
-        <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur-sm lg:hidden">
-          <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
+    <>
+      {impersonating && onStopImpersonating ? (
+        <ImpersonationBanner email={user.email} onStop={onStopImpersonating} />
+      ) : null}
+      <div className="min-h-dvh lg:grid lg:grid-cols-[256px_1fr]">
+        <aside className="sticky top-0 hidden h-dvh border-r lg:flex lg:flex-col">
+          <div className="flex h-16 shrink-0 items-center px-5">
             <Logo href="/" />
-            <div className="flex items-center gap-1">
-              <UserMenu user={user} />
-              <MobileMenu groups={groups} />
-            </div>
           </div>
-        </header>
-        <main
-          id="main"
-          className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10"
-        >
-          {children}
-        </main>
+          <div className="flex-1 overflow-y-auto px-3 py-4">
+            <NavGroups groups={groups} label="Portal" />
+          </div>
+          <div className="border-t p-3">
+            <UserMenu user={user} variant="row" />
+          </div>
+        </aside>
+
+        <div className="min-w-0">
+          <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur-sm lg:hidden">
+            <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
+              <Logo href="/" />
+              <div className="flex items-center gap-1">
+                <UserMenu user={user} />
+                <MobileMenu groups={groups} />
+              </div>
+            </div>
+          </header>
+          <main
+            id="main"
+            className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10"
+          >
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

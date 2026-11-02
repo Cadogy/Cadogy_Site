@@ -28,9 +28,15 @@ const repository: SecurityEventRepository = {
     await ensureIndexes()
     await events().insertOne({ ...event })
   },
-  list: async ({ targetId, limit }) =>
+  list: async ({ targetId, types, limit }) =>
     events()
-      .find(targetId ? { targetId } : {}, { projection: { _id: 0 } })
+      .find(
+        {
+          ...(targetId ? { targetId } : {}),
+          ...(types ? { type: { $in: [...types] } } : {}),
+        },
+        { projection: { _id: 0 } }
+      )
       .sort({ at: -1 })
       .limit(limit ?? 200)
       .toArray(),

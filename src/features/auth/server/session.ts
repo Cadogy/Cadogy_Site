@@ -26,9 +26,13 @@ const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     role,
     assurance: session.session.assurance === "multi" ? "multi" : "single",
     hasSecondFactor,
+    impersonatedBy: session.session.impersonatedBy ?? null,
   }
 })
 
 export const { requireSession, requirePermission, requireStaff } = createGuards(
   { currentUser: getSessionUser, redirect }
 )
+
+export const isImpersonating = async () =>
+  Boolean((await getSessionUser())?.impersonatedBy)

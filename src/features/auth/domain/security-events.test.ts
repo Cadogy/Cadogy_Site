@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { eventForAuthRequest, securityEventLabel } from "./security-events"
+import {
+  eventForAuthRequest,
+  eventsInGroup,
+  securityEventLabel,
+} from "./security-events"
 
 const success = (path: string, newSession = false, signedIn = false) =>
   eventForAuthRequest({ path, ok: true, newSession, signedIn })
@@ -79,5 +83,22 @@ describe("securityEventLabel", () => {
     expect(securityEventLabel("two_factor_enabled")).toBe(
       "Two-factor authentication turned on"
     )
+  })
+})
+
+describe("eventsInGroup", () => {
+  it("groups events for the security log filters", () => {
+    expect(eventsInGroup("failures")).toEqual([
+      "sign_in_failed",
+      "two_factor_failed",
+      "account_locked",
+    ])
+    expect(eventsInGroup("studio")).toContain("role_changed")
+    expect(eventsInGroup("studio")).toContain("impersonation_started")
+    expect(eventsInGroup("sign_ins")).toContain("sign_in_passkey")
+  })
+
+  it("returns nothing for unknown groups", () => {
+    expect(eventsInGroup("everything")).toBeNull()
   })
 })

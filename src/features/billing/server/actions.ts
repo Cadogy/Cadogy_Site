@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { requirePermission } from "@/features/auth/server/session"
+import {
+  isImpersonating,
+  requirePermission,
+} from "@/features/auth/server/session"
 
 import { parseMoneyInput } from "../domain/format"
 import type { Result } from "../domain/invoice"
@@ -172,6 +175,12 @@ export async function duplicateInvoiceAction(invoiceId: string) {
 }
 
 export async function startCheckoutAction(token: string) {
+  if (await isImpersonating())
+    return {
+      ok: false,
+      message:
+        "Payments are turned off while you're viewing the portal as a client.",
+    } satisfies ActionState
   const invoice = await billing.getByPublicToken(token)
   const payable =
     invoice?.status === "open" || invoice?.status === "uncollectible"

@@ -40,6 +40,13 @@ describe("portalNavigation", () => {
     ])
   })
 
+  it("adds the security page for the owner only", () => {
+    const studio = (role: "owner" | "admin") =>
+      portalNavigation(role)[0]?.items.map((item) => item.label)
+    expect(studio("owner")).toContain("Security")
+    expect(studio("admin")).not.toContain("Security")
+  })
+
   it("marks the overview links as exact so sub-pages don't light them up", () => {
     const exact = portalNavigation("owner")
       .flatMap((group) => group.items)

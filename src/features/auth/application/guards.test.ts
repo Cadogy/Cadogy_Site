@@ -19,6 +19,7 @@ const user = (overrides: Partial<SessionUser> = {}): SessionUser => ({
   role: "client",
   assurance: "multi",
   hasSecondFactor: true,
+  impersonatedBy: null,
   ...overrides,
 })
 

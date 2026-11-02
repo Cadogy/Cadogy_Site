@@ -1,5 +1,6 @@
 import "server-only"
 
+import { billing } from "@/features/billing/server/billing"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
 import { passkey } from "@better-auth/passkey"
 import { betterAuth } from "better-auth"
@@ -12,6 +13,8 @@ import { twoFactor } from "better-auth/plugins/two-factor"
 
 import { env } from "@/env"
 import {
+  sendDeleteAccountConfirmation,
+  sendEmailChangeConfirmation,
   sendExistingAccountNotice,
   sendMagicLinkEmail,
   sendPasswordResetEmail,
@@ -21,8 +24,13 @@ import { verifyTurnstile } from "@/lib/security/turnstile"
 
 import { sessionAssurance, upgradesSession } from "../domain/assurance"
 import { TURNSTILE_HEADER } from "../domain/http"
+import { isStaff, toRole } from "../domain/permissions"
 import { shouldBecomeOwner } from "../domain/roles"
-import { eventForAuthRequest } from "../domain/security-events"
+import {
+  eventForAuthRequest,
+  type SecurityEventType,
+} from "../domain/security-events"
+import { canDeleteAccount } from "../domain/user-admin"
 import { accessControl, authRoles } from "./access"
 import {
   authDb,
@@ -32,7 +40,9 @@ import {
   users,
 } from "./database"
 import { lockout } from "./lockout"
+import { sendEventNotice } from "./notices"
 import { securityLog } from "./security-log"
+import { alertIfUnfamiliar } from "./sign-in-alerts"
 
 const isProduction = process.env.NODE_ENV === "production"
 const MINUTE = 60
@@ -120,15 +130,48 @@ const afterRequest = createAuthMiddleware(async (ctx) => {
   })
   if (!type) return
   const userId = newSession?.user.id ?? ctx.context.session?.user.id ?? null
+  const email = newSession?.user.email ?? ctx.context.session?.user.email
+  const ip = requestIp(ctx.headers)
+  const userAgent = ctx.headers?.get("user-agent") ?? ""
+  if (newSession && SIGN_IN_EVENTS.has(type))
+    await quietly(() =>
+      alertIfUnfamiliar({
+        userId: newSession.user.id,
+        email: newSession.user.email,
+        ip,
+        userAgent,
+      })
+    )
+  if (email) await quietly(() => sendEventNotice(email, type))
   await securityLog.record({
     type,
     actorId: userId,
     targetId: userId,
     detail: ok ? undefined : locked ? "Blocked while locked" : undefined,
-    ip: requestIp(ctx.headers),
-    userAgent: ctx.headers?.get("user-agent") ?? "",
+    ip,
+    userAgent,
   })
 })
+
+const openInvoicesFor = async (email: string) =>
+  (await billing.listForPortalUser(email)).filter(
+    (invoice) => invoice.status === "open"
+  ).length
+
+const SIGN_IN_EVENTS = new Set<SecurityEventType>([
+  "sign_in",
+  "sign_in_backup_code",
+  "sign_in_passkey",
+  "sign_in_magic_link",
+])
+
+const quietly = async (task: () => Promise<void>) => {
+  try {
+    await task()
+  } catch (error) {
+    console.error("Security notice failed", error)
+  }
+}
 
 const promoteOwnerIfConfigured = async (user: {
   readonly id: string
@@ -184,6 +227,43 @@ export const auth = betterAuth({
     },
     onExistingUserSignUp: async ({ user }) => {
       await sendExistingAccountNotice(user.email)
+    },
+    onPasswordReset: async ({ user }) => {
+      await quietly(() => sendEventNotice(user.email, "password_reset"))
+    },
+  },
+  user: {
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+        await sendEmailChangeConfirmation(user.email, newEmail, url)
+      },
+    },
+    deleteUser: {
+      enabled: true,
+      deleteTokenExpiresIn: 60 * MINUTE,
+      sendDeleteAccountVerification: async ({ user, url }) => {
+        await sendDeleteAccountConfirmation(user.email, url)
+      },
+      beforeDelete: async (user) => {
+        const role = toRole("role" in user ? user.role : undefined)
+        const decision = canDeleteAccount({
+          role,
+          openInvoices: isStaff(role) ? 0 : await openInvoicesFor(user.email),
+        })
+        if (!decision.ok)
+          throw new APIError("BAD_REQUEST", { message: decision.error })
+      },
+      afterDelete: async (user) => {
+        await securityLog.record({
+          type: "account_deleted",
+          actorId: user.id,
+          targetId: user.id,
+          detail: user.email,
+          ip: "",
+          userAgent: "",
+        })
+      },
     },
   },
   emailVerification: {
@@ -263,6 +343,9 @@ export const auth = betterAuth({
       roles: authRoles,
       defaultRole: "client",
       adminRoles: ["owner", "admin"],
+      impersonationSessionDuration: 30 * MINUTE,
+      bannedUserMessage:
+        "This account has been suspended. Reply to any email from us if you think this is a mistake.",
     }),
     twoFactor({ issuer: "Cadogy" }),
     magicLink({

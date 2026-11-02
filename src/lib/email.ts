@@ -119,3 +119,51 @@ export const sendMagicLinkEmail = (email: string, url: string) =>
     outro:
       "If you didn't ask for this, you can ignore this email. No one can sign in without the link.",
   })
+
+const securityUrl = () => `${env.NEXT_PUBLIC_APP_URL}/account/security`
+
+export const sendSecurityNotice = ({
+  to,
+  subject,
+  intro,
+}: {
+  readonly to: string
+  readonly subject: string
+  readonly intro: string
+}) =>
+  sendActionEmail({
+    to,
+    subject,
+    intro,
+    url: securityUrl(),
+    cta: "Review your security settings",
+    outro:
+      "If this wasn't you, reset your password and sign out of other devices right away, then reply to this email so we can help.",
+  })
+
+export const sendEmailChangeConfirmation = (
+  email: string,
+  newEmail: string,
+  url: string
+) =>
+  sendActionEmail({
+    to: email,
+    subject: "Confirm your new email address",
+    intro: `Someone asked to change the email on your Cadogy account to ${newEmail}. Confirm below and we'll send a verification link to the new address.`,
+    url,
+    cta: "Confirm the change",
+    outro:
+      "If you didn't ask for this, ignore this email and your address stays the same. Then change your password.",
+  })
+
+export const sendDeleteAccountConfirmation = (email: string, url: string) =>
+  sendActionEmail({
+    to: email,
+    subject: "Confirm deleting your Cadogy account",
+    intro:
+      "You asked to delete your Cadogy account. This signs you out everywhere and removes your login. Your paid invoices stay on record, as the law requires.",
+    url,
+    cta: "Delete my account",
+    outro:
+      "If you didn't ask for this, ignore this email and change your password.",
+  })

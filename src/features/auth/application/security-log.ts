@@ -14,6 +14,7 @@ export type SecurityEventRepository = {
   readonly insert: (event: SecurityEvent) => Promise<void>
   readonly list: (filter: {
     readonly targetId?: string
+    readonly types?: readonly SecurityEventType[]
     readonly limit?: number
   }) => Promise<SecurityEvent[]>
 }
@@ -37,6 +38,7 @@ export const createSecurityLog = ({
     record,
     forUser: (userId: string, limit = 50) =>
       repository.list({ targetId: userId, limit }),
-    recent: (limit = 200) => repository.list({ limit }),
+    recent: (types?: readonly SecurityEventType[], limit = 200) =>
+      repository.list({ types, limit }),
   }
 }

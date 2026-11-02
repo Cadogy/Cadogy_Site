@@ -8,6 +8,7 @@ export type SessionUser = {
   readonly role: Role
   readonly assurance: Assurance
   readonly hasSecondFactor: boolean
+  readonly impersonatedBy: string | null
 }
 
 type Dependencies = {

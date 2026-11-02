@@ -233,6 +233,12 @@ export async function runBillingNowAction(): Promise<ActionState> {
   }
 }
 
+const IMPERSONATING: ActionState = {
+  ok: false,
+  message:
+    "Billing actions are turned off while you're viewing the portal as a client.",
+}
+
 const UNAVAILABLE: ActionState = {
   ok: false,
   message:
@@ -243,6 +249,7 @@ export async function payInvoicesAction(
   invoiceIds: readonly string[]
 ): Promise<ActionState> {
   const user = await requireSession("/dashboard/billing")
+  if (user.impersonatedBy) return IMPERSONATING
   if (!isStripeConfigured()) return UNAVAILABLE
   const prepared = await billingEngine.preparePayment(user.email, invoiceIds)
   if (!prepared.ok) return { ok: false, message: prepared.error }
@@ -253,6 +260,7 @@ export async function saveCardForAutopayAction(
   clientId: string
 ): Promise<ActionState> {
   const user = await requireSession("/dashboard/billing")
+  if (user.impersonatedBy) return IMPERSONATING
   if (!isStripeConfigured()) return UNAVAILABLE
   const client = (await billing.ownsClient(user.email, clientId))
     ? await billing.getClient(clientId)
@@ -266,6 +274,7 @@ export async function setPortalAutopayAction(
   enabled: boolean
 ): Promise<ActionState> {
   const user = await requireSession("/dashboard/billing")
+  if (user.impersonatedBy) return IMPERSONATING
   const result = await billing.setPortalAutopay(user.email, clientId, enabled)
   refresh(clientId)
   return toState(
@@ -280,6 +289,7 @@ export async function removePortalCardAction(
   clientId: string
 ): Promise<ActionState> {
   const user = await requireSession("/dashboard/billing")
+  if (user.impersonatedBy) return IMPERSONATING
   if (!(await billing.ownsClient(user.email, clientId)))
     return { ok: false, message: "Account not found." }
   const result = await billing.removeCard(clientId)

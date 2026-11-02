@@ -2,9 +2,12 @@ import "server-only"
 
 import { headers } from "next/headers"
 import { describeDevice, displayIp } from "@/features/auth/domain/devices"
+import type { Role } from "@/features/auth/domain/permissions"
 import { securityEventLabel } from "@/features/auth/domain/security-events"
+import { canDeleteAccount } from "@/features/auth/domain/user-admin"
 import { auth } from "@/features/auth/server/auth"
 import { securityLog } from "@/features/auth/server/security-log"
+import { billing } from "@/features/billing/server/billing"
 
 import type { SavedPasskey } from "../components/passkey-settings"
 import type { DeviceSession } from "../components/session-list"
@@ -66,3 +69,17 @@ export const mySecondFactors = async () => {
     })),
   }
 }
+
+export const deletionEligibility = async (user: {
+  readonly email: string
+  readonly role: Role
+}) =>
+  canDeleteAccount({
+    role: user.role,
+    openInvoices:
+      user.role === "client"
+        ? (await billing.listForPortalUser(user.email)).filter(
+            (invoice) => invoice.status === "open"
+          ).length
+        : 0,
+  })

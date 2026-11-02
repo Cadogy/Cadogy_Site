@@ -22,6 +22,14 @@ export type SecurityEventType =
   | "passkey_removed"
   | "role_changed"
   | "owner_bootstrapped"
+  | "user_banned"
+  | "user_unbanned"
+  | "user_signed_out"
+  | "two_factor_reset"
+  | "impersonation_started"
+  | "impersonation_stopped"
+  | "email_change_requested"
+  | "account_deleted"
 
 const ON_SUCCESS: Record<string, SecurityEventType> = {
   "/sign-up/email": "sign_up",
@@ -38,6 +46,7 @@ const ON_SUCCESS: Record<string, SecurityEventType> = {
   "/passkey/verify-registration": "passkey_added",
   "/passkey/delete-passkey": "passkey_removed",
   "/sign-in/magic-link": "magic_link_requested",
+  "/change-email": "email_change_requested",
 }
 
 const ON_NEW_SESSION: Record<string, SecurityEventType> = {
@@ -102,6 +111,50 @@ const LABELS: Record<SecurityEventType, string> = {
   passkey_removed: "Passkey removed",
   role_changed: "Role changed",
   owner_bootstrapped: "Became owner",
+  user_banned: "Account banned",
+  user_unbanned: "Account unbanned",
+  user_signed_out: "Signed out everywhere by the studio",
+  two_factor_reset: "Two-factor reset by the studio",
+  impersonation_started: "Studio viewed the portal as this account",
+  impersonation_stopped: "Studio stopped viewing as this account",
+  email_change_requested: "Email change requested",
+  account_deleted: "Account deleted",
 }
 
 export const securityEventLabel = (type: SecurityEventType) => LABELS[type]
+
+const GROUPS: Record<string, readonly SecurityEventType[]> = {
+  sign_ins: [
+    "sign_in",
+    "sign_in_backup_code",
+    "sign_in_passkey",
+    "sign_in_magic_link",
+    "sign_out",
+  ],
+  failures: ["sign_in_failed", "two_factor_failed", "account_locked"],
+  studio: [
+    "role_changed",
+    "owner_bootstrapped",
+    "user_banned",
+    "user_unbanned",
+    "user_signed_out",
+    "two_factor_reset",
+    "impersonation_started",
+    "impersonation_stopped",
+  ],
+  account: [
+    "sign_up",
+    "email_verified",
+    "password_changed",
+    "password_reset",
+    "two_factor_enabled",
+    "two_factor_disabled",
+    "backup_codes_regenerated",
+    "passkey_added",
+    "passkey_removed",
+    "email_change_requested",
+    "account_deleted",
+  ],
+}
+
+export const eventsInGroup = (group: string) => GROUPS[group] ?? null

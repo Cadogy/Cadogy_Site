@@ -53,6 +53,11 @@ const GROUPS: readonly PortalNavGroup[] = [
       },
       { label: "Tickets", href: "/admin/tickets", permission: "support:read" },
       { label: "Users", href: "/admin/users", permission: "users:read" },
+      {
+        label: "Security",
+        href: "/admin/security",
+        permission: "security:read",
+      },
     ],
   },
   {
