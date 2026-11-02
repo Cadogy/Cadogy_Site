@@ -54,7 +54,7 @@ export function PasskeySettings({
           Windows Hello or a security key, and counts as two-factor on its own.
         </p>
       ) : (
-        <ul className="divide-y border-y">
+        <ul className="rule-list">
           {passkeys.map((passkey) => (
             <li
               key={passkey.id}

@@ -14,7 +14,7 @@ export function CaseStudyFeature({
   return (
     <article className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
       <div className="lg:order-2">
-        <div className="relative aspect-3/4 overflow-hidden rounded-[20px] bg-card sm:hidden">
+        <div className="relative aspect-3/4 overflow-hidden rounded-media bg-card sm:hidden">
           <Image
             src={study.mobileImage}
             alt={`${study.name} homepage`}
@@ -24,7 +24,7 @@ export function CaseStudyFeature({
             className="object-cover object-left-top"
           />
         </div>
-        <div className="relative hidden aspect-video overflow-hidden rounded-[20px] bg-card sm:block">
+        <div className="relative hidden aspect-video overflow-hidden rounded-media bg-card sm:block">
           <Image
             src={study.image}
             alt={`${study.name} homepage`}
@@ -39,9 +39,9 @@ export function CaseStudyFeature({
         <p className="text-meta">{study.category} · Built and run by Cadogy</p>
         <Heading className="mt-4 text-h2">{study.name}</Heading>
         <p className="mt-5 text-lead">{study.summary}</p>
-        <ul className="mt-8 grid border-t">
+        <ul className="mt-8 rule-list">
           {study.promises.map((promise) => (
-            <li key={promise} className="border-b py-3.5 text-[15px]">
+            <li key={promise} className="py-3.5">
               {promise}
             </li>
           ))}

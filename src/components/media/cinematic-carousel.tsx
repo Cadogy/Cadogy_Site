@@ -113,7 +113,7 @@ export function CinematicCarousel({
             role="group"
             aria-roledescription="slide"
             aria-label={`${index + 1} of ${slides.length}`}
-            className="group relative h-[clamp(500px,76svh,760px)] w-[88vw] shrink-0 snap-center overflow-hidden rounded-[20px] bg-card md:w-[84vw]"
+            className="group relative h-[clamp(500px,76svh,760px)] w-[88vw] shrink-0 snap-center overflow-hidden rounded-media bg-card md:w-[84vw]"
           >
             {slide.mobileImage ? (
               <>

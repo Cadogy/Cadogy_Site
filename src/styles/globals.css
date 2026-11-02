@@ -39,9 +39,9 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-field: 0.75rem;
+  --radius-panel: 1rem;
+  --radius-media: 1.25rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -72,6 +72,27 @@
   @apply py-24 md:py-32 xl:py-40;
 }
 
+@utility container-portal {
+  @apply mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-10;
+}
+
+@utility rule-list {
+  @apply divide-y divide-border border-t;
+}
+
+@utility stack-sections {
+  display: grid;
+  row-gap: 3rem;
+  & > section:first-child {
+    border-top-width: 0;
+    padding-top: 0;
+  }
+}
+
+@utility panel {
+  @apply rounded-panel border bg-card p-5 sm:p-6;
+}
+
 @utility text-display {
   font-size: clamp(2.75rem, 1.4rem + 5.4vw, 6rem);
   line-height: 0.98;
@@ -97,6 +118,20 @@
   font-size: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
   line-height: 1.25;
   letter-spacing: -0.015em;
+  @apply font-medium;
+}
+
+@utility text-title {
+  font-size: clamp(1.75rem, 1.45rem + 1.2vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  @apply font-medium text-balance;
+}
+
+@utility text-menu {
+  font-size: 2.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   @apply font-medium;
 }
 
@@ -157,7 +192,6 @@
     --border: 50 12% 94% / 0.09;
     --input: 50 12% 94% / 0.16;
     --ring: 220 100% 72%;
-    --radius: 1rem;
   }
 
   .paper {

@@ -5,8 +5,8 @@ import { formatAmountsByCurrency } from "@/features/billing/domain/format"
 import { displayStatus } from "@/features/billing/domain/lifecycle"
 import { billing } from "@/features/billing/server/billing"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { FilterTabs, StatList } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Invoices" }
@@ -63,45 +63,26 @@ export default async function AdminInvoicesPage({ searchParams }: Props) {
           </Button>
         }
       />
-      <dl className="mb-8 grid gap-4 sm:grid-cols-3">
-        {kpis.map((kpi) => (
-          <div key={kpi.label} className="rounded-xl border bg-card p-5">
-            <dt className="text-sm text-muted-foreground">{kpi.label}</dt>
-            <dd className="mt-1 text-xl font-semibold">{kpi.value}</dd>
-            <dd className="mt-1 text-sm text-muted-foreground">{kpi.detail}</dd>
-          </div>
-        ))}
-      </dl>
-      <nav
-        aria-label="Filter invoices"
-        className="-mx-1 mb-4 flex gap-1 overflow-x-auto px-1"
-      >
-        {FILTERS.map((filter) => (
-          <Link
-            key={filter.value}
-            href={
+      <StatList stats={kpis} />
+      <div className="mt-12">
+        <FilterTabs
+          label="Filter invoices"
+          items={FILTERS.map((filter) => ({
+            label: filter.label,
+            href:
               filter.value === "all"
                 ? "/admin/billing/invoices"
-                : `/admin/billing/invoices?status=${filter.value}`
-            }
-            aria-current={status === filter.value ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-11 shrink-0 items-center rounded-md px-3 text-sm font-medium",
-              status === filter.value
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {filter.label}
-          </Link>
-        ))}
-      </nav>
-      <InvoiceList
-        invoices={visible}
-        now={now}
-        hrefFor={(invoice) => `/admin/billing/invoices/${invoice.id}`}
-        emptyMessage="No invoices here yet."
-      />
+                : `/admin/billing/invoices?status=${filter.value}`,
+            active: status === filter.value,
+          }))}
+        />
+        <InvoiceList
+          invoices={visible}
+          now={now}
+          hrefFor={(invoice) => `/admin/billing/invoices/${invoice.id}`}
+          emptyMessage="No invoices here yet."
+        />
+      </div>
     </>
   )
 }

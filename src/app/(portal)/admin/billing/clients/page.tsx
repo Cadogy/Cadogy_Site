@@ -4,6 +4,7 @@ import { billing } from "@/features/billing/server/billing"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Clients" }
@@ -36,17 +37,23 @@ export default async function ClientsPage({ searchParams }: Props) {
         {showArchived ? "Hide archived clients" : "Show archived clients"}
       </Link>
       {clients.length === 0 ? (
-        <p className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
+        <EmptyState
+          action={
+            <Button asChild variant="outline">
+              <Link href="/admin/billing/clients/new">Add client</Link>
+            </Button>
+          }
+        >
           No clients yet.
-        </p>
+        </EmptyState>
       ) : (
-        <ul className="divide-y overflow-hidden rounded-xl border">
+        <ul className="rule-list">
           {clients.map((client) => (
             <li key={client.id}>
               <Link
                 href={`/admin/billing/clients/${client.id}`}
                 className={cn(
-                  "flex flex-col gap-1 px-4 py-4 transition-colors hover:bg-accent/50 sm:flex-row sm:items-center sm:justify-between",
+                  "-mx-3 flex flex-col gap-1 rounded-field px-3 py-4 transition-colors hover:bg-foreground/5 sm:flex-row sm:items-center sm:justify-between",
                   client.archivedAt && "opacity-60"
                 )}
               >

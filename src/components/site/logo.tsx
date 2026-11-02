@@ -28,7 +28,7 @@ export function Logo({
     <Link
       href={href}
       className={cn(
-        "inline-flex min-h-11 items-center gap-2 rounded-md text-[15px] font-semibold tracking-tight",
+        "inline-flex min-h-11 items-center gap-2 rounded-full text-base font-semibold tracking-tight",
         className
       )}
     >

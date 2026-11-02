@@ -46,7 +46,7 @@ export default function ServicesPage() {
           >
             <div
               className={cn(
-                "relative aspect-4/3 overflow-hidden rounded-[20px] bg-card lg:col-span-7",
+                "relative aspect-4/3 overflow-hidden rounded-media bg-card lg:col-span-7",
                 index % 2 === 1 && "lg:order-2"
               )}
             >
@@ -65,9 +65,9 @@ export default function ServicesPage() {
                 {service.title}
               </h2>
               <p className="mt-5 text-lead">{service.detail}</p>
-              <ul className="mt-8 grid border-t">
+              <ul className="mt-8 rule-list">
                 {service.includes.map((item) => (
-                  <li key={item} className="border-b py-3.5 text-[15px]">
+                  <li key={item} className="py-3.5">
                     {item}
                   </li>
                 ))}
@@ -97,11 +97,11 @@ export default function ServicesPage() {
             title="Ways to work"
             accent="with us."
           />
-          <div className="mt-14 grid border-t lg:grid-cols-3">
+          <div className="mt-14 grid lg:grid-cols-3">
             {engagementModels.map((model) => (
               <article
                 key={model.title}
-                className="border-b py-10 lg:border-b-0 lg:border-l lg:px-8 lg:first:border-l-0 lg:first:pl-0"
+                className="border-t py-10 lg:border-l lg:px-8 lg:first:border-l-0 lg:first:pl-0"
               >
                 <h3 className="text-h3">{model.title}</h3>
                 <p className="mt-3 max-w-sm text-pretty text-muted-foreground">

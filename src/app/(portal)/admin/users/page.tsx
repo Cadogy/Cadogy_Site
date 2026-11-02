@@ -81,7 +81,7 @@ export default async function UsersPage({ searchParams }: Props) {
           No one matches those filters.
         </p>
       ) : (
-        <ul className="divide-y border-y">
+        <ul className="rule-list">
           {users.map((user) => (
             <li
               key={user.id}

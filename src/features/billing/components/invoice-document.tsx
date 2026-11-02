@@ -36,28 +36,32 @@ export function InvoiceDocument({
   invoice,
   client,
   status,
+  headingLevel = 1,
 }: {
   invoice: Invoice
   client: ClientSnapshot
   status: InvoiceBadge
+  headingLevel?: 1 | 2
 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2"
+  const Subheading = headingLevel === 1 ? "h2" : "h3"
   const totals = calculateInvoiceTotals(invoice)
   const money = (amount: number) => formatMoney(amount, invoice.currency)
 
   return (
-    <article className="rounded-2xl border bg-card p-5 text-card-foreground sm:p-10 print:border-0 print:p-0">
+    <article className="panel text-card-foreground sm:p-10 print:border-0 print:p-0">
       <header className="flex flex-col-reverse gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Invoice</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <Heading className="mt-1 text-title">
             {invoice.number ?? "Draft"}
-          </h1>
+          </Heading>
           <div className="mt-3">
             <StatusBadge status={status} />
           </div>
         </div>
         <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1">
-          <span className="inline-flex items-center gap-2 text-lg font-semibold">
+          <span className="inline-flex items-center gap-2 text-lg font-medium">
             <LogoMark />
             {siteConfig.name}
           </span>
@@ -67,7 +71,7 @@ export function InvoiceDocument({
         </div>
       </header>
 
-      <dl className="mt-8 grid gap-6 border-y py-6 sm:grid-cols-3">
+      <dl className="mt-8 grid gap-6 border-t py-6 sm:grid-cols-3">
         <div>
           <dt className="text-sm text-muted-foreground">Billed to</dt>
           <dd className="mt-1">
@@ -99,13 +103,13 @@ export function InvoiceDocument({
       </dl>
 
       <div className="mt-6">
-        <div className="hidden grid-cols-[1fr_80px_120px_120px] gap-4 border-b pb-2 text-sm text-muted-foreground sm:grid">
+        <div className="hidden grid-cols-[1fr_80px_120px_120px] gap-4 pb-2 text-meta sm:grid">
           <span>Description</span>
           <span className="text-right">Qty</span>
           <span className="text-right">Unit price</span>
           <span className="text-right">Amount</span>
         </div>
-        <ul className="divide-y">
+        <ul className="rule-list">
           {invoice.lineItems.map((item, index) => (
             <li
               key={`${item.description}-${index}`}
@@ -150,7 +154,7 @@ export function InvoiceDocument({
             <dd>{money(totals.tax)}</dd>
           </div>
         ) : null}
-        <div className="flex justify-between border-t pt-2 text-base font-semibold">
+        <div className="flex justify-between border-t pt-2 text-base font-medium">
           <dt>Total</dt>
           <dd>{money(totals.total)}</dd>
         </div>
@@ -176,7 +180,7 @@ export function InvoiceDocument({
             ) : null}
           </Fragment>
         ))}
-        <div className="flex justify-between rounded-md bg-muted px-3 py-2 text-base font-semibold">
+        <div className="flex justify-between rounded-field bg-muted px-3 py-2 text-base font-medium">
           <dt>Amount due</dt>
           <dd>{money(totals.amountDue)}</dd>
         </div>
@@ -184,10 +188,10 @@ export function InvoiceDocument({
 
       {invoice.payments.length > 0 ? (
         <section aria-labelledby="payments-title" className="mt-8">
-          <h2 id="payments-title" className="text-sm font-semibold">
+          <Subheading id="payments-title" className="text-sm font-medium">
             Payments
-          </h2>
-          <ul className="mt-2 divide-y text-sm">
+          </Subheading>
+          <ul className="mt-2 rule-list text-sm">
             {invoice.payments.map((payment, index) => (
               <li
                 key={`${payment.paidAt.toISOString()}-${index}`}

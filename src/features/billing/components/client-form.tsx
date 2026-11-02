@@ -26,10 +26,7 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="grid gap-6 rounded-xl border bg-card p-5 sm:p-6"
-    >
+    <form onSubmit={handleSubmit} className="grid gap-10">
       {state ? (
         <p
           role={state.ok ? "status" : "alert"}
@@ -70,7 +67,7 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
       </div>
 
       <fieldset className="grid gap-5 sm:grid-cols-2">
-        <legend className="mb-3 font-semibold">Address</legend>
+        <legend className="mb-4 font-medium">Address</legend>
         <Field
           id="line1"
           label="Street address"
@@ -138,7 +135,7 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
       </fieldset>
 
       <fieldset className="grid gap-5 sm:grid-cols-3">
-        <legend className="mb-3 font-semibold">Billing defaults</legend>
+        <legend className="mb-4 font-medium">Billing defaults</legend>
         <Field id="currency" label="Currency">
           {(control) => (
             <NativeSelect

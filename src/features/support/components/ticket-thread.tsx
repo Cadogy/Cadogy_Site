@@ -22,7 +22,7 @@ export function TicketThread({
           <li
             key={`${message.createdAt.toISOString()}-${index}`}
             className={cn(
-              "rounded-xl border p-4 sm:p-5",
+              "rounded-panel border p-4 sm:p-5",
               mine ? "bg-card sm:ml-10" : "bg-muted/40 sm:mr-10"
             )}
           >

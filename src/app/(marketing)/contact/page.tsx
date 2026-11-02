@@ -43,7 +43,7 @@ export default async function ContactPage() {
         <ol className="mt-10 grid gap-5 border-t pt-8">
           {steps.map((step, index) => (
             <li key={step} className="flex gap-4">
-              <span className="font-serif text-2xl leading-none text-muted-foreground italic">
+              <span className="font-serif text-h3 leading-none font-normal text-muted-foreground italic">
                 {index + 1}
               </span>
               <span>{step}</span>

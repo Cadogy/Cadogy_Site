@@ -66,7 +66,7 @@ export function ContactsManager({
 
   return (
     <div className="grid gap-6">
-      <ul className="divide-y border-y">
+      <ul className="rule-list">
         <li
           aria-label={primary.email}
           className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3"

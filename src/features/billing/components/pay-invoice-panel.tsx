@@ -66,7 +66,7 @@ export function PayInvoicePanel({
     })
 
   return (
-    <aside className="print-hidden grid gap-4 rounded-2xl border bg-card p-5 sm:p-6">
+    <aside className="print-hidden grid gap-4 panel">
       {settled ? (
         <div className="flex items-start gap-3">
           <CheckCircle2
@@ -74,7 +74,7 @@ export function PayInvoicePanel({
             aria-hidden="true"
           />
           <div>
-            <p className="font-semibold">{settled.title}</p>
+            <p className="font-medium">{settled.title}</p>
             <p className="text-sm text-muted-foreground">{settled.detail}</p>
           </div>
         </div>
@@ -83,7 +83,7 @@ export function PayInvoicePanel({
       {paymentReturned && status !== "paid" ? (
         <p
           role="status"
-          className="rounded-md border border-success/40 bg-success/10 px-3 py-2 text-sm"
+          className="rounded-field border border-success/40 bg-success/10 px-3 py-2 text-sm"
         >
           Payment received — it can take a minute to appear here.
         </p>
@@ -99,9 +99,7 @@ export function PayInvoicePanel({
         <>
           <div>
             <p className="text-sm text-muted-foreground">Amount due</p>
-            <p className="text-3xl font-semibold tracking-tight">
-              {amountDueLabel}
-            </p>
+            <p className="text-title tabular-nums">{amountDueLabel}</p>
             {dueLabel ? (
               <p
                 className={

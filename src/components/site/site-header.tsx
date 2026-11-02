@@ -35,11 +35,8 @@ function MobileMenu() {
           <Menu className="size-5" aria-hidden="true" />
         </Button>
       </SheetTrigger>
-      <SheetContent
-        side="top"
-        className="flex h-dvh flex-col gap-0 border-0 bg-background p-0"
-      >
-        <div className="flex h-16 items-center px-5">
+      <SheetContent>
+        <div className="flex h-16 shrink-0 items-center px-5">
           <SheetTitle className="text-meta font-normal">Menu</SheetTitle>
           <SheetDescription className="sr-only">
             Site navigation
@@ -54,7 +51,7 @@ function MobileMenu() {
               key={item.href}
               href={item.href}
               onNavigate={close}
-              className="py-2 text-[2.5rem] leading-tight font-medium tracking-[-0.03em] text-muted-foreground transition-colors hover:text-foreground"
+              className="py-2 text-menu text-muted-foreground transition-colors hover:text-foreground"
               activeClassName="text-foreground"
             >
               {item.label}

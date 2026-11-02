@@ -8,56 +8,34 @@ import { deletionEligibility } from "@/features/account/server/security"
 import { requestAccountDeletionAction } from "@/features/account/server/security-actions"
 import { requireSession } from "@/features/auth/server/session"
 
-export const metadata: Metadata = { title: "Account" }
+import { PortalSection } from "@/components/portal/portal-section"
 
-function Section({
-  id,
-  title,
-  description,
-  children,
-}: {
-  id: string
-  title: string
-  description: string
-  children: React.ReactNode
-}) {
-  return (
-    <section aria-labelledby={id} className="grid gap-6">
-      <div>
-        <h2 id={id} className="text-h3">
-          {title}
-        </h2>
-        <p className="mt-1 text-meta">{description}</p>
-      </div>
-      {children}
-    </section>
-  )
-}
+export const metadata: Metadata = { title: "Account" }
 
 export default async function AccountProfilePage() {
   const user = await requireSession("/account")
   const deletion = await deletionEligibility(user)
 
   return (
-    <div className="grid gap-14">
-      <Section
-        id="profile-title"
+    <div className="stack-sections">
+      <PortalSection
+        layout="split"
         title="Profile"
         description="Your name appears on support requests and in emails from us."
       >
         <ProfileForm name={user.name} email={user.email} />
-      </Section>
+      </PortalSection>
 
-      <Section
-        id="email-title"
+      <PortalSection
+        layout="split"
         title="Change email"
         description="We confirm with your current address first, then verify the new one."
       >
         <ChangeEmailForm currentEmail={user.email} />
-      </Section>
+      </PortalSection>
 
-      <Section
-        id="delete-title"
+      <PortalSection
+        layout="split"
         title="Delete account"
         description="Removes your login and signs you out everywhere. Paid invoices stay on record."
       >
@@ -66,7 +44,7 @@ export default async function AccountProfilePage() {
           reason={deletion.ok ? undefined : deletion.error}
           onRequest={requestAccountDeletionAction}
         />
-      </Section>
+      </PortalSection>
     </div>
   )
 }

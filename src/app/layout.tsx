@@ -7,6 +7,7 @@ import { GeistSans } from "geist/font/sans"
 
 import { env } from "@/env"
 import { siteConfig } from "@/config/site"
+import { themeColors } from "@/config/theme-colors"
 import { cn } from "@/lib/utils"
 
 const serif = Instrument_Serif({
@@ -18,7 +19,7 @@ const serif = Instrument_Serif({
 })
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0b",
+  themeColor: themeColors.canvas,
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -64,9 +65,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(GeistSans.variable, GeistMono.variable, serif.variable)}
     >
-      <body className="min-h-dvh bg-background font-sans">
-        {children}
-      </body>
+      <body className="min-h-dvh bg-background font-sans">{children}</body>
     </html>
   )
 }

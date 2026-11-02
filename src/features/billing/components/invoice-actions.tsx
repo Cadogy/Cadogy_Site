@@ -15,6 +15,7 @@ import {
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
+import { PortalSection } from "@/components/portal/portal-section"
 
 import { PAYMENT_METHODS, type InvoiceStatus } from "../domain/schema"
 import {
@@ -171,104 +172,105 @@ export function InvoiceActions({
   }
 
   return (
-    <div className="print-hidden grid gap-3 rounded-xl border bg-card p-5">
-      <h2 className="font-semibold">Actions</h2>
-      {feedback ? (
-        <p
-          role={feedback.ok ? "status" : "alert"}
-          className={
-            feedback.ok ? "text-sm text-success" : "text-sm text-destructive"
-          }
-        >
-          {feedback.message}
-        </p>
-      ) : null}
-      <Button variant="outline" onClick={copyLink}>
-        <Copy className="size-4" aria-hidden="true" />
-        Copy payment link
-      </Button>
-      {open ? (
-        <>
-          <Button
-            variant="outline"
-            disabled={pending}
-            onClick={() =>
-              startCommand(async () =>
-                setFeedback(await resendInvoiceAction(invoiceId))
-              )
+    <PortalSection title="Actions" className="print-hidden">
+      <div className="grid gap-3">
+        {feedback ? (
+          <p
+            role={feedback.ok ? "status" : "alert"}
+            className={
+              feedback.ok ? "text-sm text-success" : "text-sm text-destructive"
             }
           >
-            <Send className="size-4" aria-hidden="true" />
-            Email to billing contacts
-          </Button>
-          <Button
-            variant="outline"
-            disabled={pending}
-            onClick={command("remind")}
-          >
-            Send reminder
-          </Button>
-          {creditBalance ? (
+            {feedback.message}
+          </p>
+        ) : null}
+        <Button variant="outline" onClick={copyLink}>
+          <Copy className="size-4" aria-hidden="true" />
+          Copy payment link
+        </Button>
+        {open ? (
+          <>
             <Button
               variant="outline"
               disabled={pending}
               onClick={() =>
                 startCommand(async () =>
-                  setFeedback(await applyBalanceAction(invoiceId))
+                  setFeedback(await resendInvoiceAction(invoiceId))
                 )
               }
             >
-              Apply credit balance ({creditBalance})
+              <Send className="size-4" aria-hidden="true" />
+              Email to billing contacts
             </Button>
-          ) : null}
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={command("remind")}
+            >
+              Send reminder
+            </Button>
+            {creditBalance ? (
+              <Button
+                variant="outline"
+                disabled={pending}
+                onClick={() =>
+                  startCommand(async () =>
+                    setFeedback(await applyBalanceAction(invoiceId))
+                  )
+                }
+              >
+                Apply credit balance ({creditBalance})
+              </Button>
+            ) : null}
+            <RecordPaymentDialog invoiceId={invoiceId} amountDue={amountDue} />
+          </>
+        ) : null}
+        {status === "uncollectible" ? (
           <RecordPaymentDialog invoiceId={invoiceId} amountDue={amountDue} />
-        </>
-      ) : null}
-      {status === "uncollectible" ? (
-        <RecordPaymentDialog invoiceId={invoiceId} amountDue={amountDue} />
-      ) : null}
-      <Button
-        variant="outline"
-        disabled={pending}
-        onClick={() =>
-          startCommand(async () => {
-            const result = await duplicateInvoiceAction(invoiceId)
-            if (result) setFeedback(result)
-          })
-        }
-      >
-        Duplicate as new draft
-      </Button>
-      <Button variant="ghost" onClick={() => window.print()}>
-        <Printer className="size-4" aria-hidden="true" />
-        Print or save PDF
-      </Button>
-      {open ? (
-        <div className="grid gap-2 border-t pt-3">
-          <Button
-            variant="ghost"
-            className="text-destructive"
-            disabled={pending}
-            onClick={command(
-              "void",
-              "Void this invoice? The client will no longer be able to pay it."
-            )}
-          >
-            Void invoice
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-muted-foreground"
-            disabled={pending}
-            onClick={command(
-              "uncollectible",
-              "Write this invoice off as uncollectible?"
-            )}
-          >
-            Mark uncollectible
-          </Button>
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+        <Button
+          variant="outline"
+          disabled={pending}
+          onClick={() =>
+            startCommand(async () => {
+              const result = await duplicateInvoiceAction(invoiceId)
+              if (result) setFeedback(result)
+            })
+          }
+        >
+          Duplicate as new draft
+        </Button>
+        <Button variant="ghost" onClick={() => window.print()}>
+          <Printer className="size-4" aria-hidden="true" />
+          Print or save PDF
+        </Button>
+        {open ? (
+          <div className="grid gap-2 border-t pt-3">
+            <Button
+              variant="ghost"
+              className="text-destructive"
+              disabled={pending}
+              onClick={command(
+                "void",
+                "Void this invoice? The client will no longer be able to pay it."
+              )}
+            >
+              Void invoice
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-muted-foreground"
+              disabled={pending}
+              onClick={command(
+                "uncollectible",
+                "Write this invoice off as uncollectible?"
+              )}
+            >
+              Mark uncollectible
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    </PortalSection>
   )
 }

@@ -23,7 +23,7 @@ export function PolicyPage({
   return (
     <article className="container-page max-w-3xl pt-16 pb-20 sm:pt-24">
       <JsonLd data={breadcrumbSchema([{ name: title, path }])} />
-      <header className="border-b pb-8">
+      <header className="pb-10">
         <p className="text-meta">Policies</p>
         <h1 className="mt-4 text-h1">{title}</h1>
         <p className="mt-4 text-sm text-muted-foreground">
@@ -31,7 +31,7 @@ export function PolicyPage({
         </p>
         <p className="mt-6 text-lead">{intro}</p>
       </header>
-      <div className="grid gap-10 pt-10">
+      <div className="grid gap-10 border-t pt-10">
         {sections.map((section, index) => (
           <section key={section.title} aria-labelledby={`policy-${index}`}>
             <h2 id={`policy-${index}`} className="text-h3">

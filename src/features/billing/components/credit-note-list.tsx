@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { EmptyState } from "@/components/ui/empty-state"
+
 import type { CreditNoteKind } from "../application/credits"
 import { formatDate, formatMoney } from "../domain/format"
 import type { Currency } from "../domain/schema"
@@ -28,16 +30,15 @@ export function CreditNoteList({
   notes: readonly ListedNote[]
   hrefFor: (invoiceId: string) => string
 }) {
-  if (notes.length === 0)
-    return <p className="text-sm text-muted-foreground">No credit notes yet.</p>
+  if (notes.length === 0) return <EmptyState>No credit notes yet.</EmptyState>
 
   return (
-    <ul className="grid">
+    <ul className="rule-list">
       {notes.map((note) => (
         <li
           key={note.id}
           aria-label={note.number}
-          className="grid gap-1 border-t py-3 text-sm sm:grid-cols-[9rem_1fr_auto] sm:gap-4"
+          className="grid gap-1 py-3 text-sm sm:grid-cols-[9rem_1fr_auto] sm:gap-4"
         >
           <span className="font-medium tabular-nums">{note.number}</span>
           <span className="text-muted-foreground">

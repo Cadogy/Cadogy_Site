@@ -11,6 +11,8 @@ import {
   setCatalogItemArchivedAction,
 } from "@/features/billing/server/engine-actions"
 
+import { EmptyState } from "@/components/ui/empty-state"
+import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Services" }
@@ -26,17 +28,12 @@ export default async function CatalogPage() {
         title="Services"
         description="Your price list. Add a service to any client in one click; the price is copied, so changes here never alter existing clients."
       />
-      <div className="grid gap-12">
-        <section aria-labelledby="catalog-list">
-          <h2 id="catalog-list" className="mb-4 font-semibold">
-            Catalog
-          </h2>
+      <div className="stack-sections">
+        <PortalSection title="Catalog">
           {active.length === 0 ? (
-            <p className="border-t py-6 text-muted-foreground">
-              No services yet. Add your first one below.
-            </p>
+            <EmptyState>No services yet. Add your first one below.</EmptyState>
           ) : (
-            <ul className="divide-y border-y">
+            <ul className="rule-list">
               {active.map((item) => (
                 <li key={item.id} className="grid gap-3 py-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -59,7 +56,7 @@ export default async function CatalogPage() {
                     <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm text-muted-foreground hover:text-foreground">
                       Edit
                     </summary>
-                    <div className="grid gap-4 pt-4">
+                    <div className="grid max-w-2xl gap-4 pt-4">
                       <ActionForm
                         action={saveCatalogItemAction.bind(null, item.id)}
                         submitLabel="Save service"
@@ -85,26 +82,24 @@ export default async function CatalogPage() {
               ))}
             </ul>
           )}
-        </section>
+        </PortalSection>
 
-        <section aria-labelledby="catalog-new" className="border-t pt-8">
-          <h2 id="catalog-new" className="mb-4 font-semibold">
-            Add a service
-          </h2>
+        <PortalSection
+          title="Add a service"
+          description="Clients keep the price they signed up at, even if you change it here later."
+          layout="split"
+        >
           <ActionForm
             action={saveCatalogItemAction.bind(null, null)}
             submitLabel="Add service"
           >
             <CatalogItemFields />
           </ActionForm>
-        </section>
+        </PortalSection>
 
         {archived.length > 0 ? (
-          <section aria-labelledby="catalog-archived" className="border-t pt-8">
-            <h2 id="catalog-archived" className="mb-4 font-semibold">
-              Archived
-            </h2>
-            <ul className="divide-y border-y">
+          <PortalSection title="Archived">
+            <ul className="rule-list">
               {archived.map((item) => (
                 <li
                   key={item.id}
@@ -124,7 +119,7 @@ export default async function CatalogPage() {
                 </li>
               ))}
             </ul>
-          </section>
+          </PortalSection>
         ) : null}
       </div>
     </>

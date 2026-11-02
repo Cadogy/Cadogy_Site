@@ -27,9 +27,10 @@ This repository is the code that runs our own business: the marketing site, the 
 
 We'd rather show how we work than describe it. You'll find the same standards here that we bring to client projects:
 
-- **Tested business logic.** Domain rules are pure functions, written test-first. The suite has nearly 500 tests: more than 200 for billing and another 140 for sign-in and account security.
+- **Tested business logic.** Domain rules are pure functions, written test-first. The suite has more than 500 tests: over 200 for billing and another 140 for sign-in and account security.
 - **Security by default.** Every state-changing request is checked on the server against a named permission. Staff accounts require two-factor authentication. Bot protection fails closed in production.
 - **Money handled carefully.** Amounts are integer minor units. Issued invoices never change: mistakes are corrected with numbered credit notes, and every Stripe event is processed exactly once.
+- **A design system with guard rails.** One set of tokens and building blocks, enforced by tests that name the file and line of anything off-system.
 - **No dead code.** Unused files, exports and dependencies fail CI.
 
 The code is **source-available, not open source**. Read it, learn from it and reference it. To reuse any part of it, [ask us first](#license).
@@ -111,6 +112,17 @@ Sign-in is built on Better Auth with database sessions, so revoking a session or
 | Testing        | Vitest, Testing Library, happy-dom                                        |
 | Hosting        | Vercel (including Vercel Cron)                                            |
 
+## Design system
+
+The site, portal and invoices share one dark "cinematic" design system. Tokens live in `src/styles/globals.css`, and a few rules keep it consistent:
+
+- **Lines, not boxes.** Content is grouped with hairlines and whitespace. Rules sit on top of what they separate, so a block never ends in a line that doubles up with the next section's. Boxes are kept for documents, sticky summaries and chat.
+- **One scale.** Type comes from a fixed scale at weights 400 and 500. Corners come from four radius tokens: pills for controls, then field, panel and media.
+- **Building blocks.** Portal pages are built from `PortalPageHeader`, `PortalSection` (stacked, or two columns for settings and forms), `StatList`, `FilterTabs` and `EmptyState`, and form fields have size presets, so pages don't hand-roll their layout.
+- **Calm motion.** Overlays fade in over 200ms rather than sliding, and all motion respects `prefers-reduced-motion`. The portal sidebar collapses to an icon rail (Ctrl/⌘+B) and remembers the choice.
+
+`src/styles/design-system.test.ts` fails CI on bottom borders, dashed boxes, heavy weights, sizes off the scale, stray radii, shadows, sliding animations, raw hex colors and extra-wide containers, and reports each one by file and line. A second test checks that every new type or radius token is registered with the class-merging helper, so sizes are never silently dropped.
+
 ## Architecture
 
 Code is organized by feature, not by file type. Each feature keeps its rules, orchestration, adapters and UI together:
@@ -148,10 +160,10 @@ A few rules hold everywhere:
 src/
 ├── app/                 routes: (marketing), (account), (portal), api, invoice
 ├── components/          shared UI: layout, media, portal shell, primitives
-├── config/              site facts and HTTP security headers
+├── config/              site facts, theme colors and HTTP security headers
 ├── features/            account, articles, auth, billing, contact, marketing, support, users
 ├── lib/                 auth, database, email, SEO, security helpers
-├── styles/              design tokens and global styles
+├── styles/              design tokens, global styles and the design-system guard
 ├── proxy.ts             request guard (same-origin checks, route protection)
 └── env.ts               validated environment variables
 ```
@@ -177,8 +189,8 @@ We treat security as part of the product, not a final checklist.
 - **Domain first.** Rules like invoice totals, renewal periods, credit notes and permissions are pure functions with focused unit tests.
 - **Services with in-memory doubles.** Application services run against in-memory repositories, a fake clock and fake gateways, so whole workflows (issue, pay, refund, dispute) are tested in milliseconds.
 - **Components through the user's eyes.** UI tests use Testing Library and find things the way people do: by role, label and text.
-- **Guard rails as tests.** One test fails if any Server Action ships without an authorization check. Others check that security headers and cache tiers stay correct.
-- **End-to-end before release.** Larger features are run in a real browser against a throwaway database before they ship.
+- **Guard rails as tests.** One test fails if any Server Action ships without an authorization check. Others check that security headers and cache tiers stay correct, and that UI code stays on the design system.
+- **End-to-end before release.** Larger features are run in a real browser against a throwaway database before they ship, and screenshots at 375, 768, 1024 and 1440 pixels wide confirm there's no sideways scrolling and exactly one `h1` per page.
 
 ## Getting started
 

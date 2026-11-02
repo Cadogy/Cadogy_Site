@@ -12,7 +12,9 @@ export default function NewClientPage() {
         title="Add client"
         description="Billing details used on every invoice."
       />
-      <ClientForm client={null} />
+      <div className="max-w-2xl border-t pt-8">
+        <ClientForm client={null} />
+      </div>
     </>
   )
 }

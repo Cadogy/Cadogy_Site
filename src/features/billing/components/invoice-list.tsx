@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { EmptyState } from "@/components/ui/empty-state"
+
 import { formatDate, formatMoney } from "../domain/format"
 import type { Invoice } from "../domain/invoice"
 import { invoiceBadge } from "../domain/lifecycle"
@@ -18,16 +20,12 @@ export function InvoiceList({
   emptyMessage: string
 }) {
   if (invoices.length === 0) {
-    return (
-      <p className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
-        {emptyMessage}
-      </p>
-    )
+    return <EmptyState>{emptyMessage}</EmptyState>
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border">
-      <div className="hidden grid-cols-[140px_1fr_120px_120px_130px_150px] gap-4 border-b bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground md:grid">
+    <div>
+      <div className="hidden grid-cols-[140px_1fr_120px_120px_130px_150px] gap-4 pb-2 text-meta xl:grid">
         <span>Number</span>
         <span>Client</span>
         <span>Issued</span>
@@ -35,7 +33,7 @@ export function InvoiceList({
         <span className="text-right">Amount due</span>
         <span className="text-right">Status</span>
       </div>
-      <ul className="divide-y">
+      <ul className="rule-list">
         {invoices.map((invoice) => {
           const totals = calculateInvoiceTotals(invoice)
           const client =
@@ -46,26 +44,26 @@ export function InvoiceList({
             <li key={invoice.id}>
               <Link
                 href={hrefFor(invoice)}
-                className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-4 py-4 transition-colors hover:bg-accent/50 md:grid-cols-[140px_1fr_120px_120px_130px_150px] md:items-center"
+                className="-mx-3 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 rounded-field px-3 py-4 transition-colors hover:bg-foreground/5 xl:grid-cols-[140px_1fr_120px_120px_130px_150px] xl:items-center"
               >
                 <span className="font-medium">{invoice.number ?? "Draft"}</span>
-                <span className="justify-self-end md:order-last">
+                <span className="justify-self-end xl:order-last">
                   <StatusBadge status={invoiceBadge(invoice, now)} />
                 </span>
-                <span className="truncate text-sm text-muted-foreground md:text-base md:text-foreground">
+                <span className="truncate text-sm text-muted-foreground xl:text-base xl:text-foreground">
                   {client}
                 </span>
-                <span className="justify-self-end font-medium md:hidden">
+                <span className="justify-self-end font-medium xl:hidden">
                   {formatMoney(totals.amountDue, invoice.currency)}
                 </span>
-                <span className="hidden text-sm text-muted-foreground md:block">
+                <span className="hidden text-sm text-muted-foreground xl:block">
                   {invoice.issueDate ? formatDate(invoice.issueDate) : "—"}
                 </span>
-                <span className="col-span-2 text-sm text-muted-foreground md:col-span-1">
-                  <span className="md:hidden">Due </span>
+                <span className="col-span-2 text-sm text-muted-foreground xl:col-span-1">
+                  <span className="xl:hidden">Due </span>
                   {invoice.dueDate ? formatDate(invoice.dueDate) : "—"}
                 </span>
-                <span className="hidden text-right font-medium md:block">
+                <span className="hidden text-right font-medium xl:block">
                   {formatMoney(totals.amountDue, invoice.currency)}
                 </span>
               </Link>

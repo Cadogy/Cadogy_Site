@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 
+import { themeColors } from "@/config/theme-colors"
 import { reloadOnceForChunkError } from "@/lib/chunk-reload"
 
 export default function GlobalError({
@@ -25,14 +26,14 @@ export default function GlobalError({
         style={{
           fontFamily: "system-ui, sans-serif",
           padding: "4rem 1.5rem",
-          background: "#09090b",
-          color: "#fafafa",
+          background: themeColors.canvas,
+          color: themeColors.ink,
         }}
       >
         <h1 style={{ fontSize: "1.75rem", margin: 0 }}>
           Something went wrong.
         </h1>
-        <p style={{ color: "#a1a1aa" }}>
+        <p style={{ color: themeColors.muted }}>
           Please refresh the page. If the problem continues, email
           hello@cadogy.com.
         </p>

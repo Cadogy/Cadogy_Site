@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { formatDate } from "@/features/billing/domain/format"
 import { InquiryStatusSelect } from "@/features/contact/components/inquiry-status-select"
 import {
@@ -13,7 +12,9 @@ import {
 import { listInquiries } from "@/features/contact/server/admin"
 import { Mail } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import { FilterTabs } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Inquiries" }
@@ -34,39 +35,23 @@ export default async function InquiriesPage({ searchParams }: Props) {
         title="Inquiries"
         description="Project requests from the contact form."
       />
-      <nav
-        aria-label="Filter inquiries"
-        className="-mx-1 mb-4 flex gap-1 overflow-x-auto px-1"
-      >
-        {[undefined, ...INQUIRY_STATUSES].map((value) => (
-          <Link
-            key={value ?? "active"}
-            href={
-              value ? `/admin/inquiries?status=${value}` : "/admin/inquiries"
-            }
-            aria-current={filter === value ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-11 shrink-0 items-center rounded-md px-3 text-sm font-medium capitalize",
-              filter === value
-                ? "bg-accent text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {value ?? "All active"}
-          </Link>
-        ))}
-      </nav>
+      <FilterTabs
+        label="Filter inquiries"
+        items={[undefined, ...INQUIRY_STATUSES].map((value) => ({
+          label: value ? value[0].toUpperCase() + value.slice(1) : "All active",
+          href: value ? `/admin/inquiries?status=${value}` : "/admin/inquiries",
+          active: filter === value,
+        }))}
+      />
       {inquiries.length === 0 ? (
-        <p className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
-          No inquiries here.
-        </p>
+        <EmptyState>No inquiries here.</EmptyState>
       ) : (
-        <ul className="grid gap-4">
+        <ul className="rule-list">
           {inquiries.map((inquiry) => (
-            <li key={inquiry.id} className="rounded-xl border bg-card p-5">
+            <li key={inquiry.id} className="py-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="font-semibold">
+                  <p className="font-medium">
                     {inquiry.name}
                     {inquiry.company ? (
                       <span className="font-normal text-muted-foreground">
@@ -87,13 +72,14 @@ export default async function InquiriesPage({ searchParams }: Props) {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <a
-                    href={`mailto:${inquiry.email}?subject=${encodeURIComponent("Re: your project inquiry")}`}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md border px-3 text-sm font-medium hover:bg-accent"
-                  >
-                    <Mail className="size-4" aria-hidden="true" />
-                    Reply
-                  </a>
+                  <Button asChild variant="outline">
+                    <a
+                      href={`mailto:${inquiry.email}?subject=${encodeURIComponent("Re: your project inquiry")}`}
+                    >
+                      <Mail className="size-4" aria-hidden="true" />
+                      Reply
+                    </a>
+                  </Button>
                   <InquiryStatusSelect
                     id={inquiry.id}
                     status={inquiry.status}

@@ -13,6 +13,7 @@ import {
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Billing settings" }
@@ -40,13 +41,10 @@ export default async function BillingSettingsPage() {
           </ActionButton>
         }
       />
-      <div className="grid gap-12">
-        <section aria-labelledby="last-run">
-          <h2 id="last-run" className="mb-4 font-semibold">
-            Last billing run
-          </h2>
+      <div className="stack-sections">
+        <PortalSection title="Last billing run">
           {lastRun ? (
-            <dl className="grid gap-x-8 gap-y-4 border-t pt-4 sm:grid-cols-3 lg:grid-cols-6">
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-3 lg:grid-cols-6">
               {[
                 [
                   "When",
@@ -59,13 +57,15 @@ export default async function BillingSettingsPage() {
                 ["Reminders", lastRun.remindersSent],
               ].map(([label, value]) => (
                 <div key={label}>
-                  <dt className="text-sm text-muted-foreground">{label}</dt>
-                  <dd className="mt-1 font-medium tabular-nums">{value}</dd>
+                  <dt className="text-meta">{label}</dt>
+                  <dd className="mt-1 text-lg font-medium tabular-nums">
+                    {value}
+                  </dd>
                 </div>
               ))}
             </dl>
           ) : (
-            <p className="border-t pt-4 text-muted-foreground">
+            <p className="text-muted-foreground">
               Billing hasn&apos;t run yet. It runs daily at 14:00 UTC, or use
               “Run billing now”.
             </p>
@@ -80,12 +80,13 @@ export default async function BillingSettingsPage() {
               ))}
             </ul>
           ) : null}
-        </section>
+        </PortalSection>
 
-        <section aria-labelledby="billing-defaults" className="border-t pt-8">
-          <h2 id="billing-defaults" className="mb-4 font-semibold">
-            Defaults
-          </h2>
+        <PortalSection
+          title="Defaults"
+          description="Used for every automatic invoice. Each invoice keeps the values it was issued with."
+          layout="split"
+        >
           <ActionForm
             action={saveBillingSettingsAction}
             submitLabel="Save settings"
@@ -109,6 +110,7 @@ export default async function BillingSettingsPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               <Field
                 id="taxPercent"
+                width="xs"
                 label="Default tax rate (%)"
                 hint="Applied to automatic invoices."
               >
@@ -151,7 +153,7 @@ export default async function BillingSettingsPage() {
               )}
             </Field>
           </ActionForm>
-        </section>
+        </PortalSection>
       </div>
     </>
   )

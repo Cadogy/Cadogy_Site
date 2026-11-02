@@ -24,6 +24,8 @@ import {
 } from "@/features/billing/server/engine-actions"
 import { isStripeConfigured } from "@/features/billing/server/stripe"
 
+import { EmptyState } from "@/components/ui/empty-state"
+import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Billing" }
@@ -87,15 +89,10 @@ export default async function ClientBillingPage({ searchParams }: Props) {
         </p>
       ) : null}
 
-      <div className="grid gap-12">
-        <section aria-labelledby="balance-title">
-          <h2 id="balance-title" className="mb-4 font-semibold">
-            Balance due
-          </h2>
+      <div className="stack-sections">
+        <PortalSection title="Balance due">
           {open.length === 0 ? (
-            <p className="border-t py-6 text-muted-foreground">
-              You&apos;re all paid up.
-            </p>
+            <EmptyState>You&apos;re all paid up.</EmptyState>
           ) : (
             <PayBalance
               invoices={open.map((invoice) => ({
@@ -111,14 +108,11 @@ export default async function ClientBillingPage({ searchParams }: Props) {
               onlinePaymentAvailable={onlinePayment}
             />
           )}
-        </section>
+        </PortalSection>
 
         {services.length > 0 ? (
-          <section aria-labelledby="services-title" className="border-t pt-8">
-            <h2 id="services-title" className="mb-4 font-semibold">
-              Your services
-            </h2>
-            <ul className="divide-y border-y">
+          <PortalSection title="Your services">
+            <ul className="rule-list">
               {services.map((service) => (
                 <li
                   key={service.id}
@@ -151,20 +145,15 @@ export default async function ClientBillingPage({ searchParams }: Props) {
               Need to add or change a service? Open a support request and
               we&apos;ll handle it.
             </p>
-          </section>
+          </PortalSection>
         ) : null}
 
         {onlinePayment && accounts.length > 0 ? (
-          <section aria-labelledby="autopay-title" className="border-t pt-8">
-            <h2 id="autopay-title" className="mb-1 font-semibold">
-              Autopay
-            </h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Save a card and renewals are paid on the invoice date. You still
-              get every invoice and receipt by email, and you can turn it off at
-              any time.
-            </p>
-            <ul className="divide-y border-y">
+          <PortalSection
+            title="Autopay"
+            description="Save a card and renewals are paid on the invoice date. You still get every invoice and receipt by email, and you can turn it off at any time."
+          >
+            <ul className="rule-list">
               {accounts.map((account) => {
                 const saved = account.autopay.card
                 return (
@@ -224,14 +213,11 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                 )
               })}
             </ul>
-          </section>
+          </PortalSection>
         ) : null}
 
         {notes.length > 0 ? (
-          <section aria-labelledby="credit-title" className="border-t pt-8">
-            <h2 id="credit-title" className="mb-1 font-semibold">
-              Credits and refunds
-            </h2>
+          <PortalSection title="Credits and refunds">
             {balances.map(({ account, amount }) => (
               <p
                 key={account.id}
@@ -252,20 +238,17 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                 }
               />
             </div>
-          </section>
+          </PortalSection>
         ) : null}
 
-        <section aria-labelledby="history-title" className="border-t pt-8">
-          <h2 id="history-title" className="mb-4 font-semibold">
-            All invoices
-          </h2>
+        <PortalSection title="All invoices">
           <InvoiceList
             invoices={invoices}
             now={now}
             hrefFor={(invoice) => `/invoice/${invoice.publicToken}`}
             emptyMessage={`No invoices yet. Invoices sent to ${user.email} will appear here.`}
           />
-        </section>
+        </PortalSection>
       </div>
     </>
   )

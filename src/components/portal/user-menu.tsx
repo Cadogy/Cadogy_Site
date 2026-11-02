@@ -28,13 +28,13 @@ const initialsOf = ({ name, email }: MenuUser) => {
 }
 
 const itemClass =
-  "flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm outline-none data-[highlighted]:bg-foreground/[0.06]"
+  "flex min-h-11 cursor-pointer items-center gap-3 rounded-field px-3 text-sm outline-none data-[highlighted]:bg-foreground/6"
 
 function Avatar({ user }: { user: MenuUser }) {
   return (
     <span
       aria-hidden="true"
-      className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/[0.1] text-xs font-medium tracking-wide"
+      className="grid size-9 shrink-0 place-items-center rounded-full bg-foreground/10 text-xs font-medium"
     >
       {initialsOf(user)}
     </span>
@@ -85,7 +85,7 @@ export function UserMenu({
           align="end"
           sideOffset={8}
           collisionPadding={12}
-          className="z-50 w-72 rounded-2xl border bg-popover p-2 text-popover-foreground shadow-lg outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="z-50 w-72 rounded-panel border bg-card p-2 text-card-foreground duration-150 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0"
         >
           <div className="flex items-center gap-3 px-3 py-3">
             <Avatar user={user} />

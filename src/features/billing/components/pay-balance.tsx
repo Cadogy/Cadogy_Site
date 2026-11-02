@@ -59,7 +59,7 @@ export function PayBalance({
 
   return (
     <div className="grid gap-5">
-      <ul className="divide-y border-y">
+      <ul className="rule-list">
         {invoices.map((invoice) => (
           <li key={invoice.id} className="flex items-center gap-3 py-2">
             <label className="flex min-h-11 flex-1 cursor-pointer items-center gap-3">

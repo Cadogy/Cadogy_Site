@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { applyCreditNote, needsOwnerApproval, refundableAmount } from "./credits"
+import {
+  applyCreditNote,
+  needsOwnerApproval,
+  refundableAmount,
+} from "./credits"
 import type { Invoice } from "./invoice"
 import { buildLineItem } from "./test-factories"
 import { calculateInvoiceTotals } from "./totals"
@@ -52,7 +56,11 @@ describe("invoice totals with credit notes", () => {
     const totals = calculateInvoiceTotals(
       invoice({ adjustments: [note("invoice_credit", 2_500)] })
     )
-    expect(totals).toMatchObject({ credited: 2_500, refunded: 0, amountDue: 7_500 })
+    expect(totals).toMatchObject({
+      credited: 2_500,
+      refunded: 0,
+      amountDue: 7_500,
+    })
   })
 
   it("keeps a refunded paid invoice settled", () => {
@@ -63,16 +71,28 @@ describe("invoice totals with credit notes", () => {
         adjustments: [note("refund", 4_000)],
       })
     )
-    expect(totals).toMatchObject({ amountPaid: 10_000, refunded: 4_000, amountDue: 0 })
+    expect(totals).toMatchObject({
+      amountPaid: 10_000,
+      refunded: 4_000,
+      amountDue: 0,
+    })
   })
 })
 
 describe("applyCreditNote", () => {
   it("credits an open invoice and settles it when nothing is left", () => {
-    const partial = applyCreditNote(invoice(), note("invoice_credit", 4_000), actor)
+    const partial = applyCreditNote(
+      invoice(),
+      note("invoice_credit", 4_000),
+      actor
+    )
     expect(partial).toMatchObject({ ok: true, value: { status: "open" } })
 
-    const full = applyCreditNote(invoice(), note("invoice_credit", 10_000), actor)
+    const full = applyCreditNote(
+      invoice(),
+      note("invoice_credit", 10_000),
+      actor
+    )
     expect(full).toMatchObject({ ok: true, value: { status: "paid" } })
     expect(full.ok && full.value.events.map((event) => event.type)).toEqual([
       "credited",
@@ -83,7 +103,10 @@ describe("applyCreditNote", () => {
   it("never credits more than is owed", () => {
     expect(
       applyCreditNote(invoice(), note("invoice_credit", 10_001), actor)
-    ).toEqual({ ok: false, error: "A credit can't be more than the $100.00 still owed." })
+    ).toEqual({
+      ok: false,
+      error: "A credit can't be more than the $100.00 still owed.",
+    })
   })
 
   it("refunds card payments up to what's left to refund", () => {
@@ -101,10 +124,14 @@ describe("applyCreditNote", () => {
   it("only refunds card payments made through Stripe", () => {
     const paidByTransfer = invoice({
       status: "paid",
-      payments: [{ amount: 10_000, method: "bank_transfer", reference: "", paidAt: AT }],
+      payments: [
+        { amount: 10_000, method: "bank_transfer", reference: "", paidAt: AT },
+      ],
     })
     expect(refundableAmount(paidByTransfer)).toBe(0)
-    expect(applyCreditNote(paidByTransfer, note("refund", 100), actor)).toMatchObject({
+    expect(
+      applyCreditNote(paidByTransfer, note("refund", 100), actor)
+    ).toMatchObject({
       ok: false,
     })
   })
@@ -113,7 +140,10 @@ describe("applyCreditNote", () => {
     for (const status of ["draft", "void"] as const)
       expect(
         applyCreditNote(invoice({ status }), note("invoice_credit", 100), actor)
-      ).toEqual({ ok: false, error: "Credit notes only apply to issued invoices." })
+      ).toEqual({
+        ok: false,
+        error: "Credit notes only apply to issued invoices.",
+      })
   })
 })
 

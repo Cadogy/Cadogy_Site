@@ -70,7 +70,7 @@ export default async function CaseStudyPage({ params }: Props) {
         </header>
 
         <div className="px-3 md:px-4">
-          <div className="relative aspect-3/4 overflow-hidden rounded-[20px] bg-card sm:hidden">
+          <div className="relative aspect-3/4 overflow-hidden rounded-media bg-card sm:hidden">
             <Image
               src={study.mobileImage}
               alt={`${study.name} homepage`}
@@ -81,7 +81,7 @@ export default async function CaseStudyPage({ params }: Props) {
               className="object-cover object-left-top"
             />
           </div>
-          <div className="relative hidden aspect-video overflow-hidden rounded-[20px] bg-card sm:block">
+          <div className="relative hidden aspect-video overflow-hidden rounded-media bg-card sm:block">
             <Image
               src={study.image}
               alt={`${study.name} homepage`}
@@ -104,11 +104,11 @@ export default async function CaseStudyPage({ params }: Props) {
               — and what the platform has to guarantee behind the scenes.
             </span>
           </h2>
-          <ul className="mt-12 grid border-t sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4">
             {study.promises.map((promise) => (
               <li
                 key={promise}
-                className="border-b py-6 text-h3 sm:odd:pr-6 sm:even:border-l sm:even:pl-6 lg:border-b-0 lg:border-l lg:px-6 lg:first:border-l-0 lg:first:pl-0"
+                className="border-t py-6 text-h3 sm:odd:pr-6 sm:even:border-l sm:even:pl-6 lg:border-l lg:px-6 lg:first:border-l-0 lg:first:pl-0"
               >
                 {promise}
               </li>
@@ -134,11 +134,11 @@ export default async function CaseStudyPage({ params }: Props) {
             <h2 id="glance-title" className="text-h2">
               At a glance
             </h2>
-            <dl className="mt-12 grid grid-cols-2 border-t sm:grid-cols-3 lg:grid-cols-5">
+            <dl className="mt-12 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
               {study.facts.map((fact) => (
                 <div
                   key={fact.label}
-                  className="flex flex-col-reverse gap-2 border-b py-6 pr-6 lg:border-b-0"
+                  className="flex flex-col-reverse gap-2 border-t py-6 pr-6"
                 >
                   <dt className="text-meta">{fact.label}</dt>
                   <dd className="text-h1 tabular-nums">{fact.value}</dd>
@@ -162,11 +162,11 @@ export default async function CaseStudyPage({ params }: Props) {
                 has to trust the other.
               </p>
             </div>
-            <ol className="grid border-t lg:col-span-8">
+            <ol className="rule-list lg:col-span-8">
               {study.orderFlow.map((step, index) => (
                 <li
                   key={step.title}
-                  className="grid gap-2 border-b py-6 sm:grid-cols-[4rem_12rem_1fr] sm:gap-6"
+                  className="grid gap-2 py-6 sm:grid-cols-[4rem_12rem_1fr] sm:gap-6"
                 >
                   <span className="text-meta tabular-nums" aria-hidden="true">
                     {String(index + 1).padStart(2, "0")}
@@ -196,9 +196,9 @@ export default async function CaseStudyPage({ params }: Props) {
                   {chapter.intro}
                 </p>
               </div>
-              <div className="grid gap-x-10 border-t sm:grid-cols-2 lg:col-span-8">
+              <div className="grid gap-x-10 sm:grid-cols-2 lg:col-span-8">
                 {chapter.points.map((point) => (
-                  <div key={point.title} className="border-b py-6">
+                  <div key={point.title} className="border-t py-6">
                     <h3 className="text-h3">{point.title}</h3>
                     <p className="mt-3 text-pretty text-muted-foreground">
                       {point.body}

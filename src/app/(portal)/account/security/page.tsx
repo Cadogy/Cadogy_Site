@@ -15,33 +15,11 @@ import {
 } from "@/features/account/server/security-actions"
 import { requireSession } from "@/features/auth/server/session"
 
+import { PortalSection } from "@/components/portal/portal-section"
+
 export const metadata: Metadata = { title: "Security" }
 
 type Props = { searchParams: Promise<{ required?: string }> }
-
-function Section({
-  id,
-  title,
-  description,
-  children,
-}: {
-  id: string
-  title: string
-  description: string
-  children: React.ReactNode
-}) {
-  return (
-    <section aria-labelledby={id} className="grid gap-6">
-      <div>
-        <h2 id={id} className="text-h3">
-          {title}
-        </h2>
-        <p className="mt-1 text-meta">{description}</p>
-      </div>
-      {children}
-    </section>
-  )
-}
 
 export default async function AccountSecurityPage({ searchParams }: Props) {
   const user = await requireSession("/account/security")
@@ -57,7 +35,7 @@ export default async function AccountSecurityPage({ searchParams }: Props) {
     factors.passkeys.length === 0
 
   return (
-    <div className="grid gap-14">
+    <div className="stack-sections">
       {needsSecondFactor ? (
         <FormAlert>
           Your role needs two-factor authentication. Turn on an authenticator
@@ -65,32 +43,32 @@ export default async function AccountSecurityPage({ searchParams }: Props) {
         </FormAlert>
       ) : null}
 
-      <Section
-        id="two-factor-title"
+      <PortalSection
+        layout="split"
         title="Two-factor authentication"
         description="A code from your phone, on top of your password."
       >
         <TwoFactorSettings enabled={factors.twoFactorEnabled} />
-      </Section>
+      </PortalSection>
 
-      <Section
-        id="passkeys-title"
+      <PortalSection
+        layout="split"
         title="Passkeys"
         description="Sign in with your fingerprint, face or device PIN. Nothing to type, nothing to phish."
       >
         <PasskeySettings passkeys={factors.passkeys} />
-      </Section>
+      </PortalSection>
 
-      <Section
-        id="password-title"
+      <PortalSection
+        layout="split"
         title="Password"
         description="Choose one you don't use anywhere else."
       >
         <ChangePasswordForm />
-      </Section>
+      </PortalSection>
 
-      <Section
-        id="sessions-title"
+      <PortalSection
+        layout="split"
         title="Where you're signed in"
         description="Sign out any device you don't recognize, then change your password."
       >
@@ -99,10 +77,10 @@ export default async function AccountSecurityPage({ searchParams }: Props) {
           onRevoke={revokeSessionAction}
           onRevokeOthers={revokeOtherSessionsAction}
         />
-      </Section>
+      </PortalSection>
 
-      <Section
-        id="activity-title"
+      <PortalSection
+        layout="split"
         title="Recent activity"
         description="Sign-ins and security changes on your account."
       >
@@ -111,7 +89,7 @@ export default async function AccountSecurityPage({ searchParams }: Props) {
             No activity yet.
           </p>
         ) : (
-          <ul className="divide-y border-y">
+          <ul className="rule-list">
             {activity.map((event) => (
               <li
                 key={event.key}
@@ -128,7 +106,7 @@ export default async function AccountSecurityPage({ searchParams }: Props) {
             ))}
           </ul>
         )}
-      </Section>
+      </PortalSection>
     </div>
   )
 }

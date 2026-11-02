@@ -46,7 +46,7 @@ export function ContactForm({
 
   if (result?.status === "accepted") {
     return (
-      <div role="status" className="rounded-xl border bg-card p-8">
+      <div role="status" className="border-t pt-8">
         <CheckCircle2 className="size-6 text-success" aria-hidden="true" />
         <h2 className="mt-4 text-h3">Thanks — your message is on its way.</h2>
         <p className="mt-2 text-muted-foreground">
@@ -64,7 +64,7 @@ export function ContactForm({
       {formMessage ? (
         <p
           role="alert"
-          className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm"
+          className="rounded-field border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm"
         >
           {formMessage}
         </p>

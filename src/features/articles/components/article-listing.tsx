@@ -6,6 +6,7 @@ import type { WP_Post, WP_Term } from "@/types/wordpress"
 import { breadcrumbSchema, type Crumb } from "@/lib/seo/structured-data"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import { JsonLd } from "@/components/seo/json-ld"
 
@@ -121,14 +122,16 @@ export function ArticleListing({
           ))}
         </div>
       ) : (
-        <div className="mt-12 rounded-xl border border-dashed p-12 text-center">
-          <p className="font-medium">No articles found.</p>
-          <p className="mt-1 text-muted-foreground">
-            Try a different search or browse all articles.
-          </p>
-          <Button asChild variant="outline" className="mt-5">
-            <Link href="/articles">View all articles</Link>
-          </Button>
+        <div className="mt-12">
+          <EmptyState
+            action={
+              <Button asChild variant="outline">
+                <Link href="/articles">View all articles</Link>
+              </Button>
+            }
+          >
+            No articles found. Try a different search or browse all articles.
+          </EmptyState>
         </div>
       )}
 

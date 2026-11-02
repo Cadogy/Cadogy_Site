@@ -8,6 +8,7 @@ import {
 import { requirePermission } from "@/features/auth/server/session"
 
 import { cn } from "@/lib/utils"
+import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Security" }
@@ -21,30 +22,6 @@ const FILTERS = [
 ] as const
 
 type Props = { searchParams: Promise<{ group?: string }> }
-
-function Section({
-  id,
-  title,
-  description,
-  children,
-}: {
-  id: string
-  title: string
-  description: string
-  children: React.ReactNode
-}) {
-  return (
-    <section aria-labelledby={id} className="grid gap-5">
-      <div>
-        <h2 id={id} className="text-h3">
-          {title}
-        </h2>
-        <p className="mt-1 text-meta">{description}</p>
-      </div>
-      {children}
-    </section>
-  )
-}
 
 export default async function SecurityPage({ searchParams }: Props) {
   await requirePermission("security:read", "/admin/security")
@@ -61,13 +38,12 @@ export default async function SecurityPage({ searchParams }: Props) {
         title="Security"
         description="Staff sign-in strength, active lockouts and everything that happened, newest first."
       />
-      <div className="grid gap-14">
-        <Section
-          id="staff-title"
+      <div className="stack-sections">
+        <PortalSection
           title="Staff accounts"
           description="Every owner and admin needs two-factor or a passkey to open the studio."
         >
-          <ul className="divide-y border-y">
+          <ul className="rule-list">
             {staff.map((member) => {
               const protectedAccount = member.twoFactor || member.passkeys > 0
               return (
@@ -100,10 +76,9 @@ export default async function SecurityPage({ searchParams }: Props) {
               )
             })}
           </ul>
-        </Section>
+        </PortalSection>
 
-        <Section
-          id="lockouts-title"
+        <PortalSection
           title="Active lockouts"
           description="Emails with password sign-in paused after 10 failed attempts in 15 minutes."
         >
@@ -112,7 +87,7 @@ export default async function SecurityPage({ searchParams }: Props) {
               No lockouts right now.
             </p>
           ) : (
-            <ul className="divide-y border-y">
+            <ul className="rule-list">
               {lockouts.map((lock) => (
                 <li
                   key={lock._id}
@@ -126,10 +101,9 @@ export default async function SecurityPage({ searchParams }: Props) {
               ))}
             </ul>
           )}
-        </Section>
+        </PortalSection>
 
-        <Section
-          id="log-title"
+        <PortalSection
           title="Security log"
           description="The last 200 events. Kept for a year."
         >
@@ -162,7 +136,7 @@ export default async function SecurityPage({ searchParams }: Props) {
               Nothing logged yet.
             </p>
           ) : (
-            <ul className="divide-y border-y">
+            <ul className="rule-list">
               {log.map((event) => (
                 <li key={event.key} className="grid gap-1 py-3">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4">
@@ -192,7 +166,7 @@ export default async function SecurityPage({ searchParams }: Props) {
               ))}
             </ul>
           )}
-        </Section>
+        </PortalSection>
       </div>
     </>
   )

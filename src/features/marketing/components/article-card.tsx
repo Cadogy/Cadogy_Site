@@ -19,7 +19,7 @@ export function ArticleCard({
   const Heading = headingLevel === 2 ? "h2" : "h3"
   return (
     <article className="group relative flex flex-col">
-      <div className="relative aspect-16/10 overflow-hidden rounded-[20px] bg-card">
+      <div className="relative aspect-16/10 overflow-hidden rounded-media bg-card">
         <Image
           src={featuredImageOf(post)}
           alt=""

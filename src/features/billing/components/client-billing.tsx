@@ -1,6 +1,8 @@
+import { EmptyState } from "@/components/ui/empty-state"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
+import { PortalSection } from "@/components/portal/portal-section"
 
 import type {
   CatalogItem,
@@ -163,16 +165,11 @@ export function ClientBilling({
 
   return (
     <>
-      <section aria-labelledby="client-services">
-        <h2 id="client-services" className="mb-4 font-semibold">
-          Services
-        </h2>
+      <PortalSection title="Services">
         {current.length === 0 ? (
-          <p className="border-t py-6 text-muted-foreground">
-            No services yet.
-          </p>
+          <EmptyState>No services yet.</EmptyState>
         ) : (
-          <ul className="divide-y border-y">
+          <ul className="rule-list">
             {current.map((addOn) => (
               <AddOnRow key={addOn.id} clientId={client.id} addOn={addOn} />
             ))}
@@ -183,7 +180,7 @@ export function ClientBilling({
             <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm text-muted-foreground hover:text-foreground">
               Past services ({past.length})
             </summary>
-            <ul className="divide-y border-y">
+            <ul className="rule-list">
               {past.map((addOn) => (
                 <AddOnRow key={addOn.id} clientId={client.id} addOn={addOn} />
               ))}
@@ -191,7 +188,7 @@ export function ClientBilling({
           </details>
         ) : null}
 
-        <div className="mt-8 grid gap-4">
+        <div className="mt-10 grid max-w-3xl gap-4">
           <h3 className="font-medium">Add a service</h3>
           <ActionForm
             action={addAddOnAction.bind(null, client.id)}
@@ -263,17 +260,16 @@ export function ClientBilling({
             </div>
           </ActionForm>
         </div>
-      </section>
+      </PortalSection>
 
-      <section aria-labelledby="client-pending" className="border-t pt-8">
-        <h2 id="client-pending" className="mb-1 font-semibold">
-          Waiting to be billed
-        </h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          {client.autoBill
+      <PortalSection
+        title="Waiting to be billed"
+        description={
+          client.autoBill
             ? "These go out together on the next automatic invoice. Bill now to send them sooner, or select some to invoice separately."
-            : "Automatic billing is off for this client. Select what to invoice, or bill everything on one invoice."}
-        </p>
+            : "Automatic billing is off for this client. Select what to invoice, or bill everything on one invoice."
+        }
+      >
         <PendingCharges
           charges={pending.map((charge) => ({
             id: charge.id,
@@ -286,7 +282,7 @@ export function ClientBilling({
           onBill={invoiceChargesAction.bind(null, client.id)}
           onRemove={voidChargeAction.bind(null, client.id)}
         />
-        <div className="mt-8 grid gap-4">
+        <div className="mt-10 grid max-w-3xl gap-4">
           <h3 className="font-medium">Add a one-off charge</h3>
           <ActionForm
             action={addChargeAction.bind(null, client.id)}
@@ -313,15 +309,12 @@ export function ClientBilling({
             </div>
           </ActionForm>
         </div>
-      </section>
+      </PortalSection>
 
-      <section aria-labelledby="client-collection" className="border-t pt-8">
-        <h2 id="client-collection" className="mb-4 font-semibold">
-          Collection
-        </h2>
+      <PortalSection title="Collection">
         <dl className="grid gap-6 sm:grid-cols-2">
           <div className="grid gap-2">
-            <dt className="text-sm text-muted-foreground">Invoicing</dt>
+            <dt className="text-meta">Invoicing</dt>
             <dd>
               {client.autoBill
                 ? "Automatic — renewals are invoiced and emailed."
@@ -340,7 +333,7 @@ export function ClientBilling({
             </dd>
           </div>
           <div className="grid gap-2">
-            <dt className="text-sm text-muted-foreground">Autopay</dt>
+            <dt className="text-meta">Autopay</dt>
             <dd>
               {card
                 ? `${client.autopay.enabled ? "On" : "Off"} · ${card.brand} ending ${card.last4}, expires ${card.expMonth}/${card.expYear}`
@@ -359,7 +352,7 @@ export function ClientBilling({
             ) : null}
           </div>
         </dl>
-      </section>
+      </PortalSection>
     </>
   )
 }

@@ -77,7 +77,7 @@ function BackupCodes({
         one signs you in once if you lose your phone. We won&apos;t show them
         again.
       </p>
-      <ul className="grid grid-cols-2 gap-x-6 gap-y-2 border-y py-4 font-mono text-sm">
+      <ul className="grid grid-cols-2 gap-x-6 gap-y-2 border-t pt-4 font-mono text-sm">
         {codes.map((code) => (
           <li key={code}>{code}</li>
         ))}
@@ -259,13 +259,13 @@ export function TwoFactorSettings({ enabled }: { enabled: boolean }) {
               alt="QR code for your authenticator app"
               width={176}
               height={176}
-              className="rounded-xl bg-white p-2"
+              className="rounded-field bg-white p-2"
             />
             <div className="grid gap-1 text-sm">
               <span className="text-muted-foreground">
                 Can&apos;t scan? Enter this key:
               </span>
-              <code className="font-mono tracking-wide">{step.secret}</code>
+              <code className="font-mono">{step.secret}</code>
             </div>
           </div>
           <Field id="two-factor-code" label="Code from your app">

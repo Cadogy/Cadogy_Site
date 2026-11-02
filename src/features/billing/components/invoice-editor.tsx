@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NativeSelect } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
+import { PortalSection } from "@/components/portal/portal-section"
 
 import { formatMoney } from "../domain/format"
 import { CURRENCIES } from "../domain/schema"
@@ -106,15 +107,9 @@ export function InvoiceEditor({
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-      <div className="grid gap-8">
-        <section
-          aria-labelledby="details-title"
-          className="grid gap-5 rounded-xl border bg-card p-5 sm:p-6"
-        >
-          <h2 id="details-title" className="font-semibold">
-            Details
-          </h2>
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-12">
+      <div className="grid gap-12">
+        <PortalSection title="Details">
           <div className="grid gap-5 sm:grid-cols-3">
             <Field id="clientId" label="Client" className="sm:col-span-3">
               {(control) => (
@@ -170,26 +165,20 @@ export function InvoiceEditor({
               )}
             </Field>
           </div>
-        </section>
+        </PortalSection>
 
-        <section
-          aria-labelledby="items-title"
-          className="grid gap-4 rounded-xl border bg-card p-5 sm:p-6"
-        >
-          <h2 id="items-title" className="font-semibold">
-            Line items
-          </h2>
-          <div className="hidden grid-cols-[1fr_90px_140px_44px] gap-3 text-sm text-muted-foreground md:grid">
+        <PortalSection title="Line items">
+          <div className="hidden grid-cols-[1fr_90px_140px_44px] gap-3 pb-3 text-meta md:grid">
             <span>Description</span>
             <span>Qty</span>
             <span>Unit price</span>
             <span className="sr-only">Remove</span>
           </div>
-          <ol className="grid gap-4 md:gap-3">
+          <ol className="grid gap-4 md:gap-3 md:pb-4">
             {state.lineItems.map((line, index) => (
               <li
                 key={line.key}
-                className="grid grid-cols-2 gap-3 rounded-lg border p-3 md:grid-cols-[1fr_90px_140px_44px] md:items-start md:border-0 md:p-0"
+                className="grid grid-cols-2 gap-3 border-t pt-4 md:grid-cols-[1fr_90px_140px_44px] md:items-start md:border-0 md:pt-0"
               >
                 <div className="col-span-2 grid gap-1.5 md:col-span-1">
                   <Label
@@ -254,22 +243,16 @@ export function InvoiceEditor({
           <Button
             type="button"
             variant="outline"
-            className="justify-self-start"
+            className="mt-2"
             onClick={() => update("lineItems", [...state.lineItems, newLine()])}
           >
             <Plus className="size-4" aria-hidden="true" />
             Add line
           </Button>
-        </section>
+        </PortalSection>
 
-        <section
-          aria-labelledby="notes-title"
-          className="grid gap-5 rounded-xl border bg-card p-5 sm:p-6"
-        >
-          <h2 id="notes-title" className="font-semibold">
-            Discount and notes
-          </h2>
-          <div className="grid gap-5 sm:grid-cols-2">
+        <PortalSection title="Discount and notes">
+          <div className="grid max-w-2xl gap-5 sm:grid-cols-2">
             <Field id="discountType" label="Discount">
               {(control) => (
                 <NativeSelect
@@ -351,12 +334,12 @@ export function InvoiceEditor({
               />
             )}
           </Field>
-        </section>
+        </PortalSection>
       </div>
 
       <aside className="lg:sticky lg:top-6 lg:self-start">
-        <div className="grid gap-4 rounded-xl border bg-card p-5">
-          <h2 className="font-semibold">Summary</h2>
+        <div className="grid gap-4 panel">
+          <h2 className="text-lg font-medium">Summary</h2>
           {totals ? (
             <dl className="grid gap-2 text-sm">
               <div className="flex justify-between">
@@ -371,7 +354,7 @@ export function InvoiceEditor({
                 <dt className="text-muted-foreground">Tax</dt>
                 <dd>{money(totals.tax)}</dd>
               </div>
-              <div className="flex justify-between border-t pt-2 text-base font-semibold">
+              <div className="flex justify-between border-t pt-2 text-base font-medium">
                 <dt>Total</dt>
                 <dd>{money(totals.total)}</dd>
               </div>

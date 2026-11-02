@@ -40,7 +40,7 @@ export function NewTicketForm() {
   return (
     <form
       onSubmit={submitWith(dispatch)}
-      className="grid gap-5 rounded-xl border bg-card p-5 sm:p-6"
+      className="grid max-w-2xl gap-5 border-t pt-8"
     >
       {state && !state.ok ? (
         <p role="alert" className="text-sm text-destructive">

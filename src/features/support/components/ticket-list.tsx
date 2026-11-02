@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { formatDate } from "@/features/billing/domain/format"
 
+import { EmptyState } from "@/components/ui/empty-state"
+
 import type { SupportTicket } from "../application/support-service"
 import { TicketStatusBadge } from "./ticket-status-badge"
 
@@ -16,11 +18,7 @@ export function TicketList({
   viewer: "client" | "admin"
 }) {
   if (tickets.length === 0) {
-    return (
-      <p className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">
-        {emptyMessage}
-      </p>
-    )
+    return <EmptyState>{emptyMessage}</EmptyState>
   }
 
   const waitingLabel = (ticket: SupportTicket) => {
@@ -31,12 +29,12 @@ export function TicketList({
   }
 
   return (
-    <ul className="divide-y overflow-hidden rounded-xl border">
+    <ul className="rule-list">
       {tickets.map((ticket) => (
         <li key={ticket.id}>
           <Link
             href={`${basePath}/${ticket.id}`}
-            className="flex flex-col gap-2 px-4 py-4 transition-colors hover:bg-accent/50 sm:flex-row sm:items-center sm:justify-between"
+            className="-mx-3 flex flex-col gap-2 rounded-field px-3 py-4 transition-colors hover:bg-foreground/5 sm:flex-row sm:items-center sm:justify-between"
           >
             <span className="min-w-0">
               <span className="block truncate font-medium">

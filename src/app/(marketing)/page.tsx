@@ -80,7 +80,7 @@ export default async function HomePage() {
         </h1>
         <div className="lg:col-span-4 lg:pb-3">
           <p className="text-lead">{hero.lead}</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Button asChild size="lg">
               <Link href={hero.primaryCta.href}>{hero.primaryCta.label}</Link>
             </Button>

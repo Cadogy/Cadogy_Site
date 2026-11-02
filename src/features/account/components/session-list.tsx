@@ -31,7 +31,7 @@ export function SessionList({
 
   return (
     <div className="grid gap-4">
-      <ul className="divide-y border-y">
+      <ul className="rule-list">
         {sessions.map((session) => (
           <li
             key={session.id}

@@ -9,6 +9,8 @@ import {
   setTeamContactRoleAction,
 } from "@/features/billing/server/team-actions"
 
+import { EmptyState } from "@/components/ui/empty-state"
+import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Team" }
@@ -24,21 +26,17 @@ export default async function TeamPage() {
         description="Who at your company can see invoices, pay them and manage billing."
       />
       {accounts.length === 0 ? (
-        <p className="border-t pt-6 text-muted-foreground">
+        <EmptyState>
           You&apos;re not on a billing account yet. When we send you an invoice,
           or someone on your team invites you, it will appear here.
-        </p>
+        </EmptyState>
       ) : (
-        <div className="grid gap-14">
+        <div className="stack-sections">
           {accounts.map((account) => (
-            <section
+            <PortalSection
               key={account.id}
-              aria-labelledby={`team-${account.id}`}
-              className="grid gap-6"
+              title={account.company || account.name}
             >
-              <h2 id={`team-${account.id}`} className="text-h3">
-                {account.company || account.name}
-              </h2>
               <ContactsManager
                 primary={{ email: account.email, name: account.name }}
                 contacts={account.contacts}
@@ -50,7 +48,7 @@ export default async function TeamPage() {
                 onRoleChange={setTeamContactRoleAction.bind(null, account.id)}
                 onRemove={removeTeamContactAction.bind(null, account.id)}
               />
-            </section>
+            </PortalSection>
           ))}
         </div>
       )}

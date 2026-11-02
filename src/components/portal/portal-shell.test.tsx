@@ -12,11 +12,12 @@ vi.mock("@/features/auth/client", () => ({ authClient: { signOut: vi.fn() } }))
 
 const { PortalShell } = await import("./portal-shell")
 
-const renderShell = () =>
+const renderShell = ({ sidebarCollapsed = false } = {}) =>
   render(
     <PortalShell
       groups={portalNavigation("admin")}
       user={{ name: "Dylan", email: "dylan@example.com", role: "admin" }}
+      sidebarCollapsed={sidebarCollapsed}
     >
       <h1>Invoices</h1>
     </PortalShell>
@@ -56,5 +57,40 @@ describe("PortalShell", () => {
       "href",
       "/account"
     )
+  })
+
+  it("collapses the sidebar to icons, keeps every link named and remembers the choice", async () => {
+    const user = userEvent.setup()
+    renderShell()
+
+    await user.click(screen.getByRole("button", { name: "Collapse sidebar" }))
+
+    expect(
+      screen.getByRole("button", { name: "Expand sidebar" })
+    ).toHaveAttribute("aria-expanded", "false")
+    const sidebar = screen.getByRole("navigation", { name: "Portal" })
+    expect(
+      within(sidebar).getByRole("link", { name: "Invoices" })
+    ).toHaveAttribute("aria-current", "page")
+    expect(document.cookie).toContain("portal-sidebar=collapsed")
+  })
+
+  it("starts collapsed when the person collapsed it last time", () => {
+    renderShell({ sidebarCollapsed: true })
+
+    expect(
+      screen.getByRole("button", { name: "Expand sidebar" })
+    ).toBeInTheDocument()
+  })
+
+  it("toggles the sidebar with Ctrl+B", async () => {
+    const user = userEvent.setup()
+    renderShell()
+
+    await user.keyboard("{Control>}b{/Control}")
+
+    expect(
+      screen.getByRole("button", { name: "Expand sidebar" })
+    ).toBeInTheDocument()
   })
 })

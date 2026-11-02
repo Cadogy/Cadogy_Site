@@ -55,4 +55,9 @@ describe("portalNavigation", () => {
       .map((item) => item.href)
     expect(exact).toEqual(["/admin", "/dashboard"])
   })
+
+  it("gives every destination an icon for the collapsed sidebar", () => {
+    const items = portalNavigation("owner").flatMap((group) => group.items)
+    expect(items.every((item) => item.icon)).toBe(true)
+  })
 })

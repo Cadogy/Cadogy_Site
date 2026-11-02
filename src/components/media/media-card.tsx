@@ -27,7 +27,7 @@ export function MediaCard({
     <article className="group relative flex flex-col">
       <div
         className={cn(
-          "relative overflow-hidden rounded-[20px] bg-card",
+          "relative overflow-hidden rounded-media bg-card",
           aspect === "portrait" ? "aspect-4/5" : "aspect-16/10"
         )}
       >

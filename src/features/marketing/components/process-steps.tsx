@@ -2,13 +2,13 @@ import { processSteps } from "../content"
 
 export function ProcessSteps() {
   return (
-    <ol className="grid border-t lg:grid-cols-3">
+    <ol className="grid lg:grid-cols-3">
       {processSteps.map((step, index) => (
         <li
           key={step.title}
-          className="border-b py-10 lg:border-b-0 lg:border-l lg:px-8 lg:py-12 lg:first:border-l-0 lg:first:pl-0"
+          className="border-t py-10 lg:border-l lg:px-8 lg:py-12 lg:first:border-l-0 lg:first:pl-0"
         >
-          <span className="font-serif text-5xl text-muted-foreground italic">
+          <span className="font-serif text-h1 font-normal text-muted-foreground italic">
             {index + 1}
           </span>
           <h3 className="mt-8 text-h3">{step.title}</h3>

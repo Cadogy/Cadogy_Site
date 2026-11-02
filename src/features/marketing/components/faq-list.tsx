@@ -4,9 +4,9 @@ import { faqs } from "../content"
 
 export function FaqList() {
   return (
-    <div className="border-t">
+    <div className="rule-list">
       {faqs.map((faq) => (
-        <details key={faq.question} className="group border-b">
+        <details key={faq.question} className="group">
           <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-5 text-left text-h3 [&::-webkit-details-marker]:hidden">
             <h3 className="text-h3">{faq.question}</h3>
             <Plus

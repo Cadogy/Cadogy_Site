@@ -14,6 +14,7 @@ import { billing, credits } from "@/features/billing/server/billing"
 import { adjustInvoiceAction } from "@/features/billing/server/credit-actions"
 
 import { absoluteUrl } from "@/config/site"
+import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Invoice" }
@@ -85,13 +86,14 @@ export default async function AdminInvoicePage({ params }: Props) {
         title={`Invoice ${invoice.number}`}
         description={client ? `${client.company || client.name}` : undefined}
       />
-      <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_320px]">
         <InvoiceDocument
           invoice={invoice}
           client={snapshot}
           status={invoiceBadge(invoice, new Date())}
+          headingLevel={2}
         />
-        <div className="grid content-start gap-6">
+        <div className="grid content-start gap-10">
           <InvoiceActions
             invoiceId={invoice.id}
             status={invoice.status}
@@ -102,28 +104,16 @@ export default async function AdminInvoicePage({ params }: Props) {
             }
           />
           {issued && (refundable > 0 || owed > 0) ? (
-            <section
-              aria-labelledby="credit-title"
-              className="print-hidden rounded-xl border bg-card p-5"
-            >
-              <h2 id="credit-title" className="mb-4 font-semibold">
-                Refund or credit
-              </h2>
+            <PortalSection title="Refund or credit" className="print-hidden">
               <CreditNoteForm
                 refundable={asInput(refundable)}
                 owed={invoice.status === "open" ? asInput(owed) : null}
                 onSubmit={adjustInvoiceAction.bind(null, invoice.id)}
               />
-            </section>
+            </PortalSection>
           ) : null}
-          <section
-            aria-labelledby="history-title"
-            className="print-hidden rounded-xl border bg-card p-5"
-          >
-            <h2 id="history-title" className="font-semibold">
-              History
-            </h2>
-            <ol className="mt-3 grid gap-3 text-sm">
+          <PortalSection title="History" className="print-hidden">
+            <ol className="grid gap-3 text-sm">
               {[...invoice.events].reverse().map((event, index) => (
                 <li
                   key={`${event.type}-${event.at.toISOString()}-${index}`}
@@ -139,19 +129,18 @@ export default async function AdminInvoicePage({ params }: Props) {
                 </li>
               ))}
             </ol>
-          </section>
+          </PortalSection>
           {invoice.internalNotes ? (
-            <section className="print-hidden rounded-xl border bg-card p-5 text-sm">
-              <h2 className="font-semibold">Internal notes</h2>
-              <p className="mt-2 whitespace-pre-line text-muted-foreground">
+            <PortalSection title="Internal notes" className="print-hidden">
+              <p className="text-sm whitespace-pre-line text-muted-foreground">
                 {invoice.internalNotes}
               </p>
-            </section>
+            </PortalSection>
           ) : null}
           {client ? (
             <Link
               href={`/admin/billing/clients/${client.id}`}
-              className="print-hidden text-sm text-muted-foreground underline-offset-4 hover:underline"
+              className="print-hidden inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:underline"
             >
               View client
             </Link>

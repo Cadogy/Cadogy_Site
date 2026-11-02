@@ -12,6 +12,12 @@ import { labelFor, PROJECT_TYPES } from "@/features/contact/domain/schema"
 import { listInquiries } from "@/features/contact/server/admin"
 
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
+import {
+  PortalSection,
+  SectionLink,
+  StatList,
+} from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Admin" }
@@ -46,37 +52,26 @@ export default async function AdminOverviewPage() {
           </Button>
         }
       />
-      <dl className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-card p-5">
-          <dt className="text-sm text-muted-foreground">Outstanding</dt>
-          <dd className="mt-1 text-xl font-semibold">
-            {formatAmountsByCurrency(summary.outstanding)}
-          </dd>
-        </div>
-        <div className="rounded-xl border bg-card p-5">
-          <dt className="text-sm text-muted-foreground">Overdue</dt>
-          <dd className="mt-1 text-xl font-semibold">
-            {formatAmountsByCurrency(summary.overdue)}
-          </dd>
-        </div>
-        <div className="rounded-xl border bg-card p-5">
-          <dt className="text-sm text-muted-foreground">Paid, last 30 days</dt>
-          <dd className="mt-1 text-xl font-semibold">
-            {formatAmountsByCurrency(summary.paidLast30Days)}
-          </dd>
-        </div>
-        <div className="rounded-xl border bg-card p-5">
-          <dt className="text-sm text-muted-foreground">
-            Monthly recurring revenue
-          </dt>
-          <dd className="mt-1 text-xl font-semibold">
-            {formatAmountsByCurrency(mrr)}
-          </dd>
-        </div>
-      </dl>
+      <StatList
+        stats={[
+          {
+            label: "Outstanding",
+            value: formatAmountsByCurrency(summary.outstanding),
+          },
+          { label: "Overdue", value: formatAmountsByCurrency(summary.overdue) },
+          {
+            label: "Paid, last 30 days",
+            value: formatAmountsByCurrency(summary.paidLast30Days),
+          },
+          {
+            label: "Monthly recurring revenue",
+            value: formatAmountsByCurrency(mrr),
+          },
+        ]}
+      />
 
       {lastRun ? (
-        <p className="-mt-6 mb-10 text-sm text-muted-foreground">
+        <p className="mt-6 text-sm text-muted-foreground">
           Last billing run {formatDate(lastRun.at)}: {lastRun.invoicesIssued}{" "}
           invoices issued, {lastRun.autopayCollected} paid by autopay
           {lastRun.autopayFailed > 0 ? (
@@ -96,49 +91,38 @@ export default async function AdminOverviewPage() {
         </p>
       ) : null}
 
-      <div className="grid gap-10 xl:grid-cols-[1.5fr_1fr]">
-        <section aria-labelledby="overdue-title">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 id="overdue-title" className="font-semibold">
-              Needs attention
-            </h2>
-            <Link
-              href="/admin/billing/invoices?status=overdue"
-              className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"
-            >
+      <div className="mt-12 grid gap-x-12 gap-y-12 xl:grid-cols-[1.5fr_1fr]">
+        <PortalSection
+          title="Needs attention"
+          actions={
+            <SectionLink href="/admin/billing/invoices?status=overdue">
               All overdue
-            </Link>
-          </div>
+            </SectionLink>
+          }
+        >
           <InvoiceList
             invoices={overdue.slice(0, 6)}
             now={now}
             hrefFor={(invoice) => `/admin/billing/invoices/${invoice.id}`}
             emptyMessage="Nothing overdue."
           />
-        </section>
-        <section aria-labelledby="renewals-title" className="xl:order-last">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 id="renewals-title" className="font-semibold">
-              Renewing in the next 14 days
-            </h2>
-            <Link
-              href="/admin/billing/catalog"
-              className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              Services
-            </Link>
-          </div>
+        </PortalSection>
+        <PortalSection
+          title="Renewing in the next 14 days"
+          className="xl:order-last"
+          actions={
+            <SectionLink href="/admin/billing/catalog">Services</SectionLink>
+          }
+        >
           {renewals.length === 0 ? (
-            <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-              No renewals coming up.
-            </p>
+            <EmptyState>No renewals coming up.</EmptyState>
           ) : (
-            <ul className="divide-y overflow-hidden rounded-xl border">
+            <ul className="rule-list">
               {renewals.slice(0, 8).map((addOn) => (
                 <li key={addOn.id}>
                   <Link
                     href={`/admin/billing/clients/${addOn.clientId}`}
-                    className="flex flex-wrap items-baseline justify-between gap-x-4 px-4 py-3 hover:bg-accent/50"
+                    className="flex flex-wrap items-baseline justify-between gap-x-4 py-3 transition-colors hover:text-foreground"
                   >
                     <span>
                       <span className="font-medium">
@@ -159,27 +143,19 @@ export default async function AdminOverviewPage() {
               ))}
             </ul>
           )}
-        </section>
-        <section aria-labelledby="inquiries-title">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 id="inquiries-title" className="font-semibold">
-              New inquiries
-            </h2>
-            <Link
-              href="/admin/inquiries"
-              className="inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground"
-            >
-              All inquiries
-            </Link>
-          </div>
+        </PortalSection>
+        <PortalSection
+          title="New inquiries"
+          actions={
+            <SectionLink href="/admin/inquiries">All inquiries</SectionLink>
+          }
+        >
           {inquiries.length === 0 ? (
-            <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
-              No new inquiries.
-            </p>
+            <EmptyState>No new inquiries.</EmptyState>
           ) : (
-            <ul className="divide-y overflow-hidden rounded-xl border">
+            <ul className="rule-list">
               {inquiries.slice(0, 6).map((inquiry) => (
-                <li key={inquiry.id} className="px-4 py-3">
+                <li key={inquiry.id} className="py-3">
                   <p className="font-medium">
                     {inquiry.company || inquiry.name}
                   </p>
@@ -191,7 +167,7 @@ export default async function AdminOverviewPage() {
               ))}
             </ul>
           )}
-        </section>
+        </PortalSection>
       </div>
     </>
   )
