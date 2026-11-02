@@ -23,6 +23,7 @@ import {
   recordPaymentAction,
   type ActionState,
 } from "../server/actions"
+import { applyBalanceAction } from "../server/credit-actions"
 import { resendInvoiceAction } from "../server/team-actions"
 
 const METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
@@ -30,6 +31,7 @@ const METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
   bank_transfer: "Bank transfer",
   check: "Check",
   cash: "Cash",
+  credit: "Credit balance",
   other: "Other",
 }
 
@@ -95,11 +97,13 @@ function RecordPaymentDialog({
                 name="method"
                 defaultValue="bank_transfer"
               >
-                {PAYMENT_METHODS.map((method) => (
-                  <option key={method} value={method}>
-                    {METHOD_LABELS[method]}
-                  </option>
-                ))}
+                {PAYMENT_METHODS.filter((method) => method !== "credit").map(
+                  (method) => (
+                    <option key={method} value={method}>
+                      {METHOD_LABELS[method]}
+                    </option>
+                  )
+                )}
               </NativeSelect>
             )}
           </Field>
@@ -140,11 +144,13 @@ export function InvoiceActions({
   status,
   publicUrl,
   amountDue,
+  creditBalance,
 }: {
   invoiceId: string
   status: InvoiceStatus
   publicUrl: string
   amountDue: string
+  creditBalance: string | null
 }) {
   const [feedback, setFeedback] = useState<ActionState>(null)
   const [pending, startCommand] = useTransition()
@@ -202,6 +208,19 @@ export function InvoiceActions({
           >
             Send reminder
           </Button>
+          {creditBalance ? (
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() =>
+                startCommand(async () =>
+                  setFeedback(await applyBalanceAction(invoiceId))
+                )
+              }
+            >
+              Apply credit balance ({creditBalance})
+            </Button>
+          ) : null}
           <RecordPaymentDialog invoiceId={invoiceId} amountDue={amountDue} />
         </>
       ) : null}

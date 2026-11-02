@@ -12,6 +12,7 @@ export const PERMISSIONS = [
   "portal:self",
   "billing:read",
   "billing:write",
+  "billing:approve-credits",
   "support:read",
   "support:write",
   "inquiries:read",

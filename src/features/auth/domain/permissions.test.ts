@@ -22,6 +22,7 @@ const STAFF_ONLY: readonly Permission[] = [
 ]
 
 const OWNER_ONLY: readonly Permission[] = [
+  "billing:approve-credits",
   "users:assign-roles",
   "security:read",
   "security:impersonate",

@@ -18,6 +18,10 @@ export const INVOICE_EVENT_TYPES = [
   "paid",
   "voided",
   "marked_uncollectible",
+  "credited",
+  "refunded",
+  "disputed",
+  "dispute_closed",
 ] as const
 
 type InvoiceEventType = (typeof INVOICE_EVENT_TYPES)[number]
@@ -27,6 +31,13 @@ export type InvoiceEvent = {
   readonly at: Date
   readonly actorId?: string
   readonly detail?: string
+}
+
+export type InvoiceAdjustment = {
+  readonly creditNoteId: string
+  readonly number: string
+  readonly kind: "refund" | "invoice_credit"
+  readonly amount: number
 }
 
 export type ClientSnapshot = {
@@ -54,11 +65,19 @@ export type Invoice = {
   readonly footer: string
   readonly internalNotes: string
   readonly payments: readonly Payment[]
+  readonly adjustments: readonly InvoiceAdjustment[]
   readonly events: readonly InvoiceEvent[]
   readonly publicToken: string
 }
 
 export type DisplayStatus = InvoiceStatus | "overdue"
+
+export type InvoiceBadge =
+  | DisplayStatus
+  | "refunded"
+  | "partially_refunded"
+  | "settled_by_credit"
+  | "disputed"
 
 export type Result<T> =
   | { readonly ok: true; readonly value: T }

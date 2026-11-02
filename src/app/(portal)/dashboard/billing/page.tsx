@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
+import { requireSession } from "@/features/auth/server/session"
 import { ActionButton } from "@/features/billing/components/action-controls"
+import { CreditNoteList } from "@/features/billing/components/credit-note-list"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
 import { PayBalance } from "@/features/billing/components/pay-balance"
 import {
@@ -9,7 +11,11 @@ import {
 } from "@/features/billing/domain/format"
 import { displayStatus } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
-import { billing, billingEngine } from "@/features/billing/server/billing"
+import {
+  billing,
+  billingEngine,
+  credits,
+} from "@/features/billing/server/billing"
 import {
   payInvoicesAction,
   removePortalCardAction,
@@ -18,7 +24,6 @@ import {
 } from "@/features/billing/server/engine-actions"
 import { isStripeConfigured } from "@/features/billing/server/stripe"
 
-import { requireSession } from "@/features/auth/server/session"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Billing" }
@@ -41,6 +46,20 @@ export default async function ClientBillingPage({ searchParams }: Props) {
     .flat()
     .filter((addOn) => addOn.status === "active")
   const open = invoices.filter((invoice) => invoice.status === "open")
+  const [notes, balances] = await Promise.all([
+    Promise.all(
+      accounts.map((account) => credits.notesFor({ clientId: account.id }))
+    ).then((lists) => lists.flat()),
+    Promise.all(
+      accounts.map(async (account) => ({
+        account,
+        amount: await credits.balanceFor(account.id, account.currency),
+      }))
+    ).then((list) => list.filter((balance) => balance.amount > 0)),
+  ])
+  const tokens = new Map(
+    invoices.map((invoice) => [invoice.id, invoice.publicToken])
+  )
   const onlinePayment = isStripeConfigured()
 
   return (
@@ -205,6 +224,34 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                 )
               })}
             </ul>
+          </section>
+        ) : null}
+
+        {notes.length > 0 ? (
+          <section aria-labelledby="credit-title" className="border-t pt-8">
+            <h2 id="credit-title" className="mb-1 font-semibold">
+              Credits and refunds
+            </h2>
+            {balances.map(({ account, amount }) => (
+              <p
+                key={account.id}
+                className="mb-1 text-sm text-muted-foreground"
+              >
+                {accounts.length > 1
+                  ? `${account.company || account.name}: `
+                  : ""}
+                {formatMoney(amount, account.currency)} of credit, used on your
+                next invoice before any card is charged.
+              </p>
+            ))}
+            <div className="mt-4">
+              <CreditNoteList
+                notes={notes}
+                hrefFor={(invoiceId) =>
+                  `/invoice/${tokens.get(invoiceId) ?? ""}`
+                }
+              />
+            </div>
           </section>
         ) : null}
 

@@ -32,6 +32,7 @@ type Dependencies = {
   readonly repository: EngineRepository
   readonly gateway: PaymentGateway
   readonly clock: () => Date
+  readonly applyCredit?: (invoiceId: string) => Promise<unknown>
 }
 
 const SYSTEM = "system"
@@ -107,7 +108,16 @@ export const createBillingEngine = ({
   repository,
   gateway,
   clock,
+  applyCredit,
 }: Dependencies) => {
+  const creditFirst = async (
+    invoice: Invoice,
+    apply: (invoiceId: string) => Promise<unknown>
+  ) => {
+    await apply(invoice.id)
+    return (await billing.getInvoice(invoice.id)) ?? invoice
+  }
+
   const createCatalogItem = async (
     input: unknown
   ): Promise<Result<CatalogItem>> => {
@@ -301,6 +311,9 @@ export const createBillingEngine = ({
         if (!draft.ok) return draft
         const invoice = await billing.issue(draft.value.id, actorId)
         if (!invoice.ok) return invoice
+        const settled = applyCredit
+          ? await creditFirst(invoice.value, applyCredit)
+          : invoice.value
         await Promise.all(
           selected
             .filter((charge) => group.chargeIds.includes(charge.id))
@@ -312,7 +325,7 @@ export const createBillingEngine = ({
               })
             )
         )
-        return ok([...acc.value, invoice.value])
+        return ok([...acc.value, settled])
       },
       Promise.resolve(ok([]))
     )
@@ -367,6 +380,7 @@ export const createBillingEngine = ({
       invoiceId: invoice.id,
       amount: owed,
       eventId: `autopay:${result.paymentId}`,
+      paymentIntentId: result.paymentId,
       paidAt: clock(),
     })
     return "collected" as const
@@ -468,6 +482,7 @@ export const createBillingEngine = ({
     readonly amount: number
     readonly eventId: string
     readonly paidAt: Date
+    readonly paymentIntentId?: string
   }): Promise<
     Result<{
       allocations: { invoiceId: string; amount: number }[]
@@ -487,6 +502,7 @@ export const createBillingEngine = ({
           invoiceId: entry.invoiceId,
           amount: entry.amount,
           eventId: `${payment.eventId}:${entry.invoiceId}`,
+          paymentIntentId: payment.paymentIntentId,
           paidAt: payment.paidAt,
         })
       )

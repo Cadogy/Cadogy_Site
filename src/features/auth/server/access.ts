@@ -6,7 +6,7 @@ import type { Permission } from "../domain/permissions"
 const statement = {
   ...defaultStatements,
   portal: ["self"],
-  billing: ["read", "write"],
+  billing: ["read", "write", "approve-credits"],
   support: ["read", "write"],
   inquiries: ["read", "write"],
   security: ["read"],
@@ -22,6 +22,7 @@ const REQUESTS: Record<Permission, Request> = {
   "portal:self": { portal: ["self"] },
   "billing:read": { billing: ["read"] },
   "billing:write": { billing: ["write"] },
+  "billing:approve-credits": { billing: ["approve-credits"] },
   "support:read": { support: ["read"] },
   "support:write": { support: ["write"] },
   "inquiries:read": { inquiries: ["read"] },
@@ -45,6 +46,7 @@ const studio = {
 export const authRoles = {
   owner: accessControl.newRole({
     ...studio,
+    billing: ["read", "write", "approve-credits"],
     security: ["read"],
     user: [
       "create",

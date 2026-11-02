@@ -4,6 +4,7 @@ import {
   type ClientSnapshot,
   type DisplayStatus,
   type Invoice,
+  type InvoiceBadge,
   type InvoiceEvent,
   type Result,
 } from "./invoice"
@@ -162,3 +163,36 @@ const isOverdue = (invoice: Invoice, now: Date) =>
 
 export const displayStatus = (invoice: Invoice, now: Date): DisplayStatus =>
   isOverdue(invoice, now) ? "overdue" : invoice.status
+
+const total = (amounts: readonly number[]) =>
+  amounts.reduce((sum, amount) => sum + amount, 0)
+
+const hasOpenDispute = (invoice: Invoice) =>
+  invoice.events.filter((event) => event.type === "disputed").length >
+  invoice.events.filter((event) => event.type === "dispute_closed").length
+
+const paidBadge = (invoice: Invoice): InvoiceBadge => {
+  const received = total(
+    invoice.payments
+      .filter((payment) => payment.method !== "credit")
+      .map((payment) => payment.amount)
+  )
+  const refunded = total(
+    invoice.adjustments
+      .filter((adjustment) => adjustment.kind === "refund")
+      .map((adjustment) => adjustment.amount)
+  )
+  const byCredit =
+    invoice.adjustments.length > 0 ||
+    invoice.payments.some((payment) => payment.method === "credit")
+  if (received === 0) return byCredit ? "settled_by_credit" : "paid"
+  if (refunded >= received) return "refunded"
+  if (refunded > 0) return "partially_refunded"
+  return "paid"
+}
+
+export const invoiceBadge = (invoice: Invoice, now: Date): InvoiceBadge => {
+  if (hasOpenDispute(invoice)) return "disputed"
+  if (invoice.status === "paid") return paidBadge(invoice)
+  return displayStatus(invoice, now)
+}

@@ -176,7 +176,7 @@ CI runs `verify` plus a production build on every pull request and every push to
 The site runs on Vercel.
 
 1. **Environment variables.** Set the variables above in your Vercel project.
-2. **Stripe webhook.** Add an endpoint at `https://<your-domain>/api/webhooks/stripe` for the `checkout.session.completed` event, and copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
+2. **Stripe webhook.** Add an endpoint at `https://<your-domain>/api/webhooks/stripe` for the `checkout.session.completed`, `refund.created`, `charge.dispute.created` and `charge.dispute.closed` events, and copy its signing secret into `STRIPE_WEBHOOK_SECRET`.
 3. **Billing run.** Set `CRON_SECRET`. Vercel Cron then calls `/api/cron/billing` every day at 14:00 UTC, as defined in `vercel.json`. Admins can also start a run from **Billing settings**.
 
 ## Contributing

@@ -1,14 +1,17 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { CreditNoteForm } from "@/features/billing/components/credit-note-form"
 import { draftFromInvoice } from "@/features/billing/components/editor-model"
 import { InvoiceActions } from "@/features/billing/components/invoice-actions"
 import { InvoiceDocument } from "@/features/billing/components/invoice-document"
 import { InvoiceEditor } from "@/features/billing/components/invoice-editor"
-import { formatDate } from "@/features/billing/domain/format"
-import { displayStatus } from "@/features/billing/domain/lifecycle"
+import { refundableAmount } from "@/features/billing/domain/credits"
+import { formatDate, formatMoney } from "@/features/billing/domain/format"
+import { invoiceBadge } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
-import { billing } from "@/features/billing/server/billing"
+import { billing, credits } from "@/features/billing/server/billing"
+import { adjustInvoiceAction } from "@/features/billing/server/credit-actions"
 
 import { absoluteUrl } from "@/config/site"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
@@ -28,7 +31,14 @@ const EVENT_LABELS: Record<string, string> = {
   paid: "Paid in full",
   voided: "Voided",
   marked_uncollectible: "Marked uncollectible",
+  credited: "Credit note issued",
+  refunded: "Refunded",
+  disputed: "Payment disputed",
+  dispute_closed: "Dispute closed",
 }
+
+const asInput = (amount: number) =>
+  amount > 0 ? (amount / 100).toFixed(2) : null
 
 export default async function AdminInvoicePage({ params }: Props) {
   const { id } = await params
@@ -60,7 +70,14 @@ export default async function AdminInvoicePage({ params }: Props) {
 
   const snapshot = invoice.clientSnapshot
   if (!snapshot) notFound()
-  const amountDue = (calculateInvoiceTotals(invoice).amountDue / 100).toFixed(2)
+  const owed = calculateInvoiceTotals(invoice).amountDue
+  const amountDue = (owed / 100).toFixed(2)
+  const refundable = refundableAmount(invoice)
+  const issued = invoice.status !== "void"
+  const balance =
+    invoice.status === "open" && owed > 0
+      ? await credits.balanceFor(invoice.clientId, invoice.currency)
+      : 0
 
   return (
     <>
@@ -72,7 +89,7 @@ export default async function AdminInvoicePage({ params }: Props) {
         <InvoiceDocument
           invoice={invoice}
           client={snapshot}
-          status={displayStatus(invoice, new Date())}
+          status={invoiceBadge(invoice, new Date())}
         />
         <div className="grid content-start gap-6">
           <InvoiceActions
@@ -80,7 +97,25 @@ export default async function AdminInvoicePage({ params }: Props) {
             status={invoice.status}
             publicUrl={absoluteUrl(`/invoice/${invoice.publicToken}`)}
             amountDue={amountDue}
+            creditBalance={
+              balance > 0 ? formatMoney(balance, invoice.currency) : null
+            }
           />
+          {issued && (refundable > 0 || owed > 0) ? (
+            <section
+              aria-labelledby="credit-title"
+              className="print-hidden rounded-xl border bg-card p-5"
+            >
+              <h2 id="credit-title" className="mb-4 font-semibold">
+                Refund or credit
+              </h2>
+              <CreditNoteForm
+                refundable={asInput(refundable)}
+                owed={invoice.status === "open" ? asInput(owed) : null}
+                onSubmit={adjustInvoiceAction.bind(null, invoice.id)}
+              />
+            </section>
+          ) : null}
           <section
             aria-labelledby="history-title"
             className="print-hidden rounded-xl border bg-card p-5"

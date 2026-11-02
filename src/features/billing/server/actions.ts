@@ -9,7 +9,7 @@ import {
 
 import { parseMoneyInput } from "../domain/format"
 import type { Result } from "../domain/invoice"
-import { billing } from "./billing"
+import { billing, credits } from "./billing"
 import { createInvoiceCheckout, isStripeConfigured } from "./stripe"
 
 export type ActionState = {
@@ -105,8 +105,16 @@ export async function issueInvoiceAction(
   const saved = await billing.updateDraftInvoice(invoiceId, draft, admin.id)
   if (!saved.ok) return { ok: false, message: saved.error }
   const result = await billing.issue(invoiceId, admin.id)
+  if (!result.ok) return { ok: false, message: result.error }
+  const settled = await credits.applyBalance(invoiceId, admin.id)
   refreshBilling(invoiceId)
-  return toState(result, "Invoice issued and emailed to the client.")
+  return {
+    ok: true,
+    message:
+      settled.ok && settled.value.payments.some((p) => p.method === "credit")
+        ? "Invoice issued and emailed. Credit balance applied."
+        : "Invoice issued and emailed to the client.",
+  }
 }
 
 export async function deleteDraftAction(invoiceId: string) {

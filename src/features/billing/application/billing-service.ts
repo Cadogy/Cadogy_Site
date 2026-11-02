@@ -316,6 +316,7 @@ export const createBillingService = ({
         issueDate: null,
         dueDate: null,
         payments: [],
+        adjustments: [],
         events: [{ type: "created", at: clock(), actorId }],
         publicToken: generateToken(),
       })
@@ -415,17 +416,33 @@ export const createBillingService = ({
     amount: number
     eventId: string
     paidAt: Date
+    paymentIntentId?: string
   }) =>
     applyPayment(
       event.invoiceId,
       {
         amount: event.amount,
         method: "stripe",
-        reference: event.eventId,
+        reference: event.paymentIntentId ?? event.eventId,
         paidAt: event.paidAt,
         stripeEventId: event.eventId,
+        ...(event.paymentIntentId
+          ? { stripePaymentIntentId: event.paymentIntentId }
+          : {}),
       },
       "stripe"
+    )
+
+  const recordCreditPayment = (
+    id: string,
+    amount: number,
+    reference: string,
+    actorId: string
+  ) =>
+    applyPayment(
+      id,
+      { amount, method: "credit", reference, paidAt: clock() },
+      actorId
     )
 
   const transition =
@@ -606,6 +623,7 @@ export const createBillingService = ({
     issue,
     recordPayment: recordManualPayment,
     recordStripePayment,
+    recordCreditPayment,
     voidInvoice: transition(voidInvoice),
     markUncollectible: transition(markUncollectible),
     duplicate,

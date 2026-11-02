@@ -76,6 +76,15 @@ const toInvoice = (doc: InvoiceDoc): Invoice => ({
     reference: payment.reference ?? "",
     paidAt: payment.paidAt,
     ...(payment.stripeEventId ? { stripeEventId: payment.stripeEventId } : {}),
+    ...(payment.stripePaymentIntentId
+      ? { stripePaymentIntentId: payment.stripePaymentIntentId }
+      : {}),
+  })),
+  adjustments: (doc.adjustments ?? []).map((adjustment) => ({
+    creditNoteId: adjustment.creditNoteId,
+    number: adjustment.number,
+    kind: adjustment.kind,
+    amount: adjustment.amount,
   })),
   events: doc.events.map((event) => ({
     type: event.type,
@@ -175,6 +184,12 @@ export const mongoBillingRepository: BillingRepository = {
       .sort({ createdAt: -1 })
       .lean<InvoiceDoc[]>()
     return docs.map(toInvoice)
+  }),
+  findInvoiceByPaymentIntent: withDatabase(async (paymentIntentId) => {
+    const doc = await InvoiceModel.findOne({
+      "payments.stripePaymentIntentId": paymentIntentId,
+    }).lean<InvoiceDoc>()
+    return doc ? toInvoice(doc) : null
   }),
   nextSequence: withDatabase(async (key) => {
     const counter = await CounterModel.findOneAndUpdate(

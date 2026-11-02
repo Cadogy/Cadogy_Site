@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { readCheckoutSession } from "./stripe-events"
+import { readCheckoutSession, readMoneyEvent } from "./stripe-events"
 
 const paidSession = (metadata: Record<string, string>) => ({
   mode: "payment",
@@ -11,10 +11,16 @@ const paidSession = (metadata: Record<string, string>) => ({
 
 describe("readCheckoutSession", () => {
   it("reads a single-invoice payment", () => {
-    expect(readCheckoutSession(paidSession({ invoiceId: "inv_1" }))).toEqual({
+    expect(
+      readCheckoutSession({
+        ...paidSession({ invoiceId: "inv_1" }),
+        payment_intent: "pi_1",
+      })
+    ).toEqual({
       kind: "invoice",
       invoiceId: "inv_1",
       amount: 15_000,
+      paymentIntentId: "pi_1",
     })
   })
 
@@ -23,7 +29,12 @@ describe("readCheckoutSession", () => {
       readCheckoutSession(
         paidSession({ kind: "batch", invoiceIds: "inv_1,inv_2" })
       )
-    ).toEqual({ kind: "batch", invoiceIds: ["inv_1", "inv_2"], amount: 15_000 })
+    ).toEqual({
+      kind: "batch",
+      invoiceIds: ["inv_1", "inv_2"],
+      amount: 15_000,
+      paymentIntentId: undefined,
+    })
   })
 
   it("reads a completed card setup", () => {
@@ -56,3 +67,54 @@ describe("readCheckoutSession", () => {
     ).toEqual({ kind: "ignored" })
   })
 })
+
+describe("readMoneyEvent", () => {
+  it("reads refunds, including ones made in the Stripe dashboard", () => {
+    expect(
+      readMoneyEvent({
+        type: "refund.created",
+        data: { object: { id: "re_1", amount: 4_000, payment_intent: "pi_1", status: "succeeded" } },
+      })
+    ).toEqual({ kind: "refund", refundId: "re_1", amount: 4_000, paymentIntentId: "pi_1" })
+  })
+
+  it("ignores refunds that failed or have no payment", () => {
+    expect(
+      readMoneyEvent({
+        type: "refund.created",
+        data: { object: { id: "re_1", amount: 4_000, payment_intent: "pi_1", status: "failed" } },
+      })
+    ).toEqual({ kind: "ignored" })
+    expect(
+      readMoneyEvent({
+        type: "refund.created",
+        data: { object: { id: "re_1", amount: 4_000, payment_intent: null, status: "succeeded" } },
+      })
+    ).toEqual({ kind: "ignored" })
+  })
+
+  it("reads disputes opening and closing", () => {
+    const dispute = (status: string) => ({
+      id: "dp_1",
+      amount: 10_000,
+      payment_intent: { id: "pi_1" },
+      status,
+    })
+    expect(
+      readMoneyEvent({ type: "charge.dispute.created", data: { object: dispute("needs_response") } })
+    ).toEqual({ kind: "dispute_opened", disputeId: "dp_1", amount: 10_000, paymentIntentId: "pi_1" })
+    expect(
+      readMoneyEvent({ type: "charge.dispute.closed", data: { object: dispute("lost") } })
+    ).toEqual({ kind: "dispute_closed", disputeId: "dp_1", amount: 10_000, paymentIntentId: "pi_1", won: false })
+    expect(
+      readMoneyEvent({ type: "charge.dispute.closed", data: { object: dispute("won") } })
+    ).toMatchObject({ won: true })
+  })
+
+  it("ignores other events", () => {
+    expect(readMoneyEvent({ type: "customer.created", data: { object: {} } })).toEqual({
+      kind: "ignored",
+    })
+  })
+})
+

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   displayStatus,
+  invoiceBadge,
   issueInvoice,
   markUncollectible,
   recordPayment,
@@ -257,6 +258,80 @@ describe("displayStatus", () => {
 
   it("passes every other status through", () => {
     expect(displayStatus(buildInvoice(), new Date("2030-01-01"))).toBe("draft")
+  })
+})
+
+describe("invoiceBadge", () => {
+  const NOW = new Date("2026-11-10T00:00:00.000Z")
+  const card = buildPayment({ amount: 10_000, method: "stripe" })
+  const adjustment = (kind: "refund" | "invoice_credit", amount: number) => ({
+    creditNoteId: `cn_${amount}`,
+    number: "CN-2026-0001",
+    kind,
+    amount,
+  })
+  const paid = (overrides = {}) =>
+    buildInvoice({
+      status: "paid",
+      lineItems: [buildLineItem({ quantity: 1, unitAmount: 10_000 })],
+      payments: [card],
+      ...overrides,
+    })
+
+  it("shows a plain paid invoice as paid and an overdue one as overdue", () => {
+    expect(invoiceBadge(paid(), NOW)).toBe("paid")
+    expect(invoiceBadge(paid({ lineItems: [], payments: [] }), NOW)).toBe(
+      "paid"
+    )
+    expect(invoiceBadge(openInvoice(), new Date("2026-12-01"))).toBe("overdue")
+  })
+
+  it("shows partly and fully refunded invoices", () => {
+    expect(
+      invoiceBadge(paid({ adjustments: [adjustment("refund", 4_000)] }), NOW)
+    ).toBe("partially_refunded")
+    expect(
+      invoiceBadge(
+        paid({
+          adjustments: [
+            adjustment("refund", 4_000),
+            adjustment("refund", 6_000),
+          ],
+        }),
+        NOW
+      )
+    ).toBe("refunded")
+  })
+
+  it("shows invoices settled without card or cash as settled by credit", () => {
+    expect(
+      invoiceBadge(
+        paid({
+          payments: [],
+          adjustments: [adjustment("invoice_credit", 10_000)],
+        }),
+        NOW
+      )
+    ).toBe("settled_by_credit")
+    expect(
+      invoiceBadge(
+        paid({
+          payments: [buildPayment({ amount: 10_000, method: "credit" })],
+        }),
+        NOW
+      )
+    ).toBe("settled_by_credit")
+  })
+
+  it("flags an open dispute until it closes", () => {
+    const disputed = { type: "disputed" as const, at: NOW, detail: "dp_1" }
+    const closed = {
+      type: "dispute_closed" as const,
+      at: NOW,
+      detail: "dp_1:won",
+    }
+    expect(invoiceBadge(paid({ events: [disputed] }), NOW)).toBe("disputed")
+    expect(invoiceBadge(paid({ events: [disputed, closed] }), NOW)).toBe("paid")
   })
 })
 

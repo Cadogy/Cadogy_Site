@@ -8,7 +8,10 @@ import {
 import { InvoiceDocument } from "@/features/billing/components/invoice-document"
 import { PayInvoicePanel } from "@/features/billing/components/pay-invoice-panel"
 import { formatDate, formatMoney } from "@/features/billing/domain/format"
-import { displayStatus } from "@/features/billing/domain/lifecycle"
+import {
+  displayStatus,
+  invoiceBadge,
+} from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import { billing } from "@/features/billing/server/billing"
 import { isStripeConfigured } from "@/features/billing/server/stripe"
@@ -44,6 +47,7 @@ export default async function HostedInvoicePage({
       : "outsider"
   const now = new Date()
   const status = displayStatus(invoice, now)
+  const badge = invoiceBadge(invoice, now)
   const { amountDue } = calculateInvoiceTotals(invoice)
   const payable =
     (invoice.status === "open" || invoice.status === "uncollectible") &&
@@ -67,7 +71,7 @@ export default async function HostedInvoicePage({
         <InvoiceDocument
           invoice={invoice}
           client={found.clientSnapshot}
-          status={status}
+          status={badge}
         />
         <div className="grid content-start gap-6 lg:sticky lg:top-6">
           <PayInvoicePanel
@@ -77,6 +81,7 @@ export default async function HostedInvoicePage({
             amountDueLabel={formatMoney(amountDue, invoice.currency)}
             dueLabel={invoice.dueDate ? formatDate(invoice.dueDate) : null}
             status={status}
+            badge={badge}
             paymentReturned={payment === "success"}
           />
           <InvoiceAccountPrompt

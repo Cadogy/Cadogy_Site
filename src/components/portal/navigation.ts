@@ -37,6 +37,11 @@ const GROUPS: readonly PortalNavGroup[] = [
         permission: "billing:read",
       },
       {
+        label: "Credit notes",
+        href: "/admin/billing/credit-notes",
+        permission: "billing:read",
+      },
+      {
         label: "Services",
         href: "/admin/billing/catalog",
         permission: "billing:read",

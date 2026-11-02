@@ -26,6 +26,7 @@ describe("portalNavigation", () => {
           "Overview",
           "Invoices",
           "Clients",
+          "Credit notes",
           "Services",
           "Billing settings",
           "Inquiries",

@@ -174,6 +174,28 @@ export const stripeGateway: PaymentGateway = {
   },
 }
 
+export const stripeRefunds = {
+  refund: async (request: {
+    readonly paymentIntentId: string
+    readonly amount: number
+    readonly idempotencyKey: string
+  }) => {
+    if (!stripe)
+      return { ok: false as const, error: "Stripe is not configured" }
+    try {
+      const refund = await stripe.refunds.create(
+        { payment_intent: request.paymentIntentId, amount: request.amount },
+        { idempotencyKey: request.idempotencyKey }
+      )
+      return refund.status === "failed" || refund.status === "canceled"
+        ? { ok: false as const, error: refund.failure_reason ?? refund.status }
+        : { ok: true as const, refundId: refund.id }
+    } catch (error) {
+      return { ok: false as const, error: declineMessage(error) }
+    }
+  },
+}
+
 export const verifyStripeEvent = (payload: string, signature: string) => {
   if (!stripe || !env.STRIPE_WEBHOOK_SECRET)
     throw new Error("Stripe is not configured")

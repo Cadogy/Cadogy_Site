@@ -56,6 +56,12 @@ export const createInMemoryBillingRepository = (): BillingRepository => {
           (!status || invoice.status === status) &&
           (!clientIds || clientIds.includes(invoice.clientId))
       ),
+    findInvoiceByPaymentIntent: async (paymentIntentId) =>
+      [...invoices.values()].find((invoice) =>
+        invoice.payments.some(
+          (payment) => payment.stripePaymentIntentId === paymentIntentId
+        )
+      ) ?? null,
     nextSequence: async (key) => {
       const value = (counters.get(key) ?? 0) + 1
       counters.set(key, value)

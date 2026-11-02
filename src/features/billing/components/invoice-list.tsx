@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { formatDate, formatMoney } from "../domain/format"
 import type { Invoice } from "../domain/invoice"
-import { displayStatus } from "../domain/lifecycle"
+import { invoiceBadge } from "../domain/lifecycle"
 import { calculateInvoiceTotals } from "../domain/totals"
 import { StatusBadge } from "./status-badge"
 
@@ -27,7 +27,7 @@ export function InvoiceList({
 
   return (
     <div className="overflow-hidden rounded-xl border">
-      <div className="hidden grid-cols-[140px_1fr_120px_120px_130px_100px] gap-4 border-b bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground md:grid">
+      <div className="hidden grid-cols-[140px_1fr_120px_120px_130px_150px] gap-4 border-b bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground md:grid">
         <span>Number</span>
         <span>Client</span>
         <span>Issued</span>
@@ -46,11 +46,11 @@ export function InvoiceList({
             <li key={invoice.id}>
               <Link
                 href={hrefFor(invoice)}
-                className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-4 py-4 transition-colors hover:bg-accent/50 md:grid-cols-[140px_1fr_120px_120px_130px_100px] md:items-center"
+                className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 px-4 py-4 transition-colors hover:bg-accent/50 md:grid-cols-[140px_1fr_120px_120px_130px_150px] md:items-center"
               >
                 <span className="font-medium">{invoice.number ?? "Draft"}</span>
                 <span className="justify-self-end md:order-last">
-                  <StatusBadge status={displayStatus(invoice, now)} />
+                  <StatusBadge status={invoiceBadge(invoice, now)} />
                 </span>
                 <span className="truncate text-sm text-muted-foreground md:text-base md:text-foreground">
                   {client}

@@ -61,6 +61,7 @@ export const buildInvoice = (overrides: Partial<Invoice> = {}): Invoice => ({
   footer: "",
   internalNotes: "",
   payments: [],
+  adjustments: [],
   events: [],
   publicToken: "token",
   ...overrides,

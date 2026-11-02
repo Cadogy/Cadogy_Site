@@ -47,6 +47,9 @@ export type BillingRepository = {
   readonly findInvoice: (id: string) => Promise<Invoice | null>
   readonly findInvoiceByToken: (token: string) => Promise<Invoice | null>
   readonly listInvoices: (filter: InvoiceFilter) => Promise<Invoice[]>
+  readonly findInvoiceByPaymentIntent: (
+    paymentIntentId: string
+  ) => Promise<Invoice | null>
   readonly nextSequence: (key: string) => Promise<number>
 }
 

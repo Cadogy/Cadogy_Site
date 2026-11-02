@@ -38,6 +38,13 @@ export const calculateInvoiceTotals = (
   const tax = roundHalfUp(((subtotal - discount) * invoice.taxRateBps) / BPS)
   const total = subtotal - discount + tax
   const amountPaid = sum(invoice.payments.map((payment) => payment.amount))
+  const adjustments = invoice.adjustments ?? []
+  const credited = sum(adjustments.map((adjustment) => adjustment.amount))
+  const refunded = sum(
+    adjustments
+      .filter((adjustment) => adjustment.kind === "refund")
+      .map((adjustment) => adjustment.amount)
+  )
 
   return {
     subtotal,
@@ -45,6 +52,8 @@ export const calculateInvoiceTotals = (
     tax,
     total,
     amountPaid,
-    amountDue: Math.max(0, total - amountPaid),
+    credited,
+    refunded,
+    amountDue: Math.max(0, total - credited - (amountPaid - refunded)),
   }
 }

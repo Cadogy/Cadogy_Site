@@ -13,6 +13,7 @@ export const PAYMENT_METHODS = [
   "bank_transfer",
   "check",
   "cash",
+  "credit",
   "other",
 ] as const
 
@@ -103,13 +104,20 @@ export type ClientInput = z.infer<typeof clientInputSchema>
 export type InvoiceDraftInput = z.infer<typeof invoiceDraftInputSchema>
 type PaymentInput = z.infer<typeof paymentInputSchema>
 
-export type Payment = PaymentInput & { readonly stripeEventId?: string }
+export type Payment = PaymentInput & {
+  readonly stripeEventId?: string
+  readonly stripePaymentIntentId?: string
+}
 
 export type InvoiceAmounts = {
   readonly lineItems: readonly LineItem[]
   readonly discount: Discount | null
   readonly taxRateBps: number
   readonly payments: readonly Pick<Payment, "amount">[]
+  readonly adjustments?: readonly {
+    readonly kind: "refund" | "invoice_credit"
+    readonly amount: number
+  }[]
 }
 
 export type InvoiceTotals = {
@@ -118,5 +126,7 @@ export type InvoiceTotals = {
   readonly tax: number
   readonly total: number
   readonly amountPaid: number
+  readonly credited: number
+  readonly refunded: number
   readonly amountDue: number
 }

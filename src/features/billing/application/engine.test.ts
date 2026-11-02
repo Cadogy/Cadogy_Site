@@ -16,7 +16,12 @@ import {
 const day = (iso: string) => new Date(`${iso}T09:00:00.000Z`)
 const ADMIN = "admin_1"
 
-const setup = (options: { charge?: (amount: number) => ChargeResult } = {}) => {
+const setup = (
+  options: {
+    charge?: (amount: number) => ChargeResult
+    credit?: number
+  } = {}
+) => {
   let now = day("2026-11-01")
   const repository = createInMemoryBillingRepository()
   const engineRepository = createInMemoryEngineRepository()
@@ -36,6 +41,16 @@ const setup = (options: { charge?: (amount: number) => ChargeResult } = {}) => {
     repository: engineRepository,
     gateway,
     clock: () => now,
+    applyCredit: options.credit
+      ? async (invoiceId) => {
+          await billing.recordCreditPayment(
+            invoiceId,
+            options.credit ?? 0,
+            "Credit balance",
+            "system"
+          )
+        }
+      : undefined,
   })
   const setNow = (iso: string) => {
     now = day(iso)
@@ -450,5 +465,32 @@ describe("billing engine", () => {
     )
 
     expect(await engine.monthlyRecurringRevenue()).toEqual({ USD: 2_500 })
+  })
+
+  it("applies credit before charging a saved card", async () => {
+    const { billing, engine, repository, attempts } = setup({ credit: 2_400 })
+    const client = await newClient(billing)
+    await repository.saveClient({
+      ...client,
+      autopay: {
+        enabled: true,
+        card: {
+          stripeCustomerId: "cus_1",
+          paymentMethodId: "pm_1",
+          brand: "visa",
+          last4: "4242",
+          expMonth: 1,
+          expYear: 2030,
+        },
+      },
+    })
+    expectOk(await engine.addAddOn(client.id, emailAddOn))
+
+    const summary = await engine.runBilling()
+
+    expect(summary.autopayCollected).toBe(0)
+    expect(attempts).toEqual([])
+    const [invoice] = await billing.listInvoices({ clientIds: [client.id] })
+    expect(invoice?.status).toBe("paid")
   })
 })

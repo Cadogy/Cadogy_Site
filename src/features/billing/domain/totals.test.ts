@@ -37,6 +37,8 @@ describe("calculateInvoiceTotals", () => {
       tax: 0,
       total: 200_000,
       amountPaid: 0,
+      credited: 0,
+      refunded: 0,
       amountDue: 200_000,
     })
   })

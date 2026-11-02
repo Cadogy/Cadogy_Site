@@ -1,8 +1,10 @@
+import { Fragment } from "react"
+
 import { siteConfig } from "@/config/site"
 import { LogoMark } from "@/components/site/logo"
 
 import { formatDate, formatMoney } from "../domain/format"
-import type { ClientSnapshot, DisplayStatus, Invoice } from "../domain/invoice"
+import type { ClientSnapshot, Invoice, InvoiceBadge } from "../domain/invoice"
 import { calculateInvoiceTotals, calculateLineTotal } from "../domain/totals"
 import { StatusBadge } from "./status-badge"
 
@@ -11,6 +13,7 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   bank_transfer: "Bank transfer",
   check: "Check",
   cash: "Cash",
+  credit: "Credit balance",
   other: "Other",
 }
 
@@ -36,7 +39,7 @@ export function InvoiceDocument({
 }: {
   invoice: Invoice
   client: ClientSnapshot
-  status: DisplayStatus
+  status: InvoiceBadge
 }) {
   const totals = calculateInvoiceTotals(invoice)
   const money = (amount: number) => formatMoney(amount, invoice.currency)
@@ -157,6 +160,22 @@ export function InvoiceDocument({
             <dd>−{money(totals.amountPaid)}</dd>
           </div>
         ) : null}
+        {invoice.adjustments.map((adjustment) => (
+          <Fragment key={adjustment.creditNoteId}>
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">
+                Credit note {adjustment.number}
+              </dt>
+              <dd>−{money(adjustment.amount)}</dd>
+            </div>
+            {adjustment.kind === "refund" ? (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Refunded to card</dt>
+                <dd>+{money(adjustment.amount)}</dd>
+              </div>
+            ) : null}
+          </Fragment>
+        ))}
         <div className="flex justify-between rounded-md bg-muted px-3 py-2 text-base font-semibold">
           <dt>Amount due</dt>
           <dd>{money(totals.amountDue)}</dd>

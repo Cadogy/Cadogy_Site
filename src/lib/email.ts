@@ -3,6 +3,7 @@ import "server-only"
 import { Resend } from "resend"
 
 import { env } from "@/env"
+import { siteConfig } from "@/config/site"
 
 import { emailButton, emailLayout, escapeHtml } from "./email/html"
 
@@ -212,4 +213,27 @@ export const sendAccessApproved = (email: string, company: string) =>
     url: `${env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
     cta: "Open your dashboard",
     outro: "Questions? Just reply to this email.",
+  })
+
+export const sendDisputeAlert = (details: {
+  readonly invoiceNumber: string
+  readonly amount: string
+  readonly url: string
+  readonly outcome: "opened" | "won" | "lost"
+}) =>
+  sendActionEmail({
+    to: siteConfig.email,
+    subject:
+      details.outcome === "opened"
+        ? `Dispute opened on ${details.invoiceNumber}`
+        : `Dispute ${details.outcome} on ${details.invoiceNumber}`,
+    intro:
+      details.outcome === "opened"
+        ? `The card payment of ${details.amount} on ${details.invoiceNumber} was disputed. Autopay is paused for this client. Respond with evidence in Stripe before the deadline.`
+        : details.outcome === "won"
+          ? `The dispute of ${details.amount} on ${details.invoiceNumber} was decided in your favor.`
+          : `The dispute of ${details.amount} on ${details.invoiceNumber} was lost. It's recorded on the invoice as a refund.`,
+    url: details.url,
+    cta: "Open the invoice",
+    outro: "Disputes are handled in the Stripe dashboard.",
   })

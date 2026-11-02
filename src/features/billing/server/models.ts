@@ -158,6 +158,18 @@ const invoiceSchema = new Schema(
           reference: String,
           paidAt: Date,
           stripeEventId: String,
+          stripePaymentIntentId: String,
+        },
+        { _id: false }
+      ),
+    ],
+    adjustments: [
+      new Schema(
+        {
+          creditNoteId: String,
+          number: String,
+          kind: { type: String, enum: ["refund", "invoice_credit"] },
+          amount: Number,
         },
         { _id: false }
       ),
