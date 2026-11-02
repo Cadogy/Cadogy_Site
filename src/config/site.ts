@@ -1,4 +1,4 @@
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://cadogy.com"
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.cadogy.com"
 
 export type Founder = {
   readonly name: string

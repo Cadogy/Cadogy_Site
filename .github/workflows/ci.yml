@@ -16,6 +16,8 @@ jobs:
     env:
       SKIP_ENV_VALIDATION: "1"
       NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_APP_URL: https://www.cadogy.com
+      NEXT_PUBLIC_WP_API_URL: https://wp.cadogy.com/wp-json/wp/v2
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
