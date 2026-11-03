@@ -69,7 +69,7 @@ export default async function CaseStudyPage({ params }: Props) {
           </dl>
         </header>
 
-        <div className="px-3 md:px-4">
+        <div className="container-page px-3 md:px-4">
           <div className="relative aspect-3/4 overflow-hidden rounded-media bg-card sm:hidden">
             <Image
               src={study.mobileImage}

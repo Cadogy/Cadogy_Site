@@ -57,7 +57,7 @@ export default function AboutPage() {
         lead={`Cadogy was founded in ${siteConfig.foundingYear} by Charles Knapp and Dylan Safra. We stay small on purpose: a senior team with modern tooling and a disciplined process delivers the output of a much larger one, while you keep a direct line to the people doing the work.`}
       />
 
-      <div className="px-3 md:px-4">
+      <div className="container-page px-3 md:px-4">
         <div className="relative aspect-4/5 overflow-hidden rounded-media bg-card sm:aspect-16/8">
           <Image
             src="/images/studio/founders.webp"
