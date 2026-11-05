@@ -6,6 +6,7 @@ import { env } from "@/env"
 
 import type { PaymentGateway } from "../application/engine-ports"
 import type { BillingClient, SavedCard } from "../application/ports"
+import { verifyWebhook } from "../application/webhook-verification"
 import type { Invoice } from "../domain/invoice"
 import type { Currency } from "../domain/schema"
 import { calculateInvoiceTotals } from "../domain/totals"
@@ -196,12 +197,13 @@ export const stripeRefunds = {
   },
 }
 
-export const verifyStripeEvent = (payload: string, signature: string) => {
-  if (!stripe || !env.STRIPE_WEBHOOK_SECRET)
-    throw new Error("Stripe is not configured")
-  return stripe.webhooks.constructEvent(
+export const verifyStripeEvent = (payload: string, signature: string | null) =>
+  verifyWebhook({
     payload,
     signature,
-    env.STRIPE_WEBHOOK_SECRET
-  )
-}
+    secret: env.STRIPE_WEBHOOK_SECRET,
+    construct: stripe
+      ? (body: string, header: string, secret: string) =>
+          stripe.webhooks.constructEvent(body, header, secret)
+      : null,
+  })

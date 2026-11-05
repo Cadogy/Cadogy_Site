@@ -44,17 +44,6 @@ const claimEvent = async (eventId: string) => {
 const releaseEvent = (eventId: string) =>
   ProcessedStripeEventModel.deleteOne({ _id: eventId })
 
-const parseEvent = (
-  payload: string,
-  signature: string
-): Stripe.Event | null => {
-  try {
-    return verifyStripeEvent(payload, signature)
-  } catch {
-    return null
-  }
-}
-
 const logFailure = (subject: string, error: string) =>
   console.error(`Stripe ${subject} not recorded: ${error}`)
 
@@ -153,13 +142,28 @@ const handleEvent = (event: Stripe.Event) =>
     : handleCheckoutCompleted(event)
 
 export async function POST(request: NextRequest) {
-  const signature = request.headers.get("stripe-signature")
-  if (!signature)
+  const verified = verifyStripeEvent(
+    await request.text(),
+    request.headers.get("stripe-signature")
+  )
+  if (!verified.ok && verified.reason === "not_configured") {
+    console.error(
+      "Stripe webhook rejected: STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET is not set in this environment"
+    )
+    return NextResponse.json(
+      { error: "Webhook not configured" },
+      { status: 503 }
+    )
+  }
+  if (!verified.ok && verified.reason === "missing_signature")
     return NextResponse.json({ error: "Missing signature" }, { status: 400 })
-
-  const event = parseEvent(await request.text(), signature)
-  if (!event)
+  if (!verified.ok) {
+    console.warn(
+      `Stripe webhook rejected: ${verified.detail} Check that STRIPE_WEBHOOK_SECRET is this endpoint's signing secret, in the same mode (live or test).`
+    )
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
+  }
+  const { event } = verified
   if (!isHandled(event)) return NextResponse.json({ received: true })
 
   if (!(await claimEvent(event.id)))
