@@ -432,8 +432,8 @@ export const caseStudies: readonly CaseStudy[] = [
     imageAlt:
       "Sidecar for OpenCode in VS Code: a timeline of the agent's steps, live subagents and a permission request",
     slide: {
-      image: "/images/studio/opencode-sidecar-slide-hero.webp",
-      mobileImage: "/images/studio/opencode-sidecar-slide-phone.webp",
+      image: "/images/studio/opencode-sidecar-banner-desktop.webp",
+      mobileImage: "/images/studio/opencode-sidecar-banner-mobile.webp",
     },
     video: {
       youtubeId: "_KMBRo7zrMw",
