@@ -22,9 +22,17 @@ export type CaseStudy = {
   readonly image: string
   readonly mobileImage: string
   readonly challenge: readonly string[]
+  readonly productLabel: string
+  readonly sourceUrl?: string
+  readonly promisesHeading: { readonly lead: string; readonly rest: string }
   readonly promises: readonly string[]
   readonly facts: readonly { readonly value: string; readonly label: string }[]
-  readonly orderFlow: readonly CaseStudyPoint[]
+  readonly factsSource: string
+  readonly flow: {
+    readonly title: string
+    readonly intro: string
+    readonly steps: readonly CaseStudyPoint[]
+  }
   readonly chapters: readonly {
     readonly title: string
     readonly intro: string
@@ -179,6 +187,11 @@ export const caseStudies: readonly CaseStudy[] = [
       "Digital goods are also hard to protect. There's no tracking number for a game account, delivery can take seconds or hours depending on the game, and stolen cards are a constant risk. Every rule has to be easy for honest buyers and sellers without opening a door for fraud.",
       "PlayerBay needed the full machinery of a modern marketplace — listings, checkout, payouts, messaging and disputes — built to handle real money from day one, for players all over the world.",
     ],
+    productLabel: "Live product",
+    promisesHeading: {
+      lead: "What buyers are promised",
+      rest: "— and what the platform has to guarantee behind the scenes.",
+    },
     promises: [
       "Paid only when you confirm",
       "Late delivery? Automatic refund",
@@ -189,35 +202,41 @@ export const caseStudies: readonly CaseStudy[] = [
       { value: "25", label: "Languages" },
       { value: "10", label: "Currencies" },
       { value: "6", label: "Ways to pay" },
-      { value: "6", label: "Payout methods" },
-      { value: "2,100+", label: "Automated test files" },
+      { value: "7", label: "Payout methods" },
+      { value: "3,200+", label: "Automated test files" },
     ],
-    orderFlow: [
-      {
-        title: "Checkout",
-        body: "The buyer pays by card, Apple Pay, Google Pay, Amazon Pay, Cash App or crypto. Stock is reserved the moment checkout starts, so two people can't buy the last item.",
-      },
-      {
-        title: "Payment confirmed",
-        body: "The payment event is verified at the edge, queued and processed exactly once. Riskier payments pause automatic delivery for a closer look.",
-      },
-      {
-        title: "Delivery",
-        body: "Instant listings deliver automatically. Others are delivered by the seller in the order chat. Account details are encrypted, and every time they're viewed is logged.",
-      },
-      {
-        title: "Protection period",
-        body: "The buyer checks what they received while the money stays held. The protection period is set per game and category, and fixed on the order when it's placed.",
-      },
-      {
-        title: "Received",
-        body: "The buyer confirms receipt, or the order completes on its own when protection ends. Only then is the sale credited to the seller.",
-      },
-      {
-        title: "Payout",
-        body: "Sellers withdraw their balance through Payoneer, SEPA, SWIFT, Skrill, Bitcoin or USDC.",
-      },
-    ],
+    factsSource: "Counted from PlayerBay's production code and configuration.",
+    flow: {
+      title: "How an order works",
+      intro:
+        "From checkout to payout, every step is designed so neither side has to trust the other.",
+      steps: [
+        {
+          title: "Checkout",
+          body: "The buyer pays by card, Apple Pay, Google Pay, Amazon Pay, Cash App or crypto. Stock is reserved the moment checkout starts, so two people can't buy the last item.",
+        },
+        {
+          title: "Payment confirmed",
+          body: "The payment event is verified at the edge, queued and processed exactly once. Riskier payments pause automatic delivery for a closer look.",
+        },
+        {
+          title: "Delivery",
+          body: "Instant listings deliver automatically. Others are delivered by the seller in the order chat. Account details are encrypted, and every time they're viewed is logged.",
+        },
+        {
+          title: "Protection period",
+          body: "The buyer checks what they received while the money stays held. The protection period is set per game and category, and fixed on the order when it's placed.",
+        },
+        {
+          title: "Received",
+          body: "The buyer confirms receipt, or the order completes on its own when protection ends. Only then is the sale credited to the seller.",
+        },
+        {
+          title: "Payout",
+          body: "Sellers withdraw their balance through PayPal, Payoneer, SEPA, SWIFT, Skrill, Bitcoin or USDC.",
+        },
+      ],
+    },
     chapters: [
       {
         title: "Trust and safety",
@@ -273,7 +292,7 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "Many ways to pay and get paid",
-            body: "Cards and wallets through Stripe, crypto through NOWPayments, and six payout methods so sellers can be paid wherever they are.",
+            body: "Cards and wallets through Stripe, crypto through NOWPayments, and seven payout methods so sellers can be paid wherever they are.",
           },
           {
             title: "Rewards for buyers",
@@ -357,11 +376,11 @@ export const caseStudies: readonly CaseStudy[] = [
         points: [
           {
             title: "Rules you can test",
-            body: "Order, payment and dispute rules are pure functions with their own tests. Over 2,100 test files cover the platform, including tests that walk whole dispute flows from start to finish.",
+            body: "Order, payment and dispute rules are pure functions with their own tests. Over 3,200 test files cover the platform, including tests that walk whole dispute flows from start to finish.",
           },
           {
             title: "A modular monolith",
-            body: "38 feature modules with clear boundaries — orders, payments, messaging, sellers and more — in one deployable app, plus a separate real-time server.",
+            body: "41 feature modules with clear boundaries — orders, payments, messaging, sellers and more — in one deployable app, plus a separate real-time server.",
           },
           {
             title: "Hardened by default",
@@ -390,6 +409,208 @@ export const caseStudies: readonly CaseStudy[] = [
       "PostHog",
       "Sentry",
       "Vercel",
+    ],
+  },
+  {
+    slug: "opencode-sidecar",
+    name: "Sidecar for OpenCode",
+    url: "https://marketplace.visualstudio.com/items?itemName=cadogy.opencode-sidecar",
+    sourceUrl: "https://github.com/charlesknapp/opencode-sidecar",
+    category: "Developer tool",
+    summary:
+      "A free, open-source VS Code extension that puts the OpenCode coding agent in a chat panel beside your code, with every step on one timeline and nothing approved without you.",
+    role: "Product, design and engineering — built, released and maintained by Cadogy under the MIT license.",
+    image: "/images/studio/opencode-sidecar-case-study.webp",
+    mobileImage: "/images/studio/opencode-sidecar-case-study-mobile.webp",
+    challenge: [
+      "OpenCode is a capable open-source coding agent that runs in the terminal. Its official VS Code extension opens that terminal interface in a split pane. We wanted a graphical chat panel that shows everything the agent does and keeps the developer in charge, without leaving the editor.",
+      "An agent that reads files and runs commands has to be watched. Every tool call, subagent and permission request needs to be visible and answerable without breaking flow, and nothing can be approved behind the developer's back.",
+      "It also had to respect how OpenCode works: no lock-in, no separate account and no service of our own. A session started in Sidecar continues in OpenCode's terminal interface, and the other way around.",
+    ],
+    productLabel: "Get the extension",
+    promisesHeading: {
+      lead: "What developers are promised",
+      rest: "— and what the extension has to guarantee behind the scenes.",
+    },
+    promises: [
+      "Nothing approved for you",
+      "Every step on one timeline",
+      "No telemetry, no service of ours",
+      "Your sessions stay OpenCode's",
+    ],
+    facts: [
+      { value: "414", label: "Unit tests" },
+      { value: "99", label: "Headless-browser tests" },
+      { value: "4", label: "Editors supported" },
+      { value: "None", label: "Telemetry" },
+      { value: "MIT", label: "Open-source license" },
+    ],
+    factsSource:
+      "Counted from Sidecar's source code and its test runs at version 0.1.4.",
+    flow: {
+      title: "How a prompt works",
+      intro:
+        "From the message box to the diff, every step stays visible and under your control.",
+      steps: [
+        {
+          title: "Prompt",
+          body: "Type in the message box, with @ mentions for files, folders, subagents and skills, pasted screenshots, and / for OpenCode's commands. Sidecar sends it to the OpenCode service on your machine.",
+        },
+        {
+          title: "Timeline",
+          body: "Each step appears as it happens: thinking time, every tool call with its input and output, and edits with your theme's syntax colors.",
+        },
+        {
+          title: "Subagents",
+          body: "Each subagent gets a live row with its prompt, current activity, Stop and Open. Its report comes back as a line you can expand.",
+        },
+        {
+          title: "Permissions",
+          body: "When the agent needs approval, even deep inside a subagent, the request takes the message box's place until you answer. You can also tell the agent what to do instead.",
+        },
+        {
+          title: "Steer or queue",
+          body: "While the agent works, steer the running task or queue your next message. Budget Guard stops a runaway task at the cost or step limit you set.",
+        },
+        {
+          title: "Review",
+          body: "The agent's edits open in VS Code's own diff editor, kept apart from your own changes. Rewind or fork from any prompt to try another path.",
+        },
+      ],
+    },
+    chapters: [
+      {
+        title: "Visibility and control",
+        intro: "You see every step, and the agent never acts without you.",
+        points: [
+          {
+            title: "One timeline per prompt",
+            body: "A dot per step: text, thinking time, every tool call and every subagent. The prompt you're reading stays pinned while you scroll.",
+          },
+          {
+            title: "Answer where you type",
+            body: "Permission requests and questions replace the message box until answered, with numbered choices and the option to give the agent new instructions. Sensitive paths get a warning.",
+          },
+          {
+            title: "Budget Guard",
+            body: "A local per-task limit on cost and steps. It warns at 80% and then stops the agent through OpenCode's own cancellation, with Continue once or Increase budget.",
+          },
+          {
+            title: "Agent changes kept apart",
+            body: "The agent's edits come from OpenCode's session snapshots, so edits you already had aren't counted. When the two can't be told apart, Sidecar says so instead of guessing.",
+          },
+          {
+            title: "Rewind and fork",
+            body: "Rewind a session to just before any prompt, with or without its code changes, or fork from that point into a new session and keep the original.",
+          },
+          {
+            title: "Notifications that say why",
+            body: "Native notifications when a task completes, needs input, fails or is stopped, and a count on the icon for answers waiting while the panel is hidden.",
+          },
+        ],
+      },
+      {
+        title: "Built on OpenCode, not around it",
+        intro:
+          "Sidecar is a thin interface. OpenCode stays the engine and the source of truth.",
+        points: [
+          {
+            title: "OpenCode's own API",
+            body: "Sidecar talks to the OpenCode 2 service on your machine through its v2 HTTP API and a live event stream. Sessions, models, providers, agents, commands, skills and permission rules are all OpenCode's.",
+          },
+          {
+            title: "Followed live",
+            body: "New sessions, renames, rewinds, agent and model changes made in OpenCode's terminal interface or another window show up in Sidecar as they happen.",
+          },
+          {
+            title: "One adapter boundary",
+            body: "Everything that talks to OpenCode goes through a single client interface, so another transport could replace it without touching the interface.",
+          },
+          {
+            title: "Setup that disappears",
+            body: "A setup card offers Install, Start and Sign in to OpenCode when something is missing, and goes away once everything is ready.",
+          },
+        ],
+      },
+      {
+        title: "Private and secure by design",
+        intro:
+          "An extension that watches an agent at work shouldn't become another thing to watch.",
+        points: [
+          {
+            title: "Local only",
+            body: "Sidecar connects only to your local OpenCode service, on loopback unless you allow a remote one. It has no telemetry and no service of its own.",
+          },
+          {
+            title: "No credentials",
+            body: "Sign-in and providers stay with OpenCode. The local service password lives in memory, and workspace content is sent only when you attach it or the agent reads it under OpenCode's rules.",
+          },
+          {
+            title: "A locked-down view",
+            body: "The chat runs under a strict content security policy with a per-load nonce, every message from it is validated, and logs leave out prompts and file contents and redact secrets.",
+          },
+          {
+            title: "Trusted workspaces only",
+            body: "Because OpenCode can read files and run commands, Sidecar is disabled in VS Code's Restricted Mode.",
+          },
+        ],
+      },
+      {
+        title: "Engineering quality",
+        intro: "Built to be changed safely, and tested against the real thing.",
+        points: [
+          {
+            title: "Layers that test in plain Node",
+            body: "The session controller, transcript, adapter and shared model don't depend on VS Code, so most behavior runs in 414 fast unit tests.",
+          },
+          {
+            title: "The real interface, in a real browser",
+            body: "99 click-through tests drive the production chat bundle in headless Chrome, with VS Code's messaging reproduced exactly.",
+          },
+          {
+            title: "Acceptance against live OpenCode",
+            body: "Scenarios run in isolated VS Code windows against a real OpenCode service. A read-only run on a real repository checks that its Git state is byte-for-byte unchanged.",
+          },
+          {
+            title: "Native to VS Code",
+            body: "Theme colors only, across dark, light and high-contrast themes, a layout that works from a 300 px side bar to a wide editor tab, and keyboard access throughout.",
+          },
+        ],
+      },
+      {
+        title: "Shipping it",
+        intro: "One build, published everywhere VS Code runs.",
+        points: [
+          {
+            title: "One release workflow",
+            body: "A tagged release builds the extension once and publishes the same package to GitHub Releases, the Visual Studio Marketplace and Open VSX.",
+          },
+          {
+            title: "Trusted publishing",
+            body: "The Marketplace release authenticates with short-lived OpenID Connect credentials from GitHub Actions instead of a stored access token.",
+          },
+          {
+            title: "Every VS Code editor",
+            body: "VS Code installs it from the Marketplace. Cursor, Windsurf and VSCodium install it from Open VSX.",
+          },
+          {
+            title: "Five releases in two days",
+            body: "Versions 0.1.0 through 0.1.4 shipped in the first two days after launch, each with its changes in the changelog.",
+          },
+        ],
+      },
+    ],
+    stack: [
+      "TypeScript",
+      "VS Code Extension API",
+      "Webviews",
+      "OpenCode v2 API",
+      "Server-sent events",
+      "esbuild",
+      "Node.js test runner",
+      "Puppeteer",
+      "GitHub Actions",
+      "Open VSX",
     ],
   },
 ]

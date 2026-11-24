@@ -61,3 +61,57 @@ describe("PlayerBay case study", () => {
     expect(text).not.toMatch(/AI-accelerated|AI at every step/i)
   })
 })
+
+const renderSidecar = async () =>
+  render(
+    await CaseStudyPage({
+      params: Promise.resolve({ slug: "opencode-sidecar" }),
+    })
+  )
+
+describe("Sidecar for OpenCode case study", () => {
+  it("has a single h1 and links to the Marketplace listing and the source", async () => {
+    await renderSidecar()
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Sidecar for OpenCode"
+    )
+    expect(
+      screen.getByRole("link", { name: /marketplace\.visualstudio\.com/ })
+    ).toHaveAttribute(
+      "href",
+      "https://marketplace.visualstudio.com/items?itemName=cadogy.opencode-sidecar"
+    )
+    expect(screen.getByRole("link", { name: /github\.com/ })).toHaveAttribute(
+      "href",
+      "https://github.com/charlesknapp/opencode-sidecar"
+    )
+  })
+
+  it("tells its own story instead of PlayerBay's", async () => {
+    const { container } = await renderSidecar()
+
+    expect(
+      screen.getByRole("region", { name: "How a prompt works" })
+    ).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/buyer|order works|PlayerBay/i)
+  })
+
+  it("states figures counted from the extension's code and tests", async () => {
+    await renderSidecar()
+    const facts = screen.getByRole("region", { name: "At a glance" })
+
+    expect(within(facts).getByText("Unit tests")).toBeInTheDocument()
+    expect(within(facts).getByText("414")).toBeInTheDocument()
+    expect(within(facts).getByText("99")).toBeInTheDocument()
+    expect(within(facts).getByText(/Sidecar's source code/)).toBeInTheDocument()
+  })
+
+  it("keeps to our voice", async () => {
+    const { container } = await renderSidecar()
+
+    expect(container.textContent).not.toMatch(
+      /cutting-edge|world-class|revolutionary|synergy|AI-accelerated/i
+    )
+  })
+})

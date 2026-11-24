@@ -56,14 +56,26 @@ export default async function CaseStudyPage({ params }: Props) {
               <dd className="mt-1">{study.role}</dd>
             </div>
             <div>
-              <dt className="text-meta">Live product</dt>
-              <dd className="mt-3">
+              <dt className="text-meta">{study.productLabel}</dt>
+              <dd className="mt-3 flex flex-wrap gap-2">
                 <Button asChild variant="secondary">
                   <a href={study.url} target="_blank" rel="noopener noreferrer">
                     {new URL(study.url).host}
                     <ArrowUpRight className="size-4" aria-hidden="true" />
                   </a>
                 </Button>
+                {study.sourceUrl ? (
+                  <Button asChild variant="ghost">
+                    <a
+                      href={study.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {new URL(study.sourceUrl).host}
+                      <ArrowUpRight className="size-4" aria-hidden="true" />
+                    </a>
+                  </Button>
+                ) : null}
               </dd>
             </div>
           </dl>
@@ -99,9 +111,9 @@ export default async function CaseStudyPage({ params }: Props) {
           className="container-page section"
         >
           <h2 id="promises-title" className="max-w-4xl text-statement">
-            What buyers are promised{" "}
+            {study.promisesHeading.lead}{" "}
             <span className="text-muted-foreground">
-              — and what the platform has to guarantee behind the scenes.
+              {study.promisesHeading.rest}
             </span>
           </h2>
           <ul className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4">
@@ -146,7 +158,7 @@ export default async function CaseStudyPage({ params }: Props) {
               ))}
             </dl>
             <p className="mt-6 text-sm text-muted-foreground">
-              Counted from PlayerBay&apos;s production code and configuration.
+              {study.factsSource}
             </p>
           </div>
         </section>
@@ -155,15 +167,14 @@ export default async function CaseStudyPage({ params }: Props) {
           <div className="container-page grid gap-10 section lg:grid-cols-12">
             <div className="lg:col-span-4">
               <h2 id="flow-title" className="text-h2">
-                How an order works
+                {study.flow.title}
               </h2>
               <p className="mt-4 max-w-sm text-muted-foreground">
-                From checkout to payout, every step is designed so neither side
-                has to trust the other.
+                {study.flow.intro}
               </p>
             </div>
             <ol className="rule-list lg:col-span-8">
-              {study.orderFlow.map((step, index) => (
+              {study.flow.steps.map((step, index) => (
                 <li
                   key={step.title}
                   className="grid gap-2 py-6 sm:grid-cols-[4rem_12rem_1fr] sm:gap-6"

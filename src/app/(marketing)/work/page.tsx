@@ -21,7 +21,7 @@ export default function WorkPage() {
         label="Work"
         title="Software we've built"
         accent="and still run."
-        lead="We'd rather show than tell. These are products we designed, engineered and operate today, with real customers and real money moving through them."
+        lead="We'd rather show than tell. These are products we designed, built and still run today, from a live marketplace to open-source developer tools."
       />
       <section
         aria-label="Case studies"
