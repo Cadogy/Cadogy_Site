@@ -35,6 +35,11 @@ describe("buildLlmsTxt", () => {
     )
   })
 
+  it("points to the live site of each product we built", () => {
+    expect(doc).toContain("Live site: https://playerbay.com")
+    expect(doc).toContain("Live site: https://www.opencodesidecar.com")
+  })
+
   it("answers the common questions directly", () => {
     expect(doc).toContain(`### ${faqs[0]?.question}`)
     expect(doc).toContain(faqs[0]?.answer ?? "")

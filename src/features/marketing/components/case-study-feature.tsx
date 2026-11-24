@@ -1,6 +1,7 @@
 import Image from "next/image"
+import { ArrowUpRight } from "lucide-react"
 
-import type { CaseStudy } from "../content"
+import { displayHost, type CaseStudy } from "../content"
 import { ArrowLink } from "./arrow-link"
 
 export function CaseStudyFeature({
@@ -46,13 +47,25 @@ export function CaseStudyFeature({
             </li>
           ))}
         </ul>
-        <ArrowLink
-          href={`/work/${study.slug}`}
-          className="mt-8"
-          ariaLabel={`Read the ${study.name} case study`}
-        >
-          Read the case study
-        </ArrowLink>
+        <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2">
+          <ArrowLink
+            href={`/work/${study.slug}`}
+            ariaLabel={`Read the ${study.name} case study`}
+          >
+            Read the case study
+          </ArrowLink>
+          {study.website ? (
+            <a
+              href={study.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Visit {displayHost(study.website)}
+              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+            </a>
+          ) : null}
+        </div>
       </div>
     </article>
   )

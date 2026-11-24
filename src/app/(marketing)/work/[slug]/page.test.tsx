@@ -70,12 +70,15 @@ const renderSidecar = async () =>
   )
 
 describe("Sidecar for OpenCode case study", () => {
-  it("has a single h1 and links to the Marketplace listing and the source", async () => {
+  it("has a single h1 and links to its website, the Marketplace listing and the source", async () => {
     await renderSidecar()
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Sidecar for OpenCode"
     )
+    expect(
+      screen.getByRole("link", { name: /^opencodesidecar\.com/ })
+    ).toHaveAttribute("href", "https://www.opencodesidecar.com")
     expect(
       screen.getByRole("link", { name: /marketplace\.visualstudio\.com/ })
     ).toHaveAttribute(

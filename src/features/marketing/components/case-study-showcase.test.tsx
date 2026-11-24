@@ -42,6 +42,21 @@ describe("CaseStudyShowcase", () => {
     expect(readLink("PlayerBay")).not.toBeInTheDocument()
   })
 
+  it("links to each product's live site", async () => {
+    const user = userEvent.setup()
+    render(<CaseStudyShowcase studies={caseStudies} />)
+
+    expect(
+      screen.getByRole("link", { name: /visit playerbay\.com/i })
+    ).toHaveAttribute("href", "https://playerbay.com")
+
+    await user.click(screen.getByRole("tab", { name: "Sidecar for OpenCode" }))
+
+    expect(
+      screen.getByRole("link", { name: /visit opencodesidecar\.com/i })
+    ).toHaveAttribute("href", "https://www.opencodesidecar.com")
+  })
+
   it("moves between case studies with the arrow keys", async () => {
     const user = userEvent.setup()
     render(<CaseStudyShowcase studies={caseStudies} />)

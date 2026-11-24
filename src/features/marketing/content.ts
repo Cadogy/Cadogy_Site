@@ -17,7 +17,8 @@ export type EngagementModel = { readonly title: string; readonly body: string }
 export type CaseStudy = {
   readonly slug: string
   readonly name: string
-  readonly url: string
+  readonly website?: string
+  readonly links: readonly string[]
   readonly category: string
   readonly summary: string
   readonly role: string
@@ -29,7 +30,6 @@ export type CaseStudy = {
   readonly video?: Video
   readonly challenge: readonly string[]
   readonly productLabel: string
-  readonly sourceUrl?: string
   readonly promisesHeading: { readonly lead: string; readonly rest: string }
   readonly promises: readonly string[]
   readonly facts: readonly { readonly value: string; readonly label: string }[]
@@ -181,7 +181,8 @@ export const caseStudies: readonly CaseStudy[] = [
   {
     slug: "playerbay",
     name: "PlayerBay",
-    url: "https://playerbay.com",
+    website: "https://playerbay.com",
+    links: [],
     category: "Marketplace",
     summary:
       "A two-sided marketplace where players buy and sell game accounts, items, in-game currency, keys and top-ups, with buyer protection on every order and a storefront in 25 languages.",
@@ -421,8 +422,11 @@ export const caseStudies: readonly CaseStudy[] = [
   {
     slug: "opencode-sidecar",
     name: "Sidecar for OpenCode",
-    url: "https://marketplace.visualstudio.com/items?itemName=cadogy.opencode-sidecar",
-    sourceUrl: "https://github.com/charlesknapp/opencode-sidecar",
+    website: "https://www.opencodesidecar.com",
+    links: [
+      "https://marketplace.visualstudio.com/items?itemName=cadogy.opencode-sidecar",
+      "https://github.com/charlesknapp/opencode-sidecar",
+    ],
     category: "Developer tool",
     summary:
       "A free, open-source VS Code extension that puts the OpenCode coding agent in a chat panel beside your code, with every step on one timeline and nothing approved without you.",
@@ -686,3 +690,6 @@ export const faqs: readonly Faq[] = [
       "We're based in South Florida and work with clients across the United States and internationally.",
   },
 ]
+
+export const displayHost = (url: string) =>
+  new URL(url).host.replace(/^www\./, "")

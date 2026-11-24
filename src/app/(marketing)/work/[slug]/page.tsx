@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 import { CtaBand } from "@/features/marketing/components/cta-band"
-import { caseStudies } from "@/features/marketing/content"
+import { caseStudies, displayHost } from "@/features/marketing/content"
 import { ArrowUpRight } from "lucide-react"
 
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
@@ -59,24 +59,20 @@ export default async function CaseStudyPage({ params }: Props) {
             <div>
               <dt className="text-meta">{study.productLabel}</dt>
               <dd className="mt-3 flex flex-wrap gap-2">
-                <Button asChild variant="secondary">
-                  <a href={study.url} target="_blank" rel="noopener noreferrer">
-                    {new URL(study.url).host}
-                    <ArrowUpRight className="size-4" aria-hidden="true" />
-                  </a>
-                </Button>
-                {study.sourceUrl ? (
-                  <Button asChild variant="ghost">
-                    <a
-                      href={study.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                {[study.website, ...study.links]
+                  .filter((href) => href !== undefined)
+                  .map((href, index) => (
+                    <Button
+                      key={href}
+                      asChild
+                      variant={index === 0 ? "secondary" : "ghost"}
                     >
-                      {new URL(study.sourceUrl).host}
-                      <ArrowUpRight className="size-4" aria-hidden="true" />
-                    </a>
-                  </Button>
-                ) : null}
+                      <a href={href} target="_blank" rel="noopener noreferrer">
+                        {displayHost(href)}
+                        <ArrowUpRight className="size-4" aria-hidden="true" />
+                      </a>
+                    </Button>
+                  ))}
               </dd>
             </div>
           </dl>

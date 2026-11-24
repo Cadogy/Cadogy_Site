@@ -42,7 +42,7 @@ export const buildLlmsTxt = ({
       "Work",
       caseStudies.map(
         (study) =>
-          `- [${study.name}](${absoluteUrl(`/work/${study.slug}`)}): ${study.summary} ${study.role}`
+          `- [${study.name}](${absoluteUrl(`/work/${study.slug}`)}): ${study.summary} ${study.role}${study.website ? ` Live site: ${study.website}` : ""}`
       )
     ),
     ...section("Company", [
