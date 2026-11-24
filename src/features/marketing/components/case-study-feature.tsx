@@ -17,7 +17,7 @@ export function CaseStudyFeature({
         <div className="relative aspect-3/4 overflow-hidden rounded-media bg-card sm:hidden">
           <Image
             src={study.mobileImage}
-            alt={`${study.name} homepage`}
+            alt={study.imageAlt}
             fill
             sizes="100vw"
             quality={85}
@@ -27,7 +27,7 @@ export function CaseStudyFeature({
         <div className="relative hidden aspect-video overflow-hidden rounded-media bg-card sm:block">
           <Image
             src={study.image}
-            alt={`${study.name} homepage`}
+            alt={study.imageAlt}
             fill
             sizes="(min-width: 1024px) 60vw, 100vw"
             quality={85}

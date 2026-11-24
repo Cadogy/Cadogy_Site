@@ -44,21 +44,17 @@ export default async function HomePage() {
   const posts = await getLatestPosts(3)
 
   const slides: CinematicSlide[] = [
-    ...(featured
-      ? [
-          {
-            id: `work-${featured.slug}`,
-            image: featured.image,
-            mobileImage: featured.mobileImage,
-            alt: `${featured.name} marketplace homepage`,
-            meta: `Case study · ${featured.category}`,
-            title: featured.name,
-            description: featured.summary,
-            href: `/work/${featured.slug}`,
-            cta: "Read the case study",
-          },
-        ]
-      : []),
+    ...caseStudies.map((study) => ({
+      id: `work-${study.slug}`,
+      image: study.slide?.image ?? study.image,
+      mobileImage: study.slide?.mobileImage ?? study.mobileImage,
+      alt: study.slideAlt ?? study.imageAlt,
+      meta: `Case study · ${study.category}`,
+      title: study.name,
+      description: study.summary,
+      href: `/work/${study.slug}`,
+      cta: "Read the case study",
+    })),
     ...posts.map((post) => ({
       id: `post-${post.id}`,
       image: featuredImageOf(post),

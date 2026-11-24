@@ -1,3 +1,5 @@
+import type { Video } from "@/components/media/video-embed"
+
 export type Service = {
   readonly slug: string
   readonly title: string
@@ -21,6 +23,10 @@ export type CaseStudy = {
   readonly role: string
   readonly image: string
   readonly mobileImage: string
+  readonly imageAlt: string
+  readonly slide?: { readonly image: string; readonly mobileImage: string }
+  readonly slideAlt?: string
+  readonly video?: Video
   readonly challenge: readonly string[]
   readonly productLabel: string
   readonly sourceUrl?: string
@@ -182,6 +188,7 @@ export const caseStudies: readonly CaseStudy[] = [
     role: "Product, engineering and operations — designed, built and run in-house.",
     image: "/images/studio/playerbay-case-study.webp",
     mobileImage: "/images/studio/playerbay-case-study-mobile.webp",
+    imageAlt: "PlayerBay marketplace homepage",
     challenge: [
       "Digital-goods marketplaces live or die on trust. Buyers need to know they'll receive what they paid for, sellers need to know they'll get paid, and the platform has to resolve problems fairly when something goes wrong.",
       "Digital goods are also hard to protect. There's no tracking number for a game account, delivery can take seconds or hours depending on the game, and stolen cards are a constant risk. Every rule has to be easy for honest buyers and sellers without opening a door for fraud.",
@@ -422,6 +429,20 @@ export const caseStudies: readonly CaseStudy[] = [
     role: "Product, design and engineering — built, released and maintained by Cadogy under the MIT license.",
     image: "/images/studio/opencode-sidecar-case-study.webp",
     mobileImage: "/images/studio/opencode-sidecar-case-study-mobile.webp",
+    imageAlt:
+      "Sidecar for OpenCode in VS Code: a timeline of the agent's steps, live subagents and a permission request",
+    slide: {
+      image: "/images/studio/opencode-sidecar-slide-hero.webp",
+      mobileImage: "/images/studio/opencode-sidecar-slide-phone.webp",
+    },
+    video: {
+      youtubeId: "_KMBRo7zrMw",
+      title:
+        "Sidecar for OpenCode: the OpenCode chat sidebar for VS Code (free extension)",
+      poster: "/images/studio/opencode-sidecar-video.webp",
+    },
+    slideAlt:
+      "Sidecar for OpenCode panels: a debugging conversation with a test run, and subagents waiting on a permission request",
     challenge: [
       "OpenCode is a capable open-source coding agent that runs in the terminal. Its official VS Code extension opens that terminal interface in a split pane. We wanted a graphical chat panel that shows everything the agent does and keeps the developer in charge, without leaving the editor.",
       "An agent that reads files and runs commands has to be watched. Every tool call, subagent and permission request needs to be visible and answerable without breaking flow, and nothing can be approved behind the developer's back.",

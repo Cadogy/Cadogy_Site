@@ -7,6 +7,7 @@ import { ArrowUpRight } from "lucide-react"
 
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
 import { Button } from "@/components/ui/button"
+import { VideoEmbed } from "@/components/media/video-embed"
 import { JsonLd } from "@/components/seo/json-ld"
 
 type Props = { params: Promise<{ slug: string }> }
@@ -85,7 +86,7 @@ export default async function CaseStudyPage({ params }: Props) {
           <div className="relative aspect-3/4 overflow-hidden rounded-media bg-card sm:hidden">
             <Image
               src={study.mobileImage}
-              alt={`${study.name} homepage`}
+              alt={study.imageAlt}
               fill
               priority
               sizes="100vw"
@@ -96,7 +97,7 @@ export default async function CaseStudyPage({ params }: Props) {
           <div className="relative hidden aspect-video overflow-hidden rounded-media bg-card sm:block">
             <Image
               src={study.image}
-              alt={`${study.name} homepage`}
+              alt={study.imageAlt}
               fill
               priority
               sizes="100vw"
@@ -140,6 +141,19 @@ export default async function CaseStudyPage({ params }: Props) {
             </div>
           </div>
         </section>
+
+        {study.video ? (
+          <section aria-labelledby="video-title" className="border-t">
+            <div className="container-page section">
+              <h2 id="video-title" className="text-h2">
+                Watch the demo
+              </h2>
+              <div className="mt-12">
+                <VideoEmbed video={study.video} />
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section aria-labelledby="glance-title" className="border-t">
           <div className="container-page section">

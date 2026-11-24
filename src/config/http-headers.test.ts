@@ -32,6 +32,9 @@ describe("security headers", () => {
     expect(csp).toContain("frame-ancestors 'none'")
     expect(csp).toContain("https://challenges.cloudflare.com")
     expect(csp).toContain("https://checkout.stripe.com")
+    expect(csp).toContain(
+      "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com"
+    )
     expect(valueOf("/:path*", "Content-Security-Policy")).toBeUndefined()
   })
 })

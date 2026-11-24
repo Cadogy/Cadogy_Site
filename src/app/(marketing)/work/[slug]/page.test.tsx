@@ -115,3 +115,25 @@ describe("Sidecar for OpenCode case study", () => {
     )
   })
 })
+
+describe("case study videos", () => {
+  it("offers the Sidecar demo without loading YouTube until it's played", async () => {
+    await renderSidecar()
+    const demo = screen.getByRole("region", { name: "Watch the demo" })
+
+    expect(
+      within(demo).getByRole("button", {
+        name: /Play video: Sidecar for OpenCode/,
+      })
+    ).toBeInTheDocument()
+    expect(demo.querySelector("iframe")).toBeNull()
+  })
+
+  it("leaves the section out when a case study has no video", async () => {
+    await renderPlayerBay()
+
+    expect(
+      screen.queryByRole("region", { name: "Watch the demo" })
+    ).not.toBeInTheDocument()
+  })
+})

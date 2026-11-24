@@ -51,17 +51,42 @@ describe("home page", () => {
       within(carousel).getByRole("link", { name: "PlayerBay" })
     ).toHaveAttribute("href", "/work/playerbay")
     expect(
+      within(carousel).getByRole("link", { name: "Sidecar for OpenCode" })
+    ).toHaveAttribute("href", "/work/opencode-sidecar")
+    expect(
       within(carousel).getByRole("link", { name: "Modular monoliths & AI" })
     ).toHaveAttribute("href", "/articles/post-1")
+    expect(
+      within(carousel)
+        .getAllByRole("group")
+        .map((slide) => within(slide).getByRole("heading").textContent)
+    ).toEqual([
+      "PlayerBay",
+      "Sidecar for OpenCode",
+      "Modular monoliths & AI",
+      "Cloudflare basics",
+    ])
   })
 
-  it("still shows the work slide when the blog is unavailable", async () => {
+  it("describes each case study slide's image", async () => {
+    latestPosts.value = []
+    render(await HomePage())
+
+    expect(
+      screen.getAllByRole("img", { name: /Sidecar for OpenCode panels/ })
+    ).not.toHaveLength(0)
+    expect(
+      screen.getAllByRole("img", { name: /PlayerBay marketplace homepage/ })
+    ).not.toHaveLength(0)
+  })
+
+  it("still shows the work slides when the blog is unavailable", async () => {
     latestPosts.value = []
     render(await HomePage())
     const carousel = screen.getByRole("region", {
       name: "Featured work and writing",
     })
-    expect(within(carousel).getAllByRole("group")).toHaveLength(1)
+    expect(within(carousel).getAllByRole("group")).toHaveLength(2)
   })
 
   it("presents the three featured services as image cards with visible descriptions", async () => {
