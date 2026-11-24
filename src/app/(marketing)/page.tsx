@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowLink } from "@/features/marketing/components/arrow-link"
-import { CaseStudyFeature } from "@/features/marketing/components/case-study-feature"
+import { CaseStudyShowcase } from "@/features/marketing/components/case-study-showcase"
 import { CtaBand } from "@/features/marketing/components/cta-band"
 import { FaqList } from "@/features/marketing/components/faq-list"
 import { ProcessSteps } from "@/features/marketing/components/process-steps"
@@ -40,7 +40,6 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const [featured] = caseStudies
   const posts = await getLatestPosts(3)
 
   const slides: CinematicSlide[] = [
@@ -138,7 +137,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {featured ? (
+      {caseStudies.length > 0 ? (
         <section aria-labelledby="work-title" className="border-t section">
           <div className="container-page">
             <SectionHeading
@@ -148,7 +147,7 @@ export default async function HomePage() {
               action={<ArrowLink href="/work">All work</ArrowLink>}
             />
             <div className="mt-14">
-              <CaseStudyFeature study={featured} />
+              <CaseStudyShowcase studies={caseStudies} />
             </div>
           </div>
         </section>

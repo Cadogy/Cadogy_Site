@@ -427,7 +427,7 @@ export const caseStudies: readonly CaseStudy[] = [
     summary:
       "A free, open-source VS Code extension that puts the OpenCode coding agent in a chat panel beside your code, with every step on one timeline and nothing approved without you.",
     role: "Product, design and engineering — built, released and maintained by Cadogy under the MIT license.",
-    image: "/images/studio/opencode-sidecar-case-study.webp",
+    image: "/images/studio/opencode-sidecar-case-study-wide.webp",
     mobileImage: "/images/studio/opencode-sidecar-case-study-mobile.webp",
     imageAlt:
       "Sidecar for OpenCode in VS Code: a timeline of the agent's steps, live subagents and a permission request",

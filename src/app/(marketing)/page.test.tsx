@@ -1,4 +1,4 @@
-import { services } from "@/features/marketing/content"
+﻿import { caseStudies, services } from "@/features/marketing/content"
 import { render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
@@ -110,6 +110,17 @@ describe("home page", () => {
     expect(
       within(work).getByRole("link", { name: /read the playerbay case study/i })
     ).toHaveAttribute("href", "/work/playerbay")
+  })
+
+  it("lets visitors switch between every case study in the work section", async () => {
+    render(await HomePage())
+    const work = screen.getByRole("region", { name: /Proof, not promises/ })
+
+    expect(
+      within(work)
+        .getAllByRole("tab")
+        .map((tab) => tab.textContent)
+    ).toEqual(caseStudies.map((study) => study.name))
   })
 
   it("makes no unverifiable headcount or tenure claims", async () => {
