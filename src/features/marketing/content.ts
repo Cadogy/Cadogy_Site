@@ -739,18 +739,18 @@ export const caseStudies: readonly CaseStudy[] = [
     summary:
       "The website for a new midlife wellness brand for women: warm, botanical and careful with every claim, built to grow a waitlist now and open on launch day.",
     role: "Website design, engineering and launch preparation, built around the brand's own identity.",
-    image: "/images/studio/graceful-era.webp",
-    mobileImage: "/images/studio/graceful-era-mobile.webp",
+    image: "/images/studio/graceful-era-home.webp",
+    mobileImage: "/images/studio/graceful-era-home-mobile.webp",
     hero: {
-      image: "/images/studio/graceful-era-hero.webp",
+      image: "/images/studio/graceful-era-home-hero.webp",
       focus: "object-top",
     },
     imageAlt:
-      "Graceful Era Vitality's contact page: an arched portrait of a woman with a cup of tea, a Rooted in Costa Rica seal and a handwritten welcome note beside the message form",
+      "Graceful Era Vitality's homepage: the headline \"Through midlife and beyond\" beside a dark glass supplement bottle with the brand's cream label, framed by green leaves",
     story: {
       headline: "A warm, careful home for a midlife wellness brand.",
       tone: "graceful-era",
-      image: "/images/studio/graceful-era-story.webp",
+      image: "/images/studio/graceful-era-home-story.webp",
     },
     challenge: [
       "Graceful Era Vitality is a new wellness brand for women in midlife. It needed a website that feels warm and personal, carries the brand's botanical identity and can grow into a place women come back to, not a one-page bottle shop.",
