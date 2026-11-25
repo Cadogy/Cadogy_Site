@@ -32,4 +32,19 @@ describe("sanitizeArticleHtml", () => {
       sanitizeArticleHtml('<iframe src="https://evil.example/x"></iframe>')
     ).not.toContain("evil.example")
   })
+
+  it("keeps the article blocks our compiler produces", () => {
+    const html =
+      '<aside data-block="callout" data-tone="warning"><p>Careful</p></aside><section data-block="faq"><h3 id="q">Q?</h3><p>A.</p></section>'
+    const clean = sanitizeArticleHtml(html)
+
+    expect(clean).toContain('<aside data-block="callout" data-tone="warning">')
+    expect(clean).toContain('<section data-block="faq">')
+  })
+
+  it("drops block markers it doesn't know", () => {
+    expect(
+      sanitizeArticleHtml('<aside data-block="ad" data-tone="loud">x</aside>')
+    ).toBe("<aside>x</aside>")
+  })
 })

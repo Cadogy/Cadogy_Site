@@ -4,6 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { PostAuthor } from "@/features/articles/components/post-author"
 import { ShareArticle } from "@/features/articles/components/share-article"
+import { faqFromArticleHtml } from "@/features/articles/faq"
 import {
   authorOf,
   countWords,
@@ -16,6 +17,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react"
 
 import { absoluteUrl } from "@/config/site"
 import { openGraphFor } from "@/lib/seo/open-graph"
+import { faqSchema } from "@/lib/seo/structured-data"
 import {
   decodeHtml,
   extractExcerpt,
@@ -27,6 +29,7 @@ import {
 } from "@/lib/wordpress-api"
 import { Button } from "@/components/ui/button"
 import { ArticleSchema } from "@/components/seo/article-schema"
+import { JsonLd } from "@/components/seo/json-ld"
 import { OnThisPage } from "@/components/site/on-this-page"
 
 type Props = { params: Promise<{ slug: string }> }
@@ -46,7 +49,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return {}
   const title = decodeHtml(post.title.rendered)
   const description = extractExcerpt(post.excerpt.rendered, 160)
-  const image = featuredImageOf(post)
   return {
     title,
     description,
@@ -56,7 +58,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         path: `/articles/${post.slug}`,
         title,
         description,
-        image,
       }),
       type: "article",
       publishedTime: `${post.date_gmt}Z`,
@@ -66,7 +67,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
     },
   }
 }
@@ -85,9 +85,12 @@ export default async function ArticlePage({ params }: Props) {
   const categories = post._embedded?.["wp:term"]?.[0] ?? []
   const tags = post._embedded?.["wp:term"]?.[1] ?? []
   const image = featuredImageOf(post)
+  const content = sanitizeArticleHtml(post.content.rendered)
+  const questions = faqFromArticleHtml(content)
 
   return (
     <>
+      {questions.length > 0 ? <JsonLd data={faqSchema(questions)} /> : null}
       <ArticleSchema
         title={title}
         slug={post.slug}
@@ -156,7 +159,7 @@ export default async function ArticlePage({ params }: Props) {
               id="article-content"
               className="wordpress-content mt-10 max-w-[44rem]"
               dangerouslySetInnerHTML={{
-                __html: sanitizeArticleHtml(post.content.rendered),
+                __html: content,
               }}
             />
             {tags.length > 0 ? (

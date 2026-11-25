@@ -4,9 +4,13 @@
     "src/test/server-only-stub.ts"
   ],
   "project": [
-    "src/**/*.{ts,tsx}"
+    "src/**/*.{ts,tsx}",
+    "scripts/**/*.ts"
   ],
-  "ignoreDependencies": ["tailwindcss", "tw-animate-css"],
+  "ignoreDependencies": [
+    "tailwindcss",
+    "tw-animate-css"
+  ],
   "rules": {
     "enumMembers": "off"
   }

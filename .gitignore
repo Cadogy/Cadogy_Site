@@ -100,3 +100,6 @@ pnpm-debug.log*
 .prettiercache
 .cache/
 *.tgz
+
+# Local article previews (npm run blog -- preview)
+.blog-preview/

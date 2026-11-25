@@ -99,10 +99,12 @@ export const serviceCatalogSchema = () => ({
   })),
 })
 
-export const faqSchema = () => ({
+type Faq = { readonly question: string; readonly answer: string }
+
+export const faqSchema = (items: readonly Faq[] = faqs) => ({
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqs.map((faq) => ({
+  mainEntity: items.map((faq) => ({
     "@type": "Question",
     name: faq.question,
     acceptedAnswer: { "@type": "Answer", text: faq.answer },

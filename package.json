@@ -14,7 +14,8 @@
     "knip": "knip",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
-    "verify": "npm run lint && npm run typecheck && npm test && npm run knip"
+    "verify": "npm run lint && npm run typecheck && npm test && npm run knip",
+    "blog": "tsx scripts/blog.ts"
   },
   "dependencies": {
     "@better-auth/mongo-adapter": "^1.7.15",
@@ -61,12 +62,16 @@
     "@vitest/coverage-v8": "^5.0.5",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.6",
+    "gray-matter": "^4.0.3",
     "happy-dom": "^21.0.4",
     "knip": "^6.44.1",
+    "marked": "^16.4.2",
     "postcss": "^8.5.32",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5"
   },

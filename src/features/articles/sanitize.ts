@@ -1,5 +1,24 @@
 import sanitizeHtml from "sanitize-html"
 
+const BLOCK_VALUES: Record<string, Record<string, readonly string[]>> = {
+  aside: {
+    "data-block": ["summary", "callout", "sources"],
+    "data-tone": ["note", "tip", "warning"],
+  },
+  section: { "data-block": ["faq"] },
+}
+
+const keepKnownBlockMarkers =
+  (tagName: string) => (_tag: string, attribs: sanitizeHtml.Attributes) => ({
+    tagName,
+    attribs: Object.fromEntries(
+      Object.entries(attribs).filter(([name, value]) => {
+        const allowed = BLOCK_VALUES[tagName]?.[name]
+        return allowed ? allowed.includes(value) : true
+      })
+    ),
+  })
+
 const TRUSTED_EMBED_HOSTS = [
   "www.youtube.com",
   "youtube.com",
@@ -28,10 +47,14 @@ export const sanitizeArticleHtml = (html: string) =>
       iframe: ["src", "width", "height", "allow", "allowfullscreen", "title"],
       th: ["colspan", "rowspan", "scope"],
       td: ["colspan", "rowspan"],
+      aside: ["data-block", "data-tone"],
+      section: ["data-block"],
     },
     allowedSchemes: ["http", "https", "mailto"],
     allowedIframeHostnames: TRUSTED_EMBED_HOSTS,
     transformTags: {
+      aside: keepKnownBlockMarkers("aside"),
+      section: keepKnownBlockMarkers("section"),
       a: (tagName, attribs) => {
         const external =
           /^https?:\/\//.test(attribs.href ?? "") &&

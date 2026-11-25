@@ -165,3 +165,86 @@
 .wordpress-content p {
   scroll-margin-top: 6rem;
 }
+
+.wordpress-content [data-block] {
+  margin-top: 2.25em;
+  margin-bottom: 2.25em;
+}
+
+.wordpress-content [data-block] > * + * {
+  margin-top: 0.9em;
+}
+
+.wordpress-content [data-block]::before {
+  display: block;
+  margin-bottom: 0.75em;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+  color: hsl(var(--muted-foreground));
+}
+
+.wordpress-content [data-block="summary"],
+.wordpress-content [data-block="callout"] {
+  border-left: 2px solid hsl(var(--block-tone, var(--brand)));
+  padding-left: 1.25em;
+}
+
+.wordpress-content [data-block="summary"] {
+  color: hsl(var(--foreground));
+}
+
+.wordpress-content [data-block="summary"]::before {
+  content: "Key takeaways";
+}
+
+.wordpress-content [data-block="callout"]::before {
+  content: "Note";
+}
+
+.wordpress-content [data-block="callout"][data-tone="tip"] {
+  --block-tone: var(--success);
+}
+
+.wordpress-content [data-block="callout"][data-tone="tip"]::before {
+  content: "Tip";
+}
+
+.wordpress-content [data-block="callout"][data-tone="warning"] {
+  --block-tone: var(--warning);
+}
+
+.wordpress-content [data-block="callout"][data-tone="warning"]::before {
+  content: "Watch out";
+}
+
+.wordpress-content [data-block="faq"] {
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 2em;
+}
+
+.wordpress-content [data-block="faq"]::before {
+  content: "Frequently asked questions";
+  font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+}
+
+.wordpress-content [data-block="faq"] h3 {
+  margin-top: 1.75em;
+}
+
+.wordpress-content [data-block="sources"] {
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 1.5em;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.wordpress-content [data-block="sources"]::before {
+  content: "Sources";
+}
+
+.wordpress-content [data-block="sources"] a {
+  color: hsl(var(--muted-foreground));
+}

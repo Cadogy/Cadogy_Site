@@ -107,7 +107,9 @@ describe("structured data", () => {
       name: "Charles Knapp",
       jobTitle: "Co-Founder & CTO",
     })
-    expect(article.image).toBe("https://cadogy.com/images/studio/service-payments.webp")
+    expect(article.image).toBe(
+      "https://cadogy.com/images/studio/service-payments.webp"
+    )
     expect(article.url).toBe("https://cadogy.com/articles/modular-monoliths")
   })
 
@@ -129,5 +131,17 @@ describe("structured data", () => {
       name: "Cadogy",
     })
     expect(article.image).toBe("https://wp.cadogy.com/a.jpg")
+  })
+
+  it("describes any list of questions as an FAQ page", () => {
+    expect(
+      faqSchema([{ question: "Is it fast?", answer: "Yes." }]).mainEntity
+    ).toEqual([
+      {
+        "@type": "Question",
+        name: "Is it fast?",
+        acceptedAnswer: { "@type": "Answer", text: "Yes." },
+      },
+    ])
   })
 })

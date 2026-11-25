@@ -12,7 +12,7 @@ vi.mock("@/lib/wordpress-api", async (importOriginal) => ({
     excerpt: { rendered: "<p>Protect your site.</p>" },
     content: {
       rendered:
-        "<h2>Why it matters</h2><p>Text.</p><h2>Setting it up</h2><p>More.</p>",
+        '<h2>Why it matters</h2><p>Text.</p><h2>Setting it up</h2><p>More.</p><section data-block="faq"><h3>Is Cloudflare free?</h3><p>The core protection is.</p></section>',
     },
     _embedded: { author: [{ name: "Charles Knapp" }] },
   }),
@@ -85,5 +85,15 @@ describe("Article page", () => {
 
     expect(more.getAllByRole("article")).toHaveLength(2)
     expect(more.queryByText("Post 7")).not.toBeInTheDocument()
+  })
+
+  it("tells search engines about the questions it answers", async () => {
+    const { container } = await renderArticle()
+    const schemas = [
+      ...container.querySelectorAll('script[type="application/ld+json"]'),
+    ].map((script) => script.textContent ?? "")
+
+    expect(schemas.join("")).toContain('"@type":"FAQPage"')
+    expect(schemas.join("")).toContain("Is Cloudflare free?")
   })
 })
