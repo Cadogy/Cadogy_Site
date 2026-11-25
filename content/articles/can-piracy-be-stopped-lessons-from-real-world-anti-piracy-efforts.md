@@ -2,6 +2,7 @@
 title: "Can piracy be stopped? What actually works for digital products"
 description: "You can't stop piracy, but you can make it unprofitable. What the evidence says about DRM, watermarking, license checks and account sharing, and how to protect a digital product without punishing paying customers."
 topic: Security
+author: charles
 tags: [Piracy, Content protection, DRM, Licensing]
 cover:
   image: media/can-piracy-be-stopped-lessons-from-real-world-anti-piracy-efforts/cover.jpg

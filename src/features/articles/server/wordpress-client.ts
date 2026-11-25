@@ -66,6 +66,14 @@ export const createWordPressClient = ({
     })
 
   return {
+    findUserBySlug: async (slug) => {
+      const [user] = z
+        .array(idSchema)
+        .parse(
+          await request(`users?slug=${encodeURIComponent(slug)}&context=edit`)
+        )
+      return user ?? null
+    },
     findTerms: async (taxonomy) =>
       z.array(termSchema).parse(await request(`${taxonomy}?per_page=100`)),
     createTerm: async (taxonomy, name) =>

@@ -1,9 +1,12 @@
+import { createHash } from "node:crypto"
+
 import type { CompiledArticle } from "./compile"
 
 type Taxonomy = "categories" | "tags"
 type Term = { readonly id: number; readonly name: string }
 
 export type WordPressClient = {
+  findUserBySlug: (slug: string) => Promise<{ readonly id: number } | null>
   findTerms: (taxonomy: Taxonomy) => Promise<readonly Term[]>
   createTerm: (taxonomy: Taxonomy, name: string) => Promise<Term>
   findPostBySlug: (
@@ -42,6 +45,9 @@ const termIds = async (
 const baseName = (path: string) =>
   (path.split("/").pop() ?? path).replace(/.[^.]+$/, "")
 
+const fingerprint = (data: Uint8Array) =>
+  createHash("sha256").update(data).digest("hex").slice(0, 8)
+
 const uploadAll = async ({
   article,
   files,
@@ -56,7 +62,7 @@ const uploadAll = async ({
       const data = files[path]
       if (!data) throw new Error(`Missing image file: ${path}`)
       const uploaded = await client.uploadMedia({
-        filename: `${article.meta.slug}-${baseName(path)}.webp`,
+        filename: `${article.meta.slug}-${baseName(path)}-${fingerprint(data)}.webp`,
         alt,
         data,
       })
@@ -76,6 +82,9 @@ export const publishArticle = async ({
   status?: PostStatus
 }) => {
   const { meta } = article
+  const author = await client.findUserBySlug(meta.author)
+  if (!author)
+    throw new Error(`${meta.slug}: no WordPress user with slug ${meta.author}`)
   const [categories, tags, existing, uploads] = await Promise.all([
     termIds(client, "categories", [meta.topic]),
     termIds(client, "tags", meta.tags),
@@ -96,6 +105,7 @@ export const publishArticle = async ({
     categories,
     tags,
     featured_media: cover?.id ?? 0,
+    author: author.id,
   })
   if (existing && existing.featuredMedia > 0)
     await client.deleteMedia(existing.featuredMedia)

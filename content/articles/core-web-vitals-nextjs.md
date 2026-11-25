@@ -2,6 +2,7 @@
 title: "How to fix Core Web Vitals in Next.js: LCP, INP and CLS"
 description: "A practical guide to passing Core Web Vitals in a Next.js app: how Google measures them, the fixes that move LCP, INP and CLS, and how to confirm the improvement with real user data."
 topic: Engineering
+author: charles
 tags: [Next.js, Core Web Vitals, Performance, SEO]
 cover:
   image: media/core-web-vitals-nextjs/cover.jpg

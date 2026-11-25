@@ -2,6 +2,7 @@
 title: "Modular monoliths: how to draw boundaries that actually hold"
 description: "A practical guide to modular monoliths: how to define modules, enforce boundaries in TypeScript, keep data ownership clean and know when a module has earned its own service."
 topic: Architecture
+author: charles
 tags: [Modular monolith, Microservices, TypeScript]
 cover:
   image: media/modular-monoliths-are-winning-in-an-ai-driven-world/cover.jpg

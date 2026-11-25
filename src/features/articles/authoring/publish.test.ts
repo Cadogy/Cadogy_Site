@@ -18,7 +18,10 @@ const fakeWordPress = (
     deletedMedia: [] as number[],
     nextId: 100,
   }
+  const users = [{ id: 2, slug: "charles" }]
   const client: WordPressClient = {
+    findUserBySlug: async (slug) =>
+      users.find((user) => user.slug === slug) ?? null,
     findTerms: async (taxonomy) => state[taxonomy],
     createTerm: async (taxonomy, name) => {
       const term = { id: state.nextId++, name }
@@ -62,6 +65,7 @@ const article: CompiledArticle = {
     title: "Stripe webhooks that never double-charge",
     description: "Idempotency, retries and ordering, done properly.",
     topic: "Payments",
+    author: "charles",
     tags: ["Stripe", "Webhooks"],
     cover: {
       image: "media/stripe/cover.jpg",
@@ -93,22 +97,26 @@ describe("publishArticle", () => {
     expect(state.posts[0]?.fields).toMatchObject({
       slug: "stripe-webhooks",
       title: "Stripe webhooks that never double-charge",
-      content:
-        '<p>Body</p><figure><img src="https://wp.example.com/uploads/stripe-webhooks-flow.webp" alt="Flow"></figure>',
+      content: `<p>Body</p><figure><img src="https://wp.example.com/uploads/${state.media[1]?.filename}" alt="Flow"></figure>`,
       excerpt: "Idempotency, retries and ordering, done properly.",
       status: "publish",
       categories: [7],
       tags: state.tags.map((tag) => tag.id),
       featured_media: state.media[0]?.id,
+      author: 2,
     })
     expect(state.tags.map((tag) => tag.name)).toEqual(["Stripe", "Webhooks"])
     expect(state.media).toEqual([
       expect.objectContaining({
-        filename: "stripe-webhooks-cover.webp",
+        filename: expect.stringMatching(
+          /^stripe-webhooks-cover-[0-9a-f]{8}\.webp$/
+        ),
         alt: "A payment terminal",
       }),
       expect.objectContaining({
-        filename: "stripe-webhooks-flow.webp",
+        filename: expect.stringMatching(
+          /^stripe-webhooks-flow-[0-9a-f]{8}\.webp$/
+        ),
         alt: "Flow",
       }),
     ])
@@ -185,5 +193,37 @@ describe("publishArticle", () => {
     await publishArticle({ article, files, client })
 
     expect(state.deletedMedia).toEqual([])
+  })
+
+  it("refuses to publish under an author WordPress doesn't know", async () => {
+    const { client, state } = fakeWordPress()
+
+    await expect(
+      publishArticle({
+        article: { ...article, meta: { ...article.meta, author: "nobody" } },
+        files,
+        client,
+      })
+    ).rejects.toThrow("stripe-webhooks: no WordPress user with slug nobody")
+    expect(state.posts).toEqual([])
+    expect(state.media).toEqual([])
+  })
+
+  it("gives a changed image a new address so caches never serve the old one", async () => {
+    const first = fakeWordPress()
+    const second = fakeWordPress()
+    const third = fakeWordPress()
+
+    await publishArticle({ article, files, client: first.client })
+    await publishArticle({ article, files, client: second.client })
+    await publishArticle({
+      article,
+      files: { ...files, "media/stripe/cover.jpg": new Uint8Array([9]) },
+      client: third.client,
+    })
+
+    const coverName = (state: typeof first.state) => state.media[0]?.filename
+    expect(coverName(second.state)).toBe(coverName(first.state))
+    expect(coverName(third.state)).not.toBe(coverName(first.state))
   })
 })

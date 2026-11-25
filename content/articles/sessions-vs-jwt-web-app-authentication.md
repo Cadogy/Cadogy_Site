@@ -2,6 +2,7 @@
 title: "Sessions vs. JWTs for web app authentication: which should you use?"
 description: "Server sessions and JWTs both work, but they fail differently. A practical comparison covering logout and revocation, XSS and CSRF, scaling, and the setup we recommend for most web apps."
 topic: Security
+author: charles
 tags: [Authentication, Sessions, JWT, Web security]
 cover:
   image: media/sessions-vs-jwt-web-app-authentication/cover.jpg

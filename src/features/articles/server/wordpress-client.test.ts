@@ -50,6 +50,19 @@ describe("createWordPressClient", () => {
     expect(calls[0]?.url).toContain("status=any")
   })
 
+  it("finds an author by their WordPress user slug", async () => {
+    const { calls, fetcher } = recordingFetch(({ url }) =>
+      url.includes("slug=charles") ? [{ id: 2, name: "Charles Knapp" }] : []
+    )
+    const client = createWordPressClient({ ...settings, fetch: fetcher })
+
+    expect(await client.findUserBySlug("charles")).toEqual({ id: 2 })
+    expect(await client.findUserBySlug("nobody")).toBeNull()
+    expect(calls[0]?.url).toBe(
+      "https://wp.example.com/wp-json/wp/v2/users?slug=charles&context=edit"
+    )
+  })
+
   it("updates an existing post in place", async () => {
     const { calls, fetcher } = recordingFetch(() => ({ id: 4 }))
     const client = createWordPressClient({ ...settings, fetch: fetcher })

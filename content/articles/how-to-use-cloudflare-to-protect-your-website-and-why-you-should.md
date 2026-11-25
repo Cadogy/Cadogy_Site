@@ -2,6 +2,7 @@
 title: "How to protect your website with Cloudflare: a practical setup guide"
 description: "Set up Cloudflare properly: SSL modes, locking down your origin, WAF and rate limiting rules on the free plan, bot settings that won't break webhooks, and fixes for 52x errors."
 topic: Security
+author: charles
 tags: [Cloudflare, Web security, DDoS, WAF]
 cover:
   image: media/how-to-use-cloudflare-to-protect-your-website-and-why-you-should/cover.jpg

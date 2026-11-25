@@ -16,6 +16,7 @@ const frontmatterSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   topic: z.string().min(1).default("General"),
+  author: z.string().regex(/^[a-z0-9-]+$/),
   tags: z.array(z.string().min(1)).default([]),
   cover: coverSchema,
 })
@@ -31,6 +32,7 @@ type ArticleMeta = {
   readonly title: string
   readonly description: string
   readonly topic: string
+  readonly author: string
   readonly tags: readonly string[]
   readonly cover: z.infer<typeof coverSchema>
 }
@@ -222,6 +224,7 @@ export const compileArticle = (
       title: front.title,
       description: front.description,
       topic: front.topic,
+      author: front.author,
       tags: front.tags,
       cover: front.cover,
     },

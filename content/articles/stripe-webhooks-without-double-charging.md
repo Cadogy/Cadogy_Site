@@ -2,6 +2,7 @@
 title: "Stripe webhooks that never double-charge: idempotency, retries and ordering"
 description: "Stripe can send the same webhook twice, out of order, for days. How to verify signatures, deduplicate events, use idempotency keys and build handlers that are safe to run again."
 topic: Payments
+author: charles
 tags: [Stripe, Webhooks, Payments, Idempotency]
 cover:
   image: media/stripe-webhooks-without-double-charging/cover.jpg

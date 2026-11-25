@@ -9,6 +9,7 @@ Each file here is one article on cadogy.com/articles. The file name is the URL s
 title: "How to protect your website with Cloudflare: a practical setup guide"
 description: "One or two sentences. Used as the meta description and the card summary."
 topic: Security        # Engineering, Architecture, Security, Payments or AI
+author: charles        # WordPress user slug: charles or dylan
 tags: [Cloudflare, WAF]
 cover:
   image: media/<slug>/cover.jpg
@@ -19,7 +20,7 @@ cover:
 ---
 ```
 
-`topic` sets the WordPress category. Every article needs a real cover photo in `media/<slug>/`.
+`topic` sets the WordPress category. `author` is the WordPress user the post is published under; publish stops if that user does not exist, so posts never land under the admin account. Every article needs a real cover photo in `media/<slug>/`.
 
 With `marks`, preview and publish turn the photo into a branded cover: blue-toned, fading top to bottom into our block grid, with each logo on a centered tile. Pick a photo with texture and structure; it reads as background. Logos live in `marks/` as 24×24 SVGs with their color in the root `color` attribute (brands from Simple Icons, generic icons from Lucide). Preview writes each cover to `.blog-preview/<slug>-cover.webp`.
 

@@ -2,6 +2,7 @@
 title: "How to add AI features without runaway costs"
 description: "Practical ways to keep LLM costs predictable: measure cost per feature, cache prompts, route to smaller models, batch background work, cap output and protect against abuse."
 topic: AI
+author: charles
 tags: [AI integration, LLM, Cost control, Prompt caching]
 cover:
   image: media/ai-features-without-runaway-costs/cover.jpg

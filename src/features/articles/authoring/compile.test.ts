@@ -7,6 +7,7 @@ const source = (body: string, front = "") => `---
 title: Modular monoliths, done properly
 description: How to draw module boundaries that hold up.
 topic: Architecture
+author: charles
 tags: [Architecture, TypeScript]
 cover:
   image: media/modular/cover.jpg
@@ -25,6 +26,7 @@ describe("compileArticle", () => {
       title: "Modular monoliths, done properly",
       description: "How to draw module boundaries that hold up.",
       topic: "Architecture",
+      author: "charles",
       tags: ["Architecture", "TypeScript"],
       cover: {
         image: "media/modular/cover.jpg",
@@ -34,6 +36,12 @@ describe("compileArticle", () => {
         marks: [],
       },
     })
+  })
+
+  it("rejects an article without an author so it never posts as the admin account", () => {
+    expect(() =>
+      compileArticle(source("Intro.").replace("author: charles\n", ""), "x")
+    ).toThrow("x: invalid frontmatter (author)")
   })
 
   it("reads the logos to brand the cover with", () => {
@@ -200,6 +208,7 @@ describe("cover credit", () => {
         "---",
         "title: T",
         "description: D",
+        "author: charles",
         "cover:",
         "  image: media/x/cover.jpg",
         "  alt: Keys",
@@ -223,6 +232,7 @@ describe("code blocks", () => {
       "---",
       "title: T",
       "description: D",
+      "author: charles",
       "cover:",
       "  image: media/x/cover.jpg",
       "  alt: Keys",
