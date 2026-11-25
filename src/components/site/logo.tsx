@@ -19,7 +19,7 @@ export function Logo() {
   return (
     <Link
       href="/"
-      className="inline-flex min-h-11 items-center gap-2 rounded-full text-base font-semibold tracking-tight"
+      className="inline-flex min-h-11 items-center gap-2 rounded-control text-base font-semibold tracking-tight"
     >
       <LogoMark />
       <span>Cadogy</span>

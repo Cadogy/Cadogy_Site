@@ -12,14 +12,20 @@ export default function MarketingLayout({
     <>
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-background focus:px-4 focus:py-2"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-control focus:bg-background focus:px-4 focus:py-2"
       >
         Skip to content
       </a>
       <JsonLd data={professionalServiceSchema()} />
-      <SiteHeader />
-      <main id="main">{children}</main>
-      <SiteFooter />
+      <div className="relative isolate">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 hidden w-full max-w-[1360px] -translate-x-1/2 border-x xl:block"
+        />
+        <SiteHeader />
+        <main id="main">{children}</main>
+        <SiteFooter />
+      </div>
     </>
   )
 }

@@ -50,7 +50,7 @@ export function SessionList({
               </span>
             </div>
             {session.current ? (
-              <span className="rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              <span className="rounded-chip border px-3 py-1 text-xs text-muted-foreground">
                 This device
               </span>
             ) : (

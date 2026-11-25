@@ -43,7 +43,9 @@ export default function AccountLayout({
           <div aria-hidden="true" className="absolute inset-0 media-scrim" />
           <p className="absolute right-12 bottom-12 left-12 text-statement text-white">
             Invoices, payments and support,{" "}
-            <span className="serif-accent text-white/80">in one place.</span>
+            <span className="text-muted-foreground text-white/80">
+              in one place.
+            </span>
           </p>
         </div>
       </div>

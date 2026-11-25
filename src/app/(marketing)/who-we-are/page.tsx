@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import { CtaBand } from "@/features/marketing/components/cta-band"
+import { HeadingTick } from "@/features/marketing/components/heading-tick"
 import { PageHeader } from "@/features/marketing/components/page-header"
 import { PrinciplesGrid } from "@/features/marketing/components/principles-grid"
+import { ProofFigures } from "@/features/marketing/components/proof-figures"
 import { SectionHeading } from "@/features/marketing/components/section-heading"
 import { TagList } from "@/features/marketing/components/tag-list"
 import { Mail } from "lucide-react"
@@ -12,6 +14,7 @@ import { siteConfig } from "@/config/site"
 import { breadcrumbSchema, personSchema } from "@/lib/seo/structured-data"
 import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/seo/json-ld"
+import { OnThisPage } from "@/components/site/on-this-page"
 
 export const metadata: Metadata = {
   title: "About",
@@ -38,6 +41,14 @@ const stack = [
   "Google Cloud",
   "WordPress",
   "Shopify",
+] as const
+
+const ABOUT_SECTIONS = [
+  { id: "story", label: "Our story" },
+  { id: "team", label: "The team" },
+  { id: "principles", label: "Principles" },
+  { id: "proof", label: "Proof" },
+  { id: "stack", label: "Stack" },
 ] as const
 
 export default function AboutPage() {
@@ -69,106 +80,142 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <section
-        aria-labelledby="story-title"
-        className="container-page grid gap-10 section lg:grid-cols-12"
-      >
-        <h2 id="story-title" className="text-h2 lg:col-span-5">
-          Learn daily. Build intentionally.{" "}
-          <span className="serif-accent">Serve people well.</span>
-        </h2>
-        <div className="space-y-6 text-lead lg:col-span-6 lg:col-start-7">
-          <p>
-            Cadogy is the home for everything we build: client projects, our own
-            products and the lessons we learn along the way. We treat every
-            engagement as a chance to solve a problem properly, not just
-            quickly.
-          </p>
-          <p>
-            Modern tooling has changed how quickly good software can be built.
-            We invest heavily in ours, so a small team can take on work that
-            used to need a department. What hasn&apos;t changed is
-            accountability: senior engineers make the decisions and stand behind
-            every line that ships.
-          </p>
-        </div>
-      </section>
+      <div className="container-page grid gap-12 section lg:grid-cols-12 lg:gap-16">
+        <OnThisPage
+          items={ABOUT_SECTIONS}
+          className="hidden lg:sticky lg:top-24 lg:col-span-3 lg:block lg:self-start"
+        />
 
-      <section aria-labelledby="team-title" className="border-t section">
-        <div className="container-page">
-          <SectionHeading
-            id="team-title"
-            title="The people"
-            accent="you'll work with."
-          />
-          <ul className="mt-14 grid gap-14 md:grid-cols-2 md:gap-10">
-            {siteConfig.founders.map((founder) => (
-              <li key={founder.name} className="border-t pt-8">
-                <div className="flex items-center gap-5">
-                  <Image
-                    src={founder.image}
-                    alt=""
-                    width={80}
-                    height={80}
-                    className="size-16 rounded-full object-cover sm:size-20"
-                  />
-                  <div>
-                    <h3 className="text-h3">{founder.name}</h3>
-                    <p className="text-meta">{founder.role}</p>
+        <div className="min-w-0 lg:col-span-9">
+          <section
+            id="story"
+            aria-labelledby="story-title"
+            className="scroll-mt-24"
+          >
+            <h2 id="story-title" className="relative text-h2">
+              <HeadingTick />
+              Learn daily. Build intentionally.{" "}
+              <span className="text-muted-foreground">Serve people well.</span>
+            </h2>
+            <div className="mt-6 max-w-3xl space-y-5 text-lead">
+              <p>
+                Cadogy is the home for everything we build: client projects, our
+                own products and the lessons we learn along the way. We treat
+                every engagement as a chance to solve a problem properly, not
+                just quickly.
+              </p>
+              <p>
+                Modern tooling has changed how quickly good software can be
+                built. We invest heavily in ours, so a small team can take on
+                work that used to need a department. What hasn&apos;t changed is
+                accountability: senior engineers make the decisions and stand
+                behind every line that ships.
+              </p>
+            </div>
+          </section>
+
+          <section
+            id="team"
+            aria-labelledby="team-title"
+            className="mt-20 scroll-mt-24 border-t pt-12"
+          >
+            <SectionHeading
+              id="team-title"
+              title="The people"
+              accent="you'll work with."
+            />
+            <ul className="mt-10 grid gap-10 md:grid-cols-2">
+              {siteConfig.founders.map((founder) => (
+                <li key={founder.name}>
+                  <div className="flex items-center gap-5">
+                    <Image
+                      src={founder.image}
+                      alt=""
+                      width={80}
+                      height={80}
+                      className="size-16 rounded-full object-cover sm:size-20"
+                    />
+                    <div>
+                      <h3 className="text-h3">{founder.name}</h3>
+                      <p className="text-meta">{founder.role}</p>
+                    </div>
                   </div>
-                </div>
-                <p className="mt-6 max-w-lg text-pretty text-muted-foreground">
-                  {founder.bio}
-                </p>
-                <div className="mt-4 -ml-3 flex">
-                  <Button asChild variant="quiet" size="icon">
-                    <a
-                      href={founder.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`${founder.name} on LinkedIn`}
-                    >
-                      <FaLinkedin className="size-[18px]" aria-hidden="true" />
-                    </a>
-                  </Button>
-                  <Button asChild variant="quiet" size="icon">
-                    <a
-                      href={`mailto:${founder.email}`}
-                      aria-label={`Email ${founder.name}`}
-                    >
-                      <Mail className="size-[18px]" aria-hidden="true" />
-                    </a>
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+                  <p className="mt-6 max-w-lg text-pretty text-muted-foreground">
+                    {founder.bio}
+                  </p>
+                  <div className="mt-4 -ml-3 flex">
+                    <Button asChild variant="quiet" size="icon">
+                      <a
+                        href={founder.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${founder.name} on LinkedIn`}
+                      >
+                        <FaLinkedin
+                          className="size-[18px]"
+                          aria-hidden="true"
+                        />
+                      </a>
+                    </Button>
+                    <Button asChild variant="quiet" size="icon">
+                      <a
+                        href={`mailto:${founder.email}`}
+                        aria-label={`Email ${founder.name}`}
+                      >
+                        <Mail className="size-[18px]" aria-hidden="true" />
+                      </a>
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-      <section aria-labelledby="principles-title" className="border-t section">
-        <div className="container-page grid gap-12 lg:grid-cols-12">
-          <h2 id="principles-title" className="text-h2 lg:col-span-4">
-            How we hold ourselves{" "}
-            <span className="serif-accent">accountable.</span>
-          </h2>
-          <div className="lg:col-span-8">
-            <PrinciplesGrid />
-          </div>
-        </div>
-      </section>
+          <section
+            id="principles"
+            aria-labelledby="principles-title"
+            className="mt-20 scroll-mt-24 border-t pt-12"
+          >
+            <SectionHeading
+              id="principles-title"
+              title="How we hold ourselves"
+              accent="accountable."
+            />
+            <div className="mt-10">
+              <PrinciplesGrid />
+            </div>
+          </section>
 
-      <section aria-labelledby="stack-title" className="border-t section">
-        <div className="container-page">
-          <SectionHeading
-            id="stack-title"
-            title="Tools we know"
-            accent="deeply."
-            lead="Proven technology for the foundation, modern tooling where it pays off."
-          />
-          <TagList items={stack} className="mt-10" />
+          <section
+            id="proof"
+            aria-labelledby="proof-title"
+            className="mt-20 scroll-mt-24 border-t pt-12"
+          >
+            <SectionHeading
+              id="proof-title"
+              title="Numbers we can show you."
+              lead="Counted from the code of products we built and run. Each one links to the case study it comes from."
+            />
+            <div className="mt-10">
+              <ProofFigures />
+            </div>
+          </section>
+
+          <section
+            id="stack"
+            aria-labelledby="stack-title"
+            className="mt-20 scroll-mt-24 border-t pt-12"
+          >
+            <SectionHeading
+              id="stack-title"
+              title="Tools we know"
+              accent="deeply."
+              lead="Proven technology for the foundation, modern tooling where it pays off."
+            />
+            <TagList items={stack} className="mt-8" />
+          </section>
         </div>
-      </section>
+      </div>
 
       <CtaBand />
     </>

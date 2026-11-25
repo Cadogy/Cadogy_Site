@@ -13,9 +13,8 @@ describe("PlayerBay case study", () => {
     await renderPlayerBay()
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    expect(
-      screen.getByRole("link", { name: /playerbay\.com/ })
-    ).toHaveAttribute("href", "https://playerbay.com")
+    for (const link of screen.getAllByRole("link", { name: /playerbay\.com/ }))
+      expect(link).toHaveAttribute("href", "https://playerbay.com")
   })
 
   it("states facts we can verify from the codebase", async () => {
@@ -97,7 +96,10 @@ describe("Sidecar for OpenCode case study", () => {
     expect(
       screen.getByRole("region", { name: "How a prompt works" })
     ).toBeInTheDocument()
-    expect(container.textContent).not.toMatch(/buyer|order works|PlayerBay/i)
+    const story = [...container.querySelectorAll("article section")]
+      .map((section) => section.textContent)
+      .join(" ")
+    expect(story).not.toMatch(/buyer|order works|PlayerBay/i)
   })
 
   it("states figures counted from the extension's code and tests", async () => {
@@ -154,5 +156,37 @@ describe("case study sharing metadata", () => {
       title: "PlayerBay case study",
       images: [{ url: "/images/studio/playerbay-case-study.webp" }],
     })
+  })
+})
+
+describe("case study story layout", () => {
+  it("links back to all work and on to the next case study", async () => {
+    await renderPlayerBay()
+
+    expect(screen.getByRole("link", { name: /All work/ })).toHaveAttribute(
+      "href",
+      "/work"
+    )
+    expect(
+      screen.getByRole("link", {
+        name: /Next case study.*Sidecar for OpenCode/,
+      })
+    ).toHaveAttribute("href", "/work/opencode-sidecar")
+  })
+
+  it("keeps the project details in a side column", async () => {
+    await renderSidecar()
+    const details = screen.getByRole("complementary", {
+      name: "Project details",
+    })
+
+    expect(within(details).getByText("Developer tool")).toBeInTheDocument()
+    expect(within(details).getByText("TypeScript")).toBeInTheDocument()
+  })
+
+  it("captions the demo video as a figure", async () => {
+    await renderSidecar()
+
+    expect(screen.getByRole("figure", { name: /Fig. 1/ })).toBeInTheDocument()
   })
 })

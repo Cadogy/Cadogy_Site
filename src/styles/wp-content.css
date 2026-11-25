@@ -1,5 +1,5 @@
 .wordpress-content {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   line-height: 1.75;
   color: hsl(var(--foreground) / 0.86);
   overflow-wrap: break-word;
@@ -15,16 +15,17 @@
   color: hsl(var(--foreground));
   font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1.2;
+  line-height: 1.25;
   margin-top: 2.2em;
+  scroll-margin-top: 6rem;
 }
 
 .wordpress-content h2 {
-  font-size: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);
+  font-size: clamp(1.375rem, 1.25rem + 0.5vw, 1.75rem);
 }
 
 .wordpress-content h3 {
-  font-size: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+  font-size: clamp(1.125rem, 1.05rem + 0.3vw, 1.3125rem);
 }
 
 .wordpress-content h4 {
@@ -44,7 +45,7 @@
 
 .wordpress-content strong {
   color: hsl(var(--foreground));
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .wordpress-content ul,
@@ -69,12 +70,10 @@
 }
 
 .wordpress-content blockquote {
-  border-left: 2px solid hsl(var(--foreground) / 0.3);
+  border-left: 2px solid hsl(var(--brand));
   padding-left: 1.25em;
-  font-family: var(--font-instrument-serif), Georgia, serif;
-  font-style: italic;
-  font-size: 1.375rem;
-  line-height: 1.5;
+  font-size: 1.1875rem;
+  line-height: 1.6;
   color: hsl(var(--foreground));
 }
 
@@ -83,7 +82,7 @@
 .wordpress-content iframe {
   max-width: 100%;
   height: auto;
-  border-radius: 16px;
+  border-radius: 12px;
 }
 
 .wordpress-content iframe {
@@ -113,7 +112,7 @@
 
 .wordpress-content pre {
   overflow-x: auto;
-  border-radius: 16px;
+  border-radius: 12px;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   padding: 1.25em;
@@ -161,4 +160,8 @@
 .wordpress-content .wp-block-embed {
   margin-top: 2.25em;
   margin-bottom: 2.25em;
+}
+
+.wordpress-content p {
+  scroll-margin-top: 6rem;
 }

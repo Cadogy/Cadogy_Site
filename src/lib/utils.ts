@@ -15,7 +15,7 @@ const twMerge = extendTailwindMerge({
         "lead",
         "meta",
       ],
-      radius: ["field", "panel", "media"],
+      radius: ["chip", "control", "field", "panel", "media"],
     },
   },
 })

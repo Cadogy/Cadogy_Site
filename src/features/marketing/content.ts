@@ -6,13 +6,19 @@ export type Service = {
   readonly summary: string
   readonly detail: string
   readonly includes: readonly string[]
-  readonly image: string
-  readonly featured: boolean
+  readonly capture: {
+    readonly image: string
+    readonly alt: string
+    readonly span: "wide" | "narrow"
+  }
 }
 
-export type ProcessStep = { readonly title: string; readonly body: string }
+export type ProcessStep = {
+  readonly title: string
+  readonly body: string
+  readonly example: { readonly image: string; readonly alt: string }
+}
 export type Principle = { readonly title: string; readonly body: string }
-export type EngagementModel = { readonly title: string; readonly body: string }
 
 export type CaseStudy = {
   readonly slug: string
@@ -25,9 +31,12 @@ export type CaseStudy = {
   readonly image: string
   readonly mobileImage: string
   readonly imageAlt: string
-  readonly slide?: { readonly image: string; readonly mobileImage: string }
-  readonly slideAlt?: string
   readonly video?: Video
+  readonly story: {
+    readonly headline: string
+    readonly tone: "playerbay" | "sidecar"
+    readonly image?: string
+  }
   readonly challenge: readonly string[]
   readonly productLabel: string
   readonly promisesHeading: { readonly lead: string; readonly rest: string }
@@ -55,6 +64,12 @@ export const hero = {
   lead: "Cadogy is a senior software studio. We design, build and run the products, platforms and systems businesses depend on, with the pace of a startup and the standards of an enterprise team.",
   primaryCta: { label: "Start a project", href: "/contact" },
   secondaryCta: { label: "See our work", href: "/work" },
+  imageAlt:
+    "Three products we built: PlayerBay's marketplace, an invoice from our own billing system filled with sample data, and Sidecar for OpenCode asking permission before an agent runs a command",
+  news: {
+    label: "Sidecar for OpenCode case study",
+    href: "/work/opencode-sidecar",
+  },
 } as const
 
 export const statement = {
@@ -76,8 +91,11 @@ export const services: readonly Service[] = [
       "Two-sided marketplaces and multi-tenant SaaS",
       "Admin, moderation and internal tooling",
     ],
-    image: "/images/studio/product-engineering.webp",
-    featured: true,
+    capture: {
+      image: "/images/studio/playerbay-case-study.webp",
+      alt: "PlayerBay, the marketplace we built and run, showing popular games and recently viewed listings",
+      span: "wide",
+    },
   },
   {
     slug: "payments",
@@ -92,8 +110,11 @@ export const services: readonly Service[] = [
       "Subscriptions and invoicing",
       "Fraud, disputes and reconciliation",
     ],
-    image: "/images/studio/payments.webp",
-    featured: true,
+    capture: {
+      image: "/images/studio/services-payments-invoice.webp",
+      alt: "An invoice from Cadogy's own billing system, filled with sample data",
+      span: "narrow",
+    },
   },
   {
     slug: "ai",
@@ -108,13 +129,17 @@ export const services: readonly Service[] = [
       "Document and data extraction",
       "Evaluation, guardrails and cost control",
     ],
-    image: "/images/studio/ai-integration.webp",
-    featured: true,
+    capture: {
+      image: "/images/studio/services-ai-permission.webp",
+      alt: "Sidecar for OpenCode asking permission before an AI agent runs a shell command",
+      span: "narrow",
+    },
   },
   {
     slug: "infrastructure",
     title: "Infrastructure & security",
-    summary: "Fast, secure, observable systems you don't have to babysit.",
+    summary:
+      "Auth, edge security, performance and monitoring that catch problems before customers do.",
     detail:
       "We harden what you have or build it right the first time: authentication, access control, edge security, performance and monitoring, so problems surface before your customers notice them.",
     includes: [
@@ -123,23 +148,38 @@ export const services: readonly Service[] = [
       "Performance, Core Web Vitals and SEO",
       "Monitoring, alerting and incident response",
     ],
-    image: "/images/studio/infrastructure.webp",
-    featured: false,
+    capture: {
+      image: "/images/studio/services-infrastructure-headers-v2.webp",
+      alt: "Terminal output of cadogy.com's response headers: strict transport security, content security policy and frame protection",
+      span: "wide",
+    },
   },
 ]
 
 export const processSteps: readonly ProcessStep[] = [
   {
     title: "Specify",
-    body: "We turn your goals into a written specification with clear scope, milestones and acceptance criteria. You know exactly what you're getting before we write code.",
+    body: "We turn your goals into a written spec with clear scope, milestones and acceptance criteria, so you know what you get before we write code.",
+    example: {
+      image: "/images/studio/process-specify.webp",
+      alt: "An excerpt from one of our specifications: the business rules for invoicing, each backed by a test",
+    },
   },
   {
     title: "Build",
     body: "We ship in small, tested increments you can review every week. Senior engineers make every decision and review every change before it ships.",
+    example: {
+      image: "/images/studio/process-build.webp",
+      alt: "A real test run of our billing code: 227 tests passing, including the invoice lifecycle rules",
+    },
   },
   {
     title: "Run",
     body: "We launch, monitor and keep improving what we build. We operate our own products the same way, so production is where we're most at home.",
+    example: {
+      image: "/images/studio/process-run.webp",
+      alt: "The public changelog of Sidecar for OpenCode, listing the improvements in each release since launch",
+    },
   },
 ]
 
@@ -162,20 +202,40 @@ export const principles: readonly Principle[] = [
   },
 ]
 
-export const engagementModels: readonly EngagementModel[] = [
-  {
-    title: "Fixed-scope projects",
-    body: "A defined outcome, a written spec and a delivery schedule. Best for new products, rebuilds and well-understood features.",
-  },
-  {
-    title: "Ongoing partnership",
-    body: "A monthly engagement for teams that need senior engineering capacity: new features, maintenance and technical leadership.",
-  },
-  {
-    title: "Technical advisory",
-    body: "Architecture reviews, security and performance audits, and a second opinion before you commit to a big decision.",
-  },
-]
+export const waysToWork = {
+  options: [
+    { id: "fixed", title: "Fixed-scope projects", note: "Most projects" },
+    { id: "partnership", title: "Ongoing partnership" },
+    { id: "advisory", title: "Technical advisory" },
+  ],
+  rows: [
+    {
+      topic: "Best for",
+      values: [
+        "New products, rebuilds and well-understood features",
+        "Teams that need senior engineering capacity every month",
+        "A second opinion before you commit to a big decision",
+      ],
+    },
+    {
+      topic: "What you get",
+      values: [
+        "A written spec, a delivery schedule and software you own outright",
+        "New features, maintenance and technical leadership",
+        "Architecture reviews and security and performance audits",
+      ],
+    },
+    {
+      topic: "How it's priced",
+      values: [
+        "One clear price, agreed before work starts",
+        "Billed monthly",
+        "Quoted in a written proposal before we start",
+      ],
+    },
+  ],
+  highlight: "fixed",
+} as const
 
 export const caseStudies: readonly CaseStudy[] = [
   {
@@ -190,6 +250,10 @@ export const caseStudies: readonly CaseStudy[] = [
     image: "/images/studio/playerbay-case-study.webp",
     mobileImage: "/images/studio/playerbay-case-study-mobile.webp",
     imageAlt: "PlayerBay marketplace homepage",
+    story: {
+      headline: "A marketplace we built and run, in 25 languages.",
+      tone: "playerbay",
+    },
     challenge: [
       "Digital-goods marketplaces live or die on trust. Buyers need to know they'll receive what they paid for, sellers need to know they'll get paid, and the platform has to resolve problems fairly when something goes wrong.",
       "Digital goods are also hard to protect. There's no tracking number for a game account, delivery can take seconds or hours depending on the game, and stolen cards are a constant risk. Every rule has to be easy for honest buyers and sellers without opening a door for fraud.",
@@ -431,22 +495,21 @@ export const caseStudies: readonly CaseStudy[] = [
     summary:
       "A free, open-source VS Code extension that puts the OpenCode coding agent in a chat panel beside your code, with every step on one timeline and nothing approved without you.",
     role: "Product, design and engineering — built, released and maintained by Cadogy under the MIT license.",
-    image: "/images/studio/opencode-sidecar-case-study-wide.webp",
+    image: "/images/studio/opencode-sidecar-case-study-og.webp",
     mobileImage: "/images/studio/opencode-sidecar-case-study-mobile.webp",
+    story: {
+      headline: "OpenCode, in a panel beside your code.",
+      tone: "sidecar",
+      image: "/images/studio/opencode-sidecar-story.webp",
+    },
     imageAlt:
       "Sidecar for OpenCode in VS Code: a timeline of the agent's steps, live subagents and a permission request",
-    slide: {
-      image: "/images/studio/opencode-sidecar-banner-desktop.webp",
-      mobileImage: "/images/studio/opencode-sidecar-banner-mobile.webp",
-    },
     video: {
       youtubeId: "_KMBRo7zrMw",
       title:
         "Sidecar for OpenCode: the OpenCode chat sidebar for VS Code (free extension)",
       poster: "/images/studio/opencode-sidecar-video.webp",
     },
-    slideAlt:
-      "Sidecar for OpenCode panels: a debugging conversation with a test run, and subagents waiting on a permission request",
     challenge: [
       "OpenCode is a capable open-source coding agent that runs in the terminal. Its official VS Code extension opens that terminal interface in a split pane. We wanted a graphical chat panel that shows everything the agent does and keeps the developer in charge, without leaving the editor.",
       "An agent that reads files and runs commands has to be watched. Every tool call, subagent and permission request needs to be visible and answerable without breaking flow, and nothing can be approved behind the developer's back.",
@@ -693,3 +756,20 @@ export const faqs: readonly Faq[] = [
 
 export const displayHost = (url: string) =>
   new URL(url).host.replace(/^www\./, "")
+
+const PROOF = [
+  ["playerbay", "Automated test files", "test files"],
+  ["playerbay", "Languages", "languages"],
+  ["playerbay", "Currencies", "currencies"],
+  ["opencode-sidecar", "Unit tests", "unit tests"],
+  ["opencode-sidecar", "Headless-browser tests", "browser tests"],
+  ["opencode-sidecar", "Editors supported", "editors"],
+] as const
+
+export const proofFigures = PROOF.flatMap(([slug, label, short]) => {
+  const study = caseStudies.find((candidate) => candidate.slug === slug)
+  const fact = study?.facts.find((candidate) => candidate.label === label)
+  return study && fact
+    ? [{ value: fact.value, label, short, study: { name: study.name, slug } }]
+    : []
+})

@@ -1,7 +1,6 @@
 import "@/styles/globals.css"
 
 import type { Metadata, Viewport } from "next"
-import { Instrument_Serif } from "next/font/google"
 import { GeistMono } from "geist/font/mono"
 import { GeistSans } from "geist/font/sans"
 
@@ -10,14 +9,6 @@ import { siteConfig } from "@/config/site"
 import { themeColors } from "@/config/theme-colors"
 import { openGraphFor } from "@/lib/seo/open-graph"
 import { cn } from "@/lib/utils"
-
-const serif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  variable: "--font-instrument-serif",
-  display: "swap",
-})
 
 export const viewport: Viewport = {
   themeColor: themeColors.canvas,
@@ -61,7 +52,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(GeistSans.variable, GeistMono.variable, serif.variable)}
+      className={cn(GeistSans.variable, GeistMono.variable)}
     >
       <body className="min-h-dvh bg-background font-sans">{children}</body>
     </html>

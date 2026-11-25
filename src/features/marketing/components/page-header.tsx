@@ -19,7 +19,7 @@ export function PageHeader({
         {accent ? (
           <>
             {" "}
-            <span className="serif-accent">{accent}</span>
+            <span className="text-muted-foreground">{accent}</span>
           </>
         ) : null}
       </h1>

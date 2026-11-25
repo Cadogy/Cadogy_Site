@@ -7,6 +7,6 @@ export const pillTabTone = (active: boolean) =>
 
 export const pillTabClass = (active: boolean) =>
   cn(
-    "inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm transition-colors",
+    "inline-flex min-h-11 shrink-0 items-center rounded-control px-4 text-sm transition-colors",
     pillTabTone(active)
   )

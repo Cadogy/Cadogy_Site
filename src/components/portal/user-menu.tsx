@@ -98,7 +98,7 @@ export function UserMenu({
               </span>
             </div>
             {staff ? (
-              <span className="ml-auto rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
+              <span className="ml-auto rounded-chip border px-2 py-0.5 text-xs text-muted-foreground">
                 {ROLE_LABELS[user.role]}
               </span>
             ) : null}

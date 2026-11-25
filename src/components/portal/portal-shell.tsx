@@ -99,7 +99,7 @@ function NavGroups({
                 title={collapsed ? item.label : undefined}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center gap-3 rounded-full px-3 transition-colors",
+                  "flex min-h-11 items-center gap-3 rounded-control px-3 transition-colors",
                   large ? "text-lg" : "text-sm",
                   collapsed && "justify-center px-0",
                   pillTabTone(active),

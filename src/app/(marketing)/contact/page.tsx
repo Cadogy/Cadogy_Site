@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { connection } from "next/server"
 import { ContactForm } from "@/features/contact/components/contact-form"
 import { freshFormToken } from "@/features/contact/server/form-token"
+import { NumberedSteps } from "@/features/marketing/components/numbered-steps"
 import { Mail } from "lucide-react"
 
 import { env } from "@/env"
@@ -34,22 +35,18 @@ export default async function ContactPage() {
         <p className="text-meta">Contact</p>
         <h1 className="mt-5 text-h1">
           Tell us what you&apos;re{" "}
-          <span className="serif-accent">building.</span>
+          <span className="text-muted-foreground">building.</span>
         </h1>
         <p className="mt-5 text-lead">
           Share a few details and one of the founders will get back to you. No
           sales team, no gatekeeping.
         </p>
-        <ol className="mt-10 grid gap-5 border-t pt-8">
-          {steps.map((step, index) => (
-            <li key={step} className="flex gap-4">
-              <span className="serif-accent text-h3 leading-none">
-                {index + 1}
-              </span>
-              <span>{step}</span>
-            </li>
-          ))}
-        </ol>
+        <div className="mt-12">
+          <h2 className="text-h3">How a project starts</h2>
+          <div className="mt-5">
+            <NumberedSteps label="How a project starts" steps={steps} />
+          </div>
+        </div>
         <div className="mt-10 border-t pt-6">
           <p className="text-sm text-muted-foreground">Prefer email?</p>
           <a

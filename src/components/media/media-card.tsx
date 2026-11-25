@@ -1,8 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
 
-import { cn } from "@/lib/utils"
-
 export function MediaCard({
   image,
   alt,
@@ -10,8 +8,7 @@ export function MediaCard({
   description,
   href,
   meta,
-  sizes = "(min-width: 768px) 70vw, 230vw",
-  aspect = "portrait",
+  sizes = "(min-width: 768px) 40vw, 112vw",
   headingLevel = 3,
 }: {
   image: string
@@ -21,18 +18,12 @@ export function MediaCard({
   href: string
   meta?: React.ReactNode
   sizes?: string
-  aspect?: "portrait" | "landscape"
   headingLevel?: 2 | 3
 }) {
   const Heading = headingLevel === 2 ? "h2" : "h3"
   return (
     <article className="group relative flex flex-col">
-      <div
-        className={cn(
-          "relative isolate transform-gpu overflow-hidden rounded-media bg-card",
-          aspect === "portrait" ? "aspect-4/5" : "aspect-16/10"
-        )}
-      >
+      <div className="relative isolate aspect-16/10 transform-gpu overflow-hidden rounded-media bg-card">
         <Image
           src={image}
           alt={alt}
@@ -41,33 +32,13 @@ export function MediaCard({
           quality={85}
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
         />
-        {aspect === "portrait" ? (
-          <>
-            <div aria-hidden="true" className="absolute inset-0 media-scrim" />
-            <Heading className="absolute inset-x-0 bottom-0 p-6 text-[clamp(1.375rem,1.2rem+0.6vw,1.75rem)] leading-tight font-medium tracking-[-0.02em] text-white">
-              <Link
-                href={href}
-                className="after:absolute after:inset-0 after:z-10"
-              >
-                {title}
-              </Link>
-            </Heading>
-          </>
-        ) : null}
       </div>
-      {aspect === "landscape" ? (
-        <Heading className="mt-5 text-h3">
-          <Link href={href} className="after:absolute after:inset-0">
-            {title}
-          </Link>
-        </Heading>
-      ) : null}
-      <p
-        className={cn(
-          "text-pretty text-muted-foreground",
-          aspect === "portrait" ? "mt-4" : "mt-2 line-clamp-2"
-        )}
-      >
+      <Heading className="mt-5 text-h3">
+        <Link href={href} className="after:absolute after:inset-0">
+          {title}
+        </Link>
+      </Heading>
+      <p className="mt-2 line-clamp-2 text-pretty text-muted-foreground">
         {description}
       </p>
       {meta ? <p className="mt-3 text-meta">{meta}</p> : null}

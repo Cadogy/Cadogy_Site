@@ -10,7 +10,6 @@ import { MediaCard } from "@/components/media/media-card"
 export function ArticleCard({ post }: { post: WP_Post }) {
   return (
     <MediaCard
-      aspect="landscape"
       headingLevel={2}
       image={featuredImageOf(post)}
       alt=""

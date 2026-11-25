@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { ChevronRight } from "lucide-react"
 
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
@@ -18,7 +19,7 @@ import { Logo } from "./logo"
 import { NavLink } from "./nav-link"
 
 const headerLinkClass =
-  "inline-flex min-h-11 items-center rounded-full px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+  "inline-flex min-h-10 items-center rounded-control px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
 
 function MobileMenu() {
   const [open, setOpen] = useState(false)
@@ -71,11 +72,11 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 transition-colors duration-300",
-        scrolled ? "bg-background/75 backdrop-blur-xl" : "bg-background"
+        "sticky top-0 z-40 border-b backdrop-blur-xl transition-colors duration-300",
+        scrolled ? "bg-background/80" : "bg-background"
       )}
     >
-      <div className="container-page grid h-16 grid-cols-[1fr_auto] items-center lg:grid-cols-[1fr_auto_1fr]">
+      <div className="container-page grid h-14 grid-cols-[1fr_auto] items-center lg:grid-cols-[1fr_auto_1fr]">
         <Logo />
         <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
           {siteConfig.nav.map((item) => (
@@ -90,8 +91,11 @@ export function SiteHeader() {
         </nav>
         <div className="hidden items-center justify-end gap-1 lg:flex">
           <AccountControl className={headerLinkClass} />
-          <Button asChild>
-            <Link href="/contact">Start a project</Link>
+          <Button asChild className="ml-2">
+            <Link href="/contact">
+              Start a project
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </Link>
           </Button>
         </div>
         <div className="flex justify-end lg:hidden">

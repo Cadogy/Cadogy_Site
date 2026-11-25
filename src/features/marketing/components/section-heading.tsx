@@ -1,3 +1,5 @@
+import { HeadingTick } from "./heading-tick"
+
 export function SectionHeading({
   id,
   title,
@@ -14,12 +16,13 @@ export function SectionHeading({
   return (
     <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
       <div className="max-w-3xl">
-        <h2 id={id} className="text-h2">
+        <h2 id={id} className="relative text-h2">
+          <HeadingTick />
           {title}
           {accent ? (
             <>
               {" "}
-              <span className="serif-accent">{accent}</span>
+              <span className="text-muted-foreground">{accent}</span>
             </>
           ) : null}
         </h2>

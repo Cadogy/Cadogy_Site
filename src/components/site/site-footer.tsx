@@ -4,6 +4,8 @@ import { FaGithub, FaInstagram, FaLinkedin } from "react-icons/fa6"
 import { siteConfig } from "@/config/site"
 import { Button } from "@/components/ui/button"
 
+import { Logo } from "./logo"
+
 const columns = [
   { title: "Studio", links: siteConfig.nav },
   {
@@ -39,18 +41,16 @@ const socials = [
 export function SiteFooter() {
   return (
     <footer className="border-t">
-      <div className="container-page grid gap-14 py-16 md:py-24 lg:grid-cols-12">
+      <div className="container-page grid gap-12 py-14 md:py-16 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <p className="max-w-sm text-h2">
-            Cadogy <span className="serif-accent">builds anything.</span>
-          </p>
-          <p className="mt-5 max-w-sm text-muted-foreground">
+          <Logo />
+          <p className="mt-3 max-w-sm text-sm text-muted-foreground">
             A senior software studio. Founded in {siteConfig.foundingYear} in{" "}
             {siteConfig.location.label}, working with clients everywhere.
           </p>
           <a
             href={`mailto:${siteConfig.email}`}
-            className="mt-6 inline-flex min-h-11 items-center text-foreground underline-offset-4 hover:underline"
+            className="mt-3 inline-flex min-h-11 items-center text-sm text-foreground underline-offset-4 hover:underline"
           >
             {siteConfig.email}
           </a>
@@ -64,7 +64,7 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="inline-flex min-h-10 items-center transition-colors hover:text-muted-foreground"
+                      className="inline-flex min-h-10 items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {link.label}
                     </Link>

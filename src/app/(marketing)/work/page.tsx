@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
-import { CaseStudyFeature } from "@/features/marketing/components/case-study-feature"
 import { CtaBand } from "@/features/marketing/components/cta-band"
 import { PageHeader } from "@/features/marketing/components/page-header"
+import { StoryCard } from "@/features/marketing/components/story-card"
 import { caseStudies } from "@/features/marketing/content"
 
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
@@ -23,13 +23,12 @@ export default function WorkPage() {
         accent="and still run."
         lead="We'd rather show than tell. These are products we designed, built and still run today, from a live marketplace to open-source developer tools."
       />
-      <section
-        aria-label="Case studies"
-        className="container-page grid gap-24 border-t pt-16 pb-24 md:pt-24 md:pb-32"
-      >
-        {caseStudies.map((study) => (
-          <CaseStudyFeature key={study.slug} study={study} headingLevel={2} />
-        ))}
+      <section className="container-page pb-24 md:pb-32">
+        <ul aria-label="Case studies" className="grid gap-6">
+          {caseStudies.map((study) => (
+            <StoryCard key={study.slug} study={study} headingLevel={2} />
+          ))}
+        </ul>
       </section>
       <CtaBand />
     </>

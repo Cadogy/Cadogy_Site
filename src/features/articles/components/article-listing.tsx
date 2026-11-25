@@ -89,7 +89,7 @@ export function ArticleListing({
             href="/articles"
             aria-current={!activeTopic && !search ? "page" : undefined}
             className={cn(
-              "inline-flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm",
+              "inline-flex min-h-10 shrink-0 items-center rounded-control border px-4 text-sm",
               !activeTopic && !search
                 ? "bg-foreground text-background"
                 : "text-muted-foreground hover:text-foreground"
@@ -103,7 +103,7 @@ export function ArticleListing({
               href={`/articles/category/${topic.slug}`}
               aria-current={activeTopic === topic.slug ? "page" : undefined}
               className={cn(
-                "inline-flex min-h-10 shrink-0 items-center rounded-full border px-4 text-sm",
+                "inline-flex min-h-10 shrink-0 items-center rounded-control border px-4 text-sm",
                 activeTopic === topic.slug
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground"

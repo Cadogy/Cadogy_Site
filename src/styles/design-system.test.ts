@@ -33,6 +33,7 @@ const RULES: readonly Rule[] = [
       /(?<![\w:-])(?:[a-z]+:)*border-(?:b|y)(?![\w-])|(?<![\w:-])divide-y border-y/,
     allowedIn: [
       "components/portal/portal-shell.tsx",
+      "components/site/site-header.tsx",
       "components/portal/impersonation-banner.tsx",
       "features/account/components/account-tabs.tsx",
     ],
@@ -60,7 +61,7 @@ const RULES: readonly Rule[] = [
   },
   {
     name: "radius from tokens",
-    why: "Use rounded-full (controls), rounded-field (inputs), rounded-panel (portal panels) or rounded-media (images).",
+    why: "Use rounded-control (buttons, tabs, nav), rounded-chip (badges), rounded-field (inputs), rounded-panel (panels), rounded-media (images) or rounded-full (avatars and dots).",
     pattern: /\brounded-(?:sm|md|lg|xl|2xl|3xl|\[)/,
   },
   {
