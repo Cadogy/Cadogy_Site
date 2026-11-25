@@ -16,6 +16,7 @@ export async function POST(request: Request) {
   }
   revalidateTag("wordpress", { expire: 0 })
   revalidatePath("/", "layout")
+  revalidatePath("/sitemap.xml")
   return Response.json(
     { revalidated: true },
     { headers: { "Cache-Control": "no-store" } }

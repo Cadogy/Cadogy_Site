@@ -28,6 +28,12 @@ describe("content webhook", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/", "layout")
   })
 
+  it("rebuilds the sitemap so new and updated articles show up at once", async () => {
+    await POST(request(`Bearer ${"s".repeat(32)}`))
+
+    expect(revalidatePath).toHaveBeenCalledWith("/sitemap.xml")
+  })
+
   it("rejects callers without the secret", async () => {
     expect((await POST(request())).status).toBe(401)
     expect((await POST(request("Bearer wrong"))).status).toBe(401)
