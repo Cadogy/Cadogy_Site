@@ -7,7 +7,7 @@ import { VideoEmbed } from "./video-embed"
 const video = {
   youtubeId: "_KMBRo7zrMw",
   title: "Sidecar for OpenCode: a quick tour",
-  poster: "/images/studio/opencode-sidecar-video.webp",
+  poster: "/images/studio/sidecar-video.webp",
 }
 
 describe("VideoEmbed", () => {

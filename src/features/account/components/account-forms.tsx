@@ -13,6 +13,10 @@ import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { PendingButton } from "@/components/ui/pending-button"
 import { HumanCheck } from "@/components/security/human-check"
+import {
+  HumanCheckPending,
+  isAwaitingHumanCheck,
+} from "@/components/security/human-check-pending"
 
 import {
   registerAction,
@@ -50,6 +54,7 @@ export function RegisterForm({
   const { result, pending, submit, fieldError, formError } =
     useAccountAction(registerAction)
   const [turnstileToken, setTurnstileToken] = useState("")
+  const verifying = isAwaitingHumanCheck(turnstileSiteKey, turnstileToken)
 
   if (result?.ok) {
     return (
@@ -100,7 +105,13 @@ export function RegisterForm({
         )}
       </Field>
       <HumanCheck siteKey={turnstileSiteKey} onToken={setTurnstileToken} />
-      <PendingButton type="submit" size="lg" pending={pending}>
+      <HumanCheckPending show={verifying} />
+      <PendingButton
+        type="submit"
+        size="lg"
+        pending={pending}
+        disabled={verifying}
+      >
         Create account
       </PendingButton>
     </form>
@@ -116,6 +127,7 @@ export function ForgotPasswordForm({
     requestPasswordResetAction
   )
   const [turnstileToken, setTurnstileToken] = useState("")
+  const verifying = isAwaitingHumanCheck(turnstileSiteKey, turnstileToken)
 
   if (result?.ok) {
     return (
@@ -145,7 +157,13 @@ export function ForgotPasswordForm({
         )}
       </Field>
       <HumanCheck siteKey={turnstileSiteKey} onToken={setTurnstileToken} />
-      <PendingButton type="submit" size="lg" pending={pending}>
+      <HumanCheckPending show={verifying} />
+      <PendingButton
+        type="submit"
+        size="lg"
+        pending={pending}
+        disabled={verifying}
+      >
         Send reset link
       </PendingButton>
     </form>

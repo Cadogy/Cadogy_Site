@@ -24,8 +24,8 @@ export default function MarketingLayout({
         />
         <SiteHeader />
         <main id="main">{children}</main>
-        <SiteFooter />
       </div>
+      <SiteFooter />
     </>
   )
 }

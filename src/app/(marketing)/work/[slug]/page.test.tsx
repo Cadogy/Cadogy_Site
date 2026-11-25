@@ -154,7 +154,7 @@ describe("case study sharing metadata", () => {
       locale: "en_US",
       url: "/work/playerbay",
       title: "PlayerBay case study",
-      images: [{ url: "/images/studio/playerbay-case-study.webp" }],
+      images: [{ url: "/images/studio/playerbay.webp" }],
     })
   })
 })

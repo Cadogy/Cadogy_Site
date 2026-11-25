@@ -72,6 +72,20 @@ describe("OnThisPage", () => {
     )
   })
 
+  it("keeps the last section you passed highlighted while you read between headings", () => {
+    const io = observe()
+    render(page())
+    const team = document.getElementById("team") ?? document.body
+
+    act(() => io.callback?.([{ isIntersecting: true, target: team }]))
+    act(() => io.callback?.([{ isIntersecting: false, target: team }]))
+
+    expect(screen.getByRole("link", { name: "The team" })).toHaveAttribute(
+      "aria-current",
+      "location"
+    )
+  })
+
   it("can build its list from the headings in an article", async () => {
     observe()
     render(

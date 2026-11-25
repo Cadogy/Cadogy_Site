@@ -14,11 +14,10 @@ describe("Services page", () => {
   it("lets visitors explore every service, one at a time, with a real capture", () => {
     render(<ServicesPage />)
 
-    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(
-      services.map((service) => service.title)
-    )
+    const list = screen.getByRole("list", { name: "Services" })
+    expect(within(list).getAllByRole("button")).toHaveLength(services.length)
     expect(
-      within(screen.getByRole("tabpanel")).getByRole("img", {
+      within(within(list).getByRole("region")).getByRole("img", {
         name: services[0]?.capture.alt,
       })
     ).toBeInTheDocument()

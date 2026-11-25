@@ -4,6 +4,7 @@ import { ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { RollingNumber } from "@/components/ui/rolling-number"
 
 import type { CaseStudy } from "../content"
 
@@ -43,7 +44,9 @@ export function StoryCard({
           {study.facts.slice(0, 2).map((fact) => (
             <div key={fact.label} className="flex flex-col-reverse gap-1">
               <dt className="text-sm text-white/80">{fact.label}</dt>
-              <dd className="text-h1 text-white tabular-nums">{fact.value}</dd>
+              <dd className="text-h1 text-white tabular-nums">
+                <RollingNumber value={fact.value} />
+              </dd>
             </div>
           ))}
         </dl>
@@ -69,8 +72,8 @@ export function StoryCard({
           quality={85}
           draggable={false}
           className={cn(
-            "object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none",
-            study.story.image ? "object-top" : "object-left-top"
+            "object-cover transition-transform duration-700 ease-soft group-hover:scale-[1.02] motion-reduce:transition-none",
+            study.story.tone === "sidecar" ? "object-top" : "object-left-top"
           )}
         />
       </div>

@@ -15,7 +15,13 @@ vi.mock("../server/actions", () => ({
     return nextResult.value
   },
 }))
-vi.mock("@/components/security/human-check", () => ({ HumanCheck: () => null }))
+vi.mock("@/components/security/human-check", () => ({
+  HumanCheck: ({ onToken }: { onToken: (token: string) => void }) => (
+    <button type="button" onClick={() => onToken("token-123")}>
+      Pass the human check
+    </button>
+  ),
+}))
 
 const { ContactForm } = await import("./contact-form")
 
@@ -52,6 +58,24 @@ describe("ContactForm", () => {
     expect(form?.get("projectType")).toBe("payments")
     expect(form?.get("formToken")).toBe("signed-token")
     expect(form?.get("website")).toBe("")
+  })
+
+  it("holds the message until the background human check passes", async () => {
+    const user = userEvent.setup()
+    render(<ContactForm formToken="t" turnstileSiteKey="site-key" />)
+
+    await fillValidForm(user)
+    expect(screen.getByRole("button", { name: "Send message" })).toBeDisabled()
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Checking you're human"
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "Pass the human check" })
+    )
+    await user.click(screen.getByRole("button", { name: "Send message" }))
+
+    expect(submitted.forms[0]?.get("turnstileToken")).toBe("token-123")
   })
 
   it("confirms success in a live region and hides the form", async () => {

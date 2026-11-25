@@ -28,14 +28,19 @@ export function HumanCheck({
   const narrow = useNarrowViewport()
   if (!siteKey) return null
   return (
-    <Turnstile
-      key={narrow ? "compact" : "normal"}
-      siteKey={siteKey}
-      theme="auto"
-      size={narrow ? "compact" : "normal"}
-      onVerify={onToken}
-      onExpire={() => onToken("")}
-      onError={() => onToken("")}
-    />
+    <div className="flex justify-center">
+      <Turnstile
+        key={narrow ? "compact" : "normal"}
+        siteKey={siteKey}
+        theme="dark"
+        size={narrow ? "compact" : "normal"}
+        appearance="interaction-only"
+        retry="auto"
+        refreshExpired="auto"
+        onVerify={onToken}
+        onExpire={() => onToken("")}
+        onError={() => onToken("")}
+      />
+    </div>
   )
 }

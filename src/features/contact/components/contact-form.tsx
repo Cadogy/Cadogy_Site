@@ -15,6 +15,10 @@ import { NativeSelect } from "@/components/ui/native-select"
 import { PendingButton } from "@/components/ui/pending-button"
 import { Textarea } from "@/components/ui/textarea"
 import { HumanCheck } from "@/components/security/human-check"
+import {
+  HumanCheckPending,
+  isAwaitingHumanCheck,
+} from "@/components/security/human-check-pending"
 
 import type { SubmissionResult } from "../application/inquiry-service"
 import { BUDGETS, PROJECT_TYPES, TIMELINES } from "../domain/schema"
@@ -37,6 +41,7 @@ export function ContactForm({
 }) {
   const [result, formAction, pending] = useActionState(submitInquiry, null)
   const [turnstileToken, setTurnstileToken] = useState("")
+  const verifying = isAwaitingHumanCheck(turnstileSiteKey, turnstileToken)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -192,9 +197,15 @@ export function ContactForm({
       <input type="hidden" name="turnstileToken" value={turnstileToken} />
 
       <HumanCheck siteKey={turnstileSiteKey} onToken={setTurnstileToken} />
+      <HumanCheckPending show={verifying} />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <PendingButton type="submit" size="lg" pending={pending}>
+        <PendingButton
+          type="submit"
+          size="lg"
+          pending={pending}
+          disabled={verifying}
+        >
           {pending ? "Sending…" : "Send message"}
         </PendingButton>
         <p className="text-sm text-muted-foreground">

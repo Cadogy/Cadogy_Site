@@ -10,6 +10,19 @@ describe("About page", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
   })
 
+  it("shows both founders together, each named with their role", () => {
+    render(<AboutPage />)
+    const founders = screen.getByRole("figure", {
+      name: /Charles Knapp\s*, Co-Founder & CTO.*Dylan Safra\s*, Co-Founder & CFO/,
+    })
+
+    expect(
+      within(founders).getByRole("img", {
+        name: "Charles Knapp and Dylan Safra, Cadogy's founders",
+      })
+    ).toBeInTheDocument()
+  })
+
   it("has an in-page index that links to each section", () => {
     const { container } = render(<AboutPage />)
     const index = screen.getByRole("navigation", { name: "On this page" })

@@ -14,6 +14,7 @@ export function ServicesBento() {
         image: service.capture.image,
         alt: service.capture.alt,
         span: service.capture.span,
+        tone: service.tone,
       }))}
     />
   )

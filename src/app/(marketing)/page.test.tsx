@@ -37,11 +37,11 @@ describe("home page", () => {
     )
   })
 
-  it("shows real products we built beside the headline", async () => {
+  it("shows a product we built and run beside the headline", async () => {
     render(await HomePage())
 
     expect(
-      screen.getByRole("img", { name: /PlayerBay.*invoice.*Sidecar/ })
+      screen.getByRole("img", { name: /^PlayerBay's storefront/ })
     ).toBeInTheDocument()
   })
 
@@ -59,6 +59,37 @@ describe("home page", () => {
     ).toHaveAttribute("href", "/work/opencode-sidecar")
   })
 
+  it("loops the strip on phones without repeating it to screen readers or the keyboard", async () => {
+    render(await HomePage())
+    const strip = screen.getByRole("region", { name: /^In production$/ })
+
+    expect(
+      within(strip).getAllByRole("link", { name: /PlayerBay/ })
+    ).toHaveLength(1)
+    const copy = strip.querySelector(
+      '[aria-hidden="true"] a[href="/work/playerbay"]'
+    )
+    expect(copy).not.toBeNull()
+    expect(copy).toHaveAttribute("tabindex", "-1")
+  })
+
+  it("states how we work, and shows every change passes through accountable people", async () => {
+    render(await HomePage())
+    const approach = screen.getByRole("region", { name: "Our approach" })
+
+    expect(approach).toHaveTextContent(
+      "Senior engineers, start to finish. The people you talk to are the people building your product"
+    )
+    expect(
+      within(approach)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent)
+    ).toEqual(["Designed", "Reviewed", "Tested", "Shipped"])
+    expect(
+      within(approach).getByRole("img", { name: "Charles Knapp" })
+    ).toBeInTheDocument()
+  })
+
   it("shows our latest writing when the blog has posts", async () => {
     latestPosts.value = [
       post(1, "Modular monoliths &amp; AI"),
@@ -70,6 +101,25 @@ describe("home page", () => {
     expect(
       within(writing).getByRole("link", { name: "Modular monoliths & AI" })
     ).toHaveAttribute("href", "/articles/post-1")
+    expect(
+      within(
+        within(writing).getByRole("list", { name: "Latest articles" })
+      ).getAllByRole("listitem")
+    ).toHaveLength(2)
+    expect(
+      within(writing).getByRole("button", { name: "Next article" })
+    ).toBeInTheDocument()
+  })
+
+  it("puts the writing after the questions, just before the closing call to action", async () => {
+    latestPosts.value = [post(1, "Modular monoliths &amp; AI")]
+    render(await HomePage())
+    const faq = screen.getByRole("region", { name: /Questions/ })
+    const writing = screen.getByRole("region", { name: /Latest writing/ })
+
+    expect(
+      faq.compareDocumentPosition(writing) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
   })
 
   it("leaves the writing section out when the blog is unavailable", async () => {

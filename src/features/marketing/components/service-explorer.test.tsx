@@ -5,33 +5,47 @@ import { describe, expect, it, onTestFinished } from "vitest"
 import { services } from "../content"
 import { ServiceExplorer } from "./service-explorer"
 
+const openService = () => screen.getByRole("region")
+
 describe("ServiceExplorer", () => {
-  it("offers a tab per service and opens on the first", () => {
+  it("lists every service, numbered, with the first one open", () => {
     render(<ServiceExplorer />)
 
-    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(
-      services.map((service) => service.title)
+    const toggles = screen.getAllByRole("button")
+    expect(toggles.map((toggle) => toggle.textContent)).toEqual(
+      services.map(
+        (service, index) =>
+          `${String(index + 1).padStart(2, "0")}${service.title}`
+      )
     )
-    const panel = screen.getByRole("tabpanel")
-    expect(panel).toHaveAccessibleName(services[0]?.title)
-    for (const item of services[0]?.includes ?? [])
-      expect(within(panel).getByText(item)).toBeVisible()
+    expect(toggles[0]).toHaveAttribute("aria-expanded", "true")
+    expect(openService()).toHaveAccessibleName(/Product engineering/)
     expect(
-      within(panel).getByRole("img", { name: services[0]?.capture.alt })
+      within(openService()).getByText(services[0]?.detail ?? "")
+    ).toBeVisible()
+    for (const item of services[0]?.includes ?? [])
+      expect(within(openService()).getByText(item)).toBeVisible()
+    expect(
+      within(openService()).getByRole("img", { name: services[0]?.capture.alt })
     ).toBeInTheDocument()
   })
 
-  it("shows what the chosen service includes", async () => {
+  it("opens one service at a time", async () => {
     const user = userEvent.setup()
     render(<ServiceExplorer />)
 
-    await user.click(screen.getByRole("tab", { name: "Payments & commerce" }))
+    await user.click(
+      screen.getByRole("button", { name: /Payments & commerce/ })
+    )
 
-    const panel = screen.getByRole("tabpanel")
-    expect(panel).toHaveAccessibleName("Payments & commerce")
+    expect(screen.getAllByRole("region")).toHaveLength(1)
+    expect(openService()).toHaveAccessibleName(/Payments & commerce/)
     expect(
-      within(panel).getByText("Stripe integrations and webhooks")
+      within(openService()).getByText("Stripe integrations and webhooks")
     ).toBeVisible()
+    expect(
+      screen.getByRole("button", { name: /Product engineering/ })
+    ).toHaveAttribute("aria-expanded", "false")
   })
 
   it("opens the service named in the link that brought you here", () => {
@@ -39,23 +53,6 @@ describe("ServiceExplorer", () => {
     onTestFinished(() => window.history.replaceState(null, "", "/"))
     render(<ServiceExplorer />)
 
-    expect(screen.getByRole("tabpanel")).toHaveAccessibleName(
-      "Infrastructure & security"
-    )
-  })
-
-  it("moves between services with the arrow keys", async () => {
-    const user = userEvent.setup()
-    render(<ServiceExplorer />)
-
-    await user.click(screen.getByRole("tab", { name: "Product engineering" }))
-    await user.keyboard("{ArrowDown}")
-
-    expect(
-      screen.getByRole("tab", { name: "Payments & commerce" })
-    ).toHaveFocus()
-    expect(screen.getByRole("tabpanel")).toHaveAccessibleName(
-      "Payments & commerce"
-    )
+    expect(openService()).toHaveAccessibleName(/Infrastructure & security/)
   })
 })

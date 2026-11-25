@@ -45,7 +45,7 @@ export function VideoEmbed({ video }: { video: Video }) {
               fill
               sizes="(min-width: 1360px) 1300px, 100vw"
               quality={85}
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+              className="object-cover transition-transform duration-700 ease-soft group-hover:scale-[1.02]"
             />
             <span className="absolute right-3 bottom-3 inline-flex size-12 items-center justify-center gap-2.5 rounded-control bg-foreground text-base font-medium text-background transition-transform duration-300 group-hover:scale-105 sm:right-6 sm:bottom-6 sm:size-auto sm:h-14 sm:pr-6 sm:pl-5">
               <Play className="size-5 fill-current" aria-hidden="true" />

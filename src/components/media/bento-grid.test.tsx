@@ -8,7 +8,7 @@ const item = (overrides: Partial<BentoItem> = {}): BentoItem => ({
   title: "Payments & commerce",
   description: "Checkout, payouts and invoicing built for real money.",
   href: "/services#payments",
-  image: "/images/studio/services-payments-invoice.webp",
+  image: "/images/studio/service-payments.webp",
   alt: "A Cadogy invoice with sample data",
   span: "narrow",
   ...overrides,

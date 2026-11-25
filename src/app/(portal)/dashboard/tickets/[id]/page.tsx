@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { requireSession } from "@/features/auth/server/session"
 import { ReplyForm } from "@/features/support/components/ticket-forms"
 import { TicketStatusBadge } from "@/features/support/components/ticket-status-badge"
 import { TicketThread } from "@/features/support/components/ticket-thread"
 import { support } from "@/features/support/server/support"
 
-import { requireSession } from "@/features/auth/server/session"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Support request" }

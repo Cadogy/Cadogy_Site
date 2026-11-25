@@ -12,7 +12,13 @@ const navigation = vi.hoisted(() => ({
 }))
 
 vi.mock("next/navigation", () => ({ useRouter: () => navigation }))
-vi.mock("@/components/security/human-check", () => ({ HumanCheck: () => null }))
+vi.mock("@/components/security/human-check", () => ({
+  HumanCheck: ({ onToken }: { onToken: (token: string) => void }) => (
+    <button type="button" onClick={() => onToken("token-123")}>
+      Pass the human check
+    </button>
+  ),
+}))
 vi.mock("@/features/auth/client", () => ({
   authClient: {
     signIn: {
@@ -199,6 +205,32 @@ describe("LoginForm", () => {
     expect(signInMagicLink).not.toHaveBeenCalled()
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /enter your email/i
+    )
+  })
+
+  it("waits for the background human check before signing in", async () => {
+    signInEmail.mockResolvedValue({ data: { user: {} }, error: null })
+    const user = userEvent.setup()
+    render(<LoginForm callbackPath="/dashboard" turnstileSiteKey="site-key" />)
+
+    expect(screen.getByRole("button", { name: /Sign in$/ })).toBeDisabled()
+    expect(
+      screen.getByRole("button", { name: /Email me a sign-in link/ })
+    ).toBeDisabled()
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Checking you're human"
+    )
+
+    await user.click(
+      screen.getByRole("button", { name: "Pass the human check" })
+    )
+    await submit(user)
+
+    expect(signInEmail).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        headers: { "x-turnstile-token": "token-123" },
+      })
     )
   })
 })

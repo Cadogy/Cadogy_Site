@@ -11,6 +11,7 @@ export type Service = {
     readonly alt: string
     readonly span: "wide" | "narrow"
   }
+  readonly tone: "--brand" | "--success" | "--violet" | "--warning"
 }
 
 export type ProcessStep = {
@@ -65,7 +66,7 @@ export const hero = {
   primaryCta: { label: "Start a project", href: "/contact" },
   secondaryCta: { label: "See our work", href: "/work" },
   imageAlt:
-    "Three products we built: PlayerBay's marketplace, an invoice from our own billing system filled with sample data, and Sidecar for OpenCode asking permission before an agent runs a command",
+    "PlayerBay's storefront, the marketplace we built and run: popular games, buyer protections and recently viewed listings",
   news: {
     label: "Sidecar for OpenCode case study",
     href: "/work/opencode-sidecar",
@@ -80,6 +81,7 @@ export const statement = {
 export const services: readonly Service[] = [
   {
     slug: "product-engineering",
+    tone: "--brand",
     title: "Product engineering",
     summary:
       "Web apps, SaaS platforms and marketplaces, from first commit to production.",
@@ -92,13 +94,14 @@ export const services: readonly Service[] = [
       "Admin, moderation and internal tooling",
     ],
     capture: {
-      image: "/images/studio/playerbay-case-study.webp",
+      image: "/images/studio/playerbay-storefront.webp",
       alt: "PlayerBay, the marketplace we built and run, showing popular games and recently viewed listings",
       span: "wide",
     },
   },
   {
     slug: "payments",
+    tone: "--success",
     title: "Payments & commerce",
     summary:
       "Checkout, payouts, escrow, subscriptions and invoicing built for real money.",
@@ -111,13 +114,14 @@ export const services: readonly Service[] = [
       "Fraud, disputes and reconciliation",
     ],
     capture: {
-      image: "/images/studio/services-payments-invoice.webp",
+      image: "/images/studio/service-payments.webp",
       alt: "An invoice from Cadogy's own billing system, filled with sample data",
       span: "narrow",
     },
   },
   {
     slug: "ai",
+    tone: "--violet",
     title: "AI integration",
     summary:
       "Practical AI features and automation that do real work inside your product and operations.",
@@ -130,13 +134,14 @@ export const services: readonly Service[] = [
       "Evaluation, guardrails and cost control",
     ],
     capture: {
-      image: "/images/studio/services-ai-permission.webp",
+      image: "/images/studio/service-ai.webp",
       alt: "Sidecar for OpenCode asking permission before an AI agent runs a shell command",
       span: "narrow",
     },
   },
   {
     slug: "infrastructure",
+    tone: "--warning",
     title: "Infrastructure & security",
     summary:
       "Auth, edge security, performance and monitoring that catch problems before customers do.",
@@ -149,7 +154,7 @@ export const services: readonly Service[] = [
       "Monitoring, alerting and incident response",
     ],
     capture: {
-      image: "/images/studio/services-infrastructure-headers-v2.webp",
+      image: "/images/studio/service-infrastructure.webp",
       alt: "Terminal output of cadogy.com's response headers: strict transport security, content security policy and frame protection",
       span: "wide",
     },
@@ -247,12 +252,13 @@ export const caseStudies: readonly CaseStudy[] = [
     summary:
       "A two-sided marketplace where players buy and sell game accounts, items, in-game currency, keys and top-ups, with buyer protection on every order and a storefront in 25 languages.",
     role: "Product, engineering and operations — designed, built and run in-house.",
-    image: "/images/studio/playerbay-case-study.webp",
-    mobileImage: "/images/studio/playerbay-case-study-mobile.webp",
+    image: "/images/studio/playerbay.webp",
+    mobileImage: "/images/studio/playerbay-mobile.webp",
     imageAlt: "PlayerBay marketplace homepage",
     story: {
       headline: "A marketplace we built and run, in 25 languages.",
       tone: "playerbay",
+      image: "/images/studio/playerbay-storefront.webp",
     },
     challenge: [
       "Digital-goods marketplaces live or die on trust. Buyers need to know they'll receive what they paid for, sellers need to know they'll get paid, and the platform has to resolve problems fairly when something goes wrong.",
@@ -495,12 +501,12 @@ export const caseStudies: readonly CaseStudy[] = [
     summary:
       "A free, open-source VS Code extension that puts the OpenCode coding agent in a chat panel beside your code, with every step on one timeline and nothing approved without you.",
     role: "Product, design and engineering — built, released and maintained by Cadogy under the MIT license.",
-    image: "/images/studio/opencode-sidecar-case-study-og.webp",
-    mobileImage: "/images/studio/opencode-sidecar-case-study-mobile.webp",
+    image: "/images/studio/sidecar.webp",
+    mobileImage: "/images/studio/sidecar-mobile.webp",
     story: {
       headline: "OpenCode, in a panel beside your code.",
       tone: "sidecar",
-      image: "/images/studio/opencode-sidecar-story.webp",
+      image: "/images/studio/sidecar-story.webp",
     },
     imageAlt:
       "Sidecar for OpenCode in VS Code: a timeline of the agent's steps, live subagents and a permission request",
@@ -508,7 +514,7 @@ export const caseStudies: readonly CaseStudy[] = [
       youtubeId: "_KMBRo7zrMw",
       title:
         "Sidecar for OpenCode: the OpenCode chat sidebar for VS Code (free extension)",
-      poster: "/images/studio/opencode-sidecar-video.webp",
+      poster: "/images/studio/sidecar-video.webp",
     },
     challenge: [
       "OpenCode is a capable open-source coding agent that runs in the terminal. Its official VS Code extension opens that terminal interface in a split pane. We wanted a graphical chat panel that shows everything the agent does and keeps the developer in charge, without leaving the editor.",

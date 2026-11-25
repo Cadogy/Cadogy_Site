@@ -10,6 +10,7 @@ import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react"
 import { openGraphFor } from "@/lib/seo/open-graph"
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
 import { Button } from "@/components/ui/button"
+import { RollingNumber } from "@/components/ui/rolling-number"
 import { TextLink } from "@/components/ui/text-link"
 import { VideoEmbed } from "@/components/media/video-embed"
 import { JsonLd } from "@/components/seo/json-ld"
@@ -92,7 +93,8 @@ export default async function CaseStudyPage({ params }: Props) {
                 src={study.image}
                 alt={study.imageAlt}
                 fill
-                priority
+                loading="eager"
+                fetchPriority="high"
                 sizes="(min-width: 1024px) 58vw, 100vw"
                 quality={85}
                 className="object-cover object-top"
@@ -164,7 +166,9 @@ export default async function CaseStudyPage({ params }: Props) {
                     <dt className="text-sm text-muted-foreground">
                       {fact.label}
                     </dt>
-                    <dd className="text-h1 tabular-nums">{fact.value}</dd>
+                    <dd className="text-h1 tabular-nums">
+                      <RollingNumber value={fact.value} />
+                    </dd>
                   </div>
                 ))}
               </dl>

@@ -1,3 +1,4 @@
+import { RollingNumber } from "@/components/ui/rolling-number"
 import { TextLink } from "@/components/ui/text-link"
 
 import { proofFigures } from "../content"
@@ -11,7 +12,9 @@ export function ProofFigures() {
           className="flex flex-col"
         >
           <dt className="order-2 mt-2 text-muted-foreground">{figure.label}</dt>
-          <dd className="order-1 text-h1 tabular-nums">{figure.value}</dd>
+          <dd className="order-1 text-h1 tabular-nums">
+            <RollingNumber value={figure.value} />
+          </dd>
           <dd className="order-3">
             <TextLink href={`/work/${figure.study.slug}`}>
               {figure.study.name}

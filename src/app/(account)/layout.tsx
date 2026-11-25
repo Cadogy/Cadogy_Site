@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
 
+import { SignalGrid } from "@/components/media/signal-grid"
 import { Logo } from "@/components/site/logo"
 
 export const metadata: Metadata = { robots: { index: false, follow: false } }
@@ -25,27 +25,17 @@ export default function AccountLayout({
         </header>
         <main
           id="main"
-          className="flex flex-1 items-start justify-center px-5 pt-10 pb-16 sm:items-center sm:pt-0 md:px-8"
+          className="flex flex-1 items-start justify-center px-5 pt-10 pb-16 sm:items-center sm:py-12 md:px-8"
         >
           {children}
         </main>
       </div>
-      <div className="relative hidden lg:block">
-        <div className="sticky top-0 h-dvh">
-          <Image
-            src="/images/studio/infrastructure.webp"
-            alt="Florida's coastline at night, seen from orbit"
-            fill
-            sizes="(min-width: 1024px) 50vw, 1px"
-            quality={85}
-            className="object-cover"
-          />
-          <div aria-hidden="true" className="absolute inset-0 media-scrim" />
-          <p className="absolute right-12 bottom-12 left-12 text-statement text-white">
+      <div className="relative hidden border-l bg-card lg:block">
+        <div className="sticky top-0 isolate h-dvh overflow-hidden">
+          <SignalGrid className="-z-10 [mask-image:linear-gradient(to_bottom,transparent_15%,black_70%)]" />
+          <p className="max-w-xl p-12 text-h2">
             Invoices, payments and support,{" "}
-            <span className="text-muted-foreground text-white/80">
-              in one place.
-            </span>
+            <span className="text-muted-foreground">in one place.</span>
           </p>
         </div>
       </div>

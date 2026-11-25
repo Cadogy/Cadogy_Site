@@ -26,7 +26,12 @@ export default function WorkPage() {
       <section className="container-page pb-24 md:pb-32">
         <ul aria-label="Case studies" className="grid gap-6">
           {caseStudies.map((study) => (
-            <StoryCard key={study.slug} study={study} headingLevel={2} />
+            <StoryCard
+              key={study.slug}
+              study={study}
+              headingLevel={2}
+              className="reveal"
+            />
           ))}
         </ul>
       </section>

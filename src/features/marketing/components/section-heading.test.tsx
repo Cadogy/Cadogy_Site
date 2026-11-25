@@ -35,4 +35,12 @@ describe("SectionHeading", () => {
     )
     expect(container.textContent).toBe("How we work")
   })
+
+  it("can leave the tick out where an index already marks the section", () => {
+    const { container } = render(
+      <SectionHeading id="team" title="The team" tick={false} />
+    )
+
+    expect(container.querySelector('[data-slot="tick"]')).toBeNull()
+  })
 })

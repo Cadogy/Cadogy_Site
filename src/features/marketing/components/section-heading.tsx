@@ -6,18 +6,20 @@ export function SectionHeading({
   accent,
   lead,
   action,
+  tick = true,
 }: {
   id: string
   title: string
   accent?: string
   lead?: string
   action?: React.ReactNode
+  tick?: boolean
 }) {
   return (
     <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
       <div className="max-w-3xl">
         <h2 id={id} className="relative text-h2">
-          <HeadingTick />
+          {tick ? <HeadingTick /> : null}
           {title}
           {accent ? (
             <>

@@ -7,7 +7,7 @@ describe("MediaCard", () => {
   it("shows the title and description without any hover interaction", () => {
     render(
       <MediaCard
-        image="/images/studio/payments.webp"
+        image="/images/studio/service-payments.webp"
         alt=""
         title="Payments & commerce"
         description="Checkout, payouts, escrow and invoicing built for real money."

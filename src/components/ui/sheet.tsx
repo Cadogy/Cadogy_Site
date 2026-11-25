@@ -28,7 +28,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const screenClass =
-  "fixed inset-0 z-50 flex h-dvh flex-col bg-background duration-200 ease-out data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0"
+  "fixed inset-0 z-50 flex h-dvh flex-col bg-background duration-200 ease-soft data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0"
 
 type SheetContentProps = React.ComponentPropsWithoutRef<
   typeof SheetPrimitive.Content

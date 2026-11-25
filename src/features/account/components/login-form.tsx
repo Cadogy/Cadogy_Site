@@ -11,6 +11,10 @@ import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { PendingButton } from "@/components/ui/pending-button"
 import { HumanCheck } from "@/components/security/human-check"
+import {
+  HumanCheckPending,
+  isAwaitingHumanCheck,
+} from "@/components/security/human-check-pending"
 
 import { FormAlert } from "./auth-card"
 import { authErrorMessage } from "./auth-errors"
@@ -24,6 +28,7 @@ export function LoginForm({
 }) {
   const router = useRouter()
   const [turnstileToken, setTurnstileToken] = useState("")
+  const verifying = isAwaitingHumanCheck(turnstileSiteKey, turnstileToken)
   const [checkKey, setCheckKey] = useState(0)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -154,7 +159,14 @@ export function LoginForm({
         onToken={setTurnstileToken}
       />
 
-      <PendingButton type="submit" size="lg" pending={pending}>
+      <HumanCheckPending show={verifying} />
+
+      <PendingButton
+        type="submit"
+        size="lg"
+        pending={pending}
+        disabled={verifying}
+      >
         Sign in
       </PendingButton>
 
@@ -177,8 +189,8 @@ export function LoginForm({
       <Button
         type="button"
         size="lg"
-        variant="ghost"
-        disabled={pending}
+        variant="secondary"
+        disabled={pending || verifying}
         onClick={() => void sendSignInLink()}
       >
         <Mail className="size-4" aria-hidden="true" />

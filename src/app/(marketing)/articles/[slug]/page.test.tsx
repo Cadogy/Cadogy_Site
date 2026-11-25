@@ -16,6 +16,15 @@ vi.mock("@/lib/wordpress-api", async (importOriginal) => ({
     },
     _embedded: { author: [{ name: "Charles Knapp" }] },
   }),
+  getLatestPosts: async () =>
+    [7, 8, 9].map((id) => ({
+      id,
+      slug: `post-${id}`,
+      date_gmt: "2025-03-29T12:00:00",
+      title: { rendered: `Post ${id}` },
+      excerpt: { rendered: "<p>Summary.</p>" },
+      content: { rendered: "<p>Text.</p>" },
+    })),
 }))
 
 const { default: ArticlePage } = await import("./page")
@@ -49,5 +58,32 @@ describe("Article page", () => {
     expect(
       within(index).getByRole("link", { name: "Setting it up" })
     ).toHaveAttribute("href", "#setting-it-up")
+  })
+
+  it("credits the founder who wrote it and offers ways to share it", async () => {
+    await renderArticle()
+
+    expect(screen.getByText("Co-Founder & CTO")).toBeInTheDocument()
+    const share = within(
+      screen.getByRole("group", { name: "Share this article" })
+    )
+    expect(
+      share.getByRole("link", { name: "Share on LinkedIn" })
+    ).toHaveAttribute(
+      "href",
+      expect.stringContaining(encodeURIComponent("/articles/cloudflare-basics"))
+    )
+    expect(share.getByRole("link", { name: "Share on X" })).toBeInTheDocument()
+    expect(share.getByRole("button", { name: "Copy link" })).toBeInTheDocument()
+  })
+
+  it("suggests more articles without repeating the one you're reading", async () => {
+    await renderArticle()
+    const more = within(
+      screen.getByRole("region", { name: "More articles to read" })
+    )
+
+    expect(more.getAllByRole("article")).toHaveLength(2)
+    expect(more.queryByText("Post 7")).not.toBeInTheDocument()
   })
 })

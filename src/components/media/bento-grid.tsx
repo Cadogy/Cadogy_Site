@@ -3,6 +3,10 @@ import Link from "next/link"
 
 import { cn } from "@/lib/utils"
 
+import { SignalGrid } from "./signal-grid"
+
+const FROM_BELOW = [0.5, 1] as const
+
 export type BentoItem = {
   readonly id: string
   readonly title: string
@@ -11,6 +15,7 @@ export type BentoItem = {
   readonly image: string
   readonly alt: string
   readonly span: "wide" | "narrow"
+  readonly tone?: string
 }
 
 const SPAN = {
@@ -39,14 +44,22 @@ export function BentoGrid({
         <li
           key={item.id}
           className={cn(
-            "group relative isolate flex transform-gpu flex-col overflow-hidden rounded-media border bg-card transition-colors hover:border-input",
+            "group relative isolate flex transform-gpu reveal flex-col overflow-hidden rounded-media border bg-card",
             SPAN[item.span].cell
           )}
         >
-          <div className="flex flex-1 flex-col px-6 pt-6 sm:px-8 sm:pt-8">
+          <div className="relative flex flex-1 flex-col px-6 pt-6 sm:px-8 sm:pt-8">
+            <SignalGrid
+              tone={item.tone}
+              cell={18}
+              origin={FROM_BELOW}
+              peak={0.3}
+              base={0.015}
+              className="opacity-80"
+            />
             <div
               className={cn(
-                "relative isolate transform-gpu overflow-hidden rounded-t-panel border-x border-t md:min-h-80 md:flex-1",
+                "relative isolate z-10 transform-gpu overflow-hidden rounded-t-panel border-x border-t bg-card md:min-h-80 md:flex-1",
                 SPAN[item.span].art
               )}
             >
@@ -56,7 +69,7 @@ export function BentoGrid({
                 fill
                 sizes={SPAN[item.span].sizes}
                 quality={85}
-                className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none"
+                className="object-cover object-top transition-transform duration-700 ease-soft group-hover:scale-[1.02] motion-reduce:transition-none"
               />
             </div>
           </div>
@@ -66,7 +79,10 @@ export function BentoGrid({
                 {String(index + 1).padStart(2, "0")}
               </span>
               <h3 className="text-h3">
-                <Link href={item.href} className="after:absolute after:inset-0">
+                <Link
+                  href={item.href}
+                  className="after:absolute after:inset-0 after:z-20"
+                >
                   {item.title}
                 </Link>
               </h3>

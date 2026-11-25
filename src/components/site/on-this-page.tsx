@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -44,6 +44,9 @@ export function OnThisPage({
 }) {
   const [items, setItems] = useState<readonly Item[]>(fixedItems ?? [])
   const [visible, setVisible] = useState<ReadonlySet<string>>(new Set())
+  const [last, setLast] = useState<string>()
+  const listRef = useRef<HTMLUListElement>(null)
+  const [marker, setMarker] = useState<{ top: number; height: number }>()
 
   useEffect(() => {
     if (!headingsFrom) return
@@ -57,7 +60,10 @@ export function OnThisPage({
     if (items.length === 0 || typeof IntersectionObserver === "undefined")
       return
     const observer = new IntersectionObserver(
-      (entries) =>
+      (entries) => {
+        const entered = entries.filter((entry) => entry.isIntersecting)
+        const latest = entered.at(-1)
+        if (latest) setLast(latest.target.id)
         setVisible((current) => {
           const next = new Set(current)
           for (const entry of entries) {
@@ -65,7 +71,8 @@ export function OnThisPage({
             else next.delete(entry.target.id)
           }
           return next
-        }),
+        })
+      },
       { rootMargin: "-15% 0px -60% 0px" }
     )
     for (const item of items) {
@@ -75,23 +82,40 @@ export function OnThisPage({
     return () => observer.disconnect()
   }, [items])
 
+  const active =
+    items.find((item) => visible.has(item.id))?.id ?? last ?? items[0]?.id
+
+  useLayoutEffect(() => {
+    const link = active
+      ? listRef.current?.querySelector(`a[href="#${CSS.escape(active)}"]`)
+      : null
+    if (!(link instanceof HTMLElement)) return setMarker(undefined)
+    setMarker({ top: link.offsetTop, height: link.offsetHeight })
+  }, [active, items])
+
   if (items.length === 0) return null
-  const active = items.find((item) => visible.has(item.id))?.id
 
   return (
     <nav aria-label="On this page" className={className}>
       <p className="text-meta">On this page</p>
-      <ul className="mt-4 grid border-l">
+      <ul ref={listRef} className="relative mt-4 grid border-l">
+        {marker ? (
+          <span
+            aria-hidden="true"
+            className="absolute -left-px w-px bg-brand transition-[top,height] duration-300 ease-soft motion-reduce:transition-none"
+            style={{ top: marker.top, height: marker.height }}
+          />
+        ) : null}
         {items.map((item) => (
           <li key={item.id}>
             <a
               href={`#${item.id}`}
               aria-current={item.id === active ? "location" : undefined}
               className={cn(
-                "-ml-px flex min-h-10 items-center border-l py-1 pl-4 text-sm transition-colors",
+                "flex min-h-10 items-center py-1 pl-4 text-sm transition-colors",
                 item.id === active
-                  ? "border-brand text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {item.label}

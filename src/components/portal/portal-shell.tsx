@@ -185,7 +185,7 @@ export function PortalShell({
       ) : null}
       <div
         className={cn(
-          "min-h-dvh lg:grid lg:transition-[grid-template-columns] lg:duration-200 lg:ease-out",
+          "min-h-dvh lg:grid lg:transition-[grid-template-columns] lg:duration-200 lg:ease-soft",
           collapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[256px_1fr]"
         )}
       >

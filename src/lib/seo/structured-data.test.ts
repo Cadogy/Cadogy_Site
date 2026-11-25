@@ -96,7 +96,7 @@ describe("structured data", () => {
       description: "Fewer moving parts.",
       publishedAt: "2026-01-29T00:00:00Z",
       modifiedAt: "2026-01-30T00:00:00Z",
-      image: "/images/studio/payments.webp",
+      image: "/images/studio/service-payments.webp",
       authorName: "Charles Knapp",
       keywords: ["architecture"],
       wordCount: 900,
@@ -107,7 +107,7 @@ describe("structured data", () => {
       name: "Charles Knapp",
       jobTitle: "Co-Founder & CTO",
     })
-    expect(article.image).toBe("https://cadogy.com/images/studio/payments.webp")
+    expect(article.image).toBe("https://cadogy.com/images/studio/service-payments.webp")
     expect(article.url).toBe("https://cadogy.com/articles/modular-monoliths")
   })
 

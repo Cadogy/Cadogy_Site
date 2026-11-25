@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { requireSession } from "@/features/auth/server/session"
 import { TicketList } from "@/features/support/components/ticket-list"
 import { support } from "@/features/support/server/support"
 
-import { requireSession } from "@/features/auth/server/session"
 import { Button } from "@/components/ui/button"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
