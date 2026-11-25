@@ -22,7 +22,7 @@ export function VideoEmbed({ video }: { video: Video }) {
 
   return (
     <div className="grid gap-4">
-      <div className="group relative aspect-video overflow-hidden rounded-media bg-card">
+      <div className="group relative isolate aspect-video transform-gpu overflow-hidden rounded-media bg-card">
         {playing ? (
           <iframe
             src={playerUrl(video.youtubeId)}

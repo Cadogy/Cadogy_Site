@@ -46,7 +46,7 @@ export default function ServicesPage() {
           >
             <div
               className={cn(
-                "relative aspect-4/3 overflow-hidden rounded-media bg-card lg:col-span-7",
+                "relative isolate aspect-4/3 transform-gpu overflow-hidden rounded-media bg-card lg:col-span-7",
                 index % 2 === 1 && "lg:order-2"
               )}
             >

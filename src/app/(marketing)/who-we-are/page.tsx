@@ -57,7 +57,7 @@ export default function AboutPage() {
       />
 
       <div className="container-page px-3 md:px-4">
-        <div className="relative aspect-4/5 overflow-hidden rounded-media bg-card sm:aspect-16/8">
+        <div className="relative isolate aspect-4/5 transform-gpu overflow-hidden rounded-media bg-card sm:aspect-16/8">
           <Image
             src="/images/studio/founders.webp"
             alt="Charles Knapp and Dylan Safra, Cadogy's founders"

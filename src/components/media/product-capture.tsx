@@ -2,7 +2,8 @@ import Image from "next/image"
 
 import { cn } from "@/lib/utils"
 
-const FRAME = "relative overflow-hidden rounded-media bg-card"
+const FRAME =
+  "relative isolate transform-gpu overflow-hidden rounded-media bg-card"
 
 export function ProductCapture({
   image,

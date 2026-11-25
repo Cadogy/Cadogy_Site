@@ -64,6 +64,12 @@ const RULES: readonly Rule[] = [
     pattern: /\brounded-(?:sm|md|lg|xl|2xl|3xl|\[)/,
   },
   {
+    name: "media frames clip as one layer",
+    why: "Add isolate transform-gpu to a rounded media frame. Otherwise a zooming image and its overlay are clipped separately and the frame's background shows as a light fringe at the corners.",
+    pattern:
+      /^(?=.*\boverflow-hidden\b)(?=.*\brounded-media\b)(?!.*\bisolate\b)/,
+  },
+  {
     name: "no shadows",
     why: "Depth comes from surface steps on the dark canvas, not shadows.",
     pattern: /(?<![\w-])shadow-(?!none)/,

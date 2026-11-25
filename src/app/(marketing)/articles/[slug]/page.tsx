@@ -123,7 +123,7 @@ export default async function ArticlePage({ params }: Props) {
         </header>
 
         <div className="container-page max-w-5xl">
-          <div className="relative aspect-video overflow-hidden rounded-media bg-card">
+          <div className="relative isolate aspect-video transform-gpu overflow-hidden rounded-media bg-card">
             <Image
               src={image}
               alt=""
