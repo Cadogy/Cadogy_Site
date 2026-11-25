@@ -4,7 +4,7 @@ export function HeroStage({ alt }: { alt: string }) {
   return (
     <div
       id="hero-stage"
-      className="relative isolate aspect-[1898/947] w-[120%] max-w-none transform-gpu overflow-hidden rounded-t-media border-x border-t bg-card lg:aspect-auto lg:min-h-[24rem] lg:w-[calc(100%+50vw)] lg:flex-none"
+      className="relative isolate aspect-[1898/947] w-[120%] max-w-none transform-gpu overflow-hidden rounded-t-media bg-card lg:aspect-auto lg:min-h-[24rem] lg:w-[calc(100%+50vw)] lg:flex-none"
     >
       <Image
         src="/images/studio/playerbay-storefront.webp"

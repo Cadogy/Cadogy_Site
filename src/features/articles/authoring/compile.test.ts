@@ -8,6 +8,11 @@ title: Modular monoliths, done properly
 description: How to draw module boundaries that hold up.
 topic: Architecture
 tags: [Architecture, TypeScript]
+cover:
+  image: media/modular/cover.jpg
+  alt: Shipping containers stacked in rows
+  credit: Photo by Jane Doe on Unsplash
+  creditUrl: https://unsplash.com/photos/abc
 ${front}---
 ${body}`
 
@@ -21,6 +26,12 @@ describe("compileArticle", () => {
       description: "How to draw module boundaries that hold up.",
       topic: "Architecture",
       tags: ["Architecture", "TypeScript"],
+      cover: {
+        image: "media/modular/cover.jpg",
+        alt: "Shipping containers stacked in rows",
+        credit: "Photo by Jane Doe on Unsplash",
+        creditUrl: "https://unsplash.com/photos/abc",
+      },
     })
   })
 
@@ -95,15 +106,134 @@ describe("compileArticle", () => {
     )
   })
 
-  it("lets an article choose its cover pattern", () => {
-    expect(
-      compileArticle(source("Body", "cover: skyline\n"), "x").meta.cover
-    ).toBe("skyline")
+  it("requires a cover photo with alt text", () => {
+    expect(() =>
+      compileArticle(
+        ["---", "title: T", "description: D", "---", "Body"].join("\n"),
+        "x"
+      )
+    ).toThrow(/cover/)
   })
 
-  it("rejects a cover pattern that doesn't exist", () => {
+  it("places a captioned, credited image from the article's media folder", () => {
+    const { html, media } = compileArticle(
+      source(
+        [
+          ":::figure media/modular/diagram.png",
+          "alt: Modules calling each other through public interfaces",
+          "caption: Each module talks to others only through its interface.",
+          "credit: Diagram by Cadogy",
+          ":::",
+        ].join("\n")
+      ),
+      "x"
+    )
+
+    expect(html).toContain('<img src="media:media/modular/diagram.png"')
+    expect(html).toContain(
+      'alt="Modules calling each other through public interfaces"'
+    )
+    expect(html).toContain(
+      "<figcaption>Each module talks to others only through its interface. <span>Diagram by Cadogy</span></figcaption>"
+    )
+    expect(media).toEqual([
+      {
+        path: "media/modular/cover.jpg",
+        alt: "Shipping containers stacked in rows",
+      },
+      {
+        path: "media/modular/diagram.png",
+        alt: "Modules calling each other through public interfaces",
+      },
+    ])
+  })
+
+  it("rejects a figure without alt text", () => {
     expect(() =>
-      compileArticle(source("Body", "cover: zigzag\n"), "x")
-    ).toThrow(/cover/)
+      compileArticle(
+        source([":::figure media/x.png", "caption: Hi", ":::"].join("\n")),
+        "x"
+      )
+    ).toThrow(/alt/)
+  })
+
+  it("embeds a YouTube video without tracking cookies", () => {
+    const { html } = compileArticle(
+      source([":::youtube dQw4w9WgXcQ", "How webhooks work", ":::"].join("\n")),
+      "x"
+    )
+
+    expect(html).toContain(
+      'src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"'
+    )
+    expect(html).toContain('title="How webhooks work"')
+    expect(html).toContain("<figcaption>How webhooks work</figcaption>")
+  })
+
+  it("rejects a malformed YouTube id", () => {
+    expect(() =>
+      compileArticle(
+        source([":::youtube not-an-id", "Title", ":::"].join("\n")),
+        "x"
+      )
+    ).toThrow(/YouTube/)
+  })
+})
+
+describe("cover credit", () => {
+  it("ends the article with the cover photo's credit, linked to the original", () => {
+    const { html } = compileArticle(
+      [
+        "---",
+        "title: T",
+        "description: D",
+        "cover:",
+        "  image: media/x/cover.jpg",
+        "  alt: Keys",
+        "  credit: Photo by Ari Sha on Unsplash",
+        "  creditUrl: https://unsplash.com/photos/abc",
+        "---",
+        "Body",
+      ].join("\n"),
+      "x"
+    )
+
+    expect(html.trimEnd()).toMatch(
+      /<p><em>Cover: <a href="https:\/\/unsplash\.com\/photos\/abc">Photo by Ari Sha on Unsplash<\/a><\/em><\/p>$/
+    )
+  })
+})
+
+describe("code blocks", () => {
+  const withCover = (body: string) =>
+    [
+      "---",
+      "title: T",
+      "description: D",
+      "cover:",
+      "  image: media/x/cover.jpg",
+      "  alt: Keys",
+      "---",
+      body,
+    ].join("\n")
+
+  it("colors code by its language", () => {
+    const { html } = compileArticle(
+      withCover(["```ts", "const total: number = 42", "```"].join("\n")),
+      "x"
+    )
+
+    expect(html).toContain('<pre class="shiki')
+    expect(html).toMatch(/<span style="color:#[0-9A-Fa-f]{6}">const<\/span>/)
+    expect(html).toContain("42</span>")
+  })
+
+  it("still renders code in a language it doesn't know", () => {
+    const { html } = compileArticle(
+      withCover(["```brainfuck", "++>-", "```"].join("\n")),
+      "x"
+    )
+
+    expect(html).toContain("++>-")
   })
 })

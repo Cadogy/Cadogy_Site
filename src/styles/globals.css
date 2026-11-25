@@ -160,6 +160,17 @@
   }
 }
 
+@utility read-in-key {
+  color: hsl(var(--foreground));
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: read-in-key linear both;
+      animation-timeline: view();
+      animation-range: entry 70% cover 50%;
+    }
+  }
+}
+
 @utility carousel-dim {
   @supports (animation-timeline: view()) {
     @media (prefers-reduced-motion: no-preference) {
@@ -179,6 +190,12 @@
 @keyframes read-in {
   from {
     color: hsl(var(--muted-foreground) / 0.35);
+  }
+}
+
+@keyframes read-in-key {
+  from {
+    color: hsl(var(--muted-foreground));
   }
 }
 

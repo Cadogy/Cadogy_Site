@@ -2,8 +2,12 @@
 title: "How to protect your website with Cloudflare: a practical setup guide"
 description: "Set up Cloudflare properly: SSL modes, locking down your origin, WAF and rate limiting rules on the free plan, bot settings that won't break webhooks, and fixes for 52x errors."
 topic: Security
-cover: skyline
 tags: [Cloudflare, Web security, DDoS, WAF]
+cover:
+  image: media/how-to-use-cloudflare-to-protect-your-website-and-why-you-should/cover.jpg
+  alt: "A glowing blue lava lamp in a dark room"
+  credit: Photo by Martin Engel on Unsplash
+  creditUrl: https://unsplash.com/photos/4opaDCbazYM
 ---
 
 Putting a site behind Cloudflare takes ten minutes. Putting it behind Cloudflare *properly* takes about an hour, and most sites stop after the first ten minutes.
@@ -51,6 +55,12 @@ If you still get a redirect loop on Full (strict), something else is redirecting
 :::
 
 Then turn on **Always Use HTTPS** and set the **Minimum TLS Version** to 1.2.
+
+A fun detail about the encryption behind all this: Cloudflare feeds part of its randomness from a wall of lava lamps in its San Francisco office.
+
+:::youtube 1cUUfMeOijg
+The lava lamps that help keep the internet secure (Tom Scott)
+:::
 
 ## Step 2: Lock down your origin
 

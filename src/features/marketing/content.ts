@@ -33,6 +33,7 @@ export type CaseStudy = {
   readonly mobileImage: string
   readonly imageAlt: string
   readonly video?: Video
+  readonly hero: { readonly image: string; readonly focus: string }
   readonly story: {
     readonly headline: string
     readonly tone: "playerbay" | "sidecar"
@@ -75,7 +76,20 @@ export const hero = {
 
 export const statement = {
   lead: "Senior engineers, start to finish.",
-  rest: "The people you talk to are the people building your product, so decisions are fast, nothing gets lost in handoffs, and every change is designed, reviewed and tested by someone accountable for it.",
+  sentences: [
+    {
+      before: "The people you talk to are ",
+      key: "the people building your product",
+      after: ".",
+    },
+    { before: "Decisions are ", key: "fast", after: "." },
+    { before: "Nothing gets ", key: "lost in handoffs", after: "." },
+    {
+      before: "Every change is designed, reviewed and tested by someone ",
+      key: "accountable for it",
+      after: ".",
+    },
+  ],
 } as const
 
 export const services: readonly Service[] = [
@@ -254,6 +268,10 @@ export const caseStudies: readonly CaseStudy[] = [
     role: "Product, engineering and operations — designed, built and run in-house.",
     image: "/images/studio/playerbay.webp",
     mobileImage: "/images/studio/playerbay-mobile.webp",
+    hero: {
+      image: "/images/studio/playerbay-storefront.webp",
+      focus: "object-left-top",
+    },
     imageAlt: "PlayerBay marketplace homepage",
     story: {
       headline: "A marketplace we built and run, in 25 languages.",
@@ -291,27 +309,27 @@ export const caseStudies: readonly CaseStudy[] = [
       steps: [
         {
           title: "Checkout",
-          body: "The buyer pays by card, Apple Pay, Google Pay, Amazon Pay, Cash App or crypto. Stock is reserved the moment checkout starts, so two people can't buy the last item.",
+          body: "Card, wallets or crypto. Stock is reserved the moment checkout starts, so the last item can't sell twice.",
         },
         {
           title: "Payment confirmed",
-          body: "The payment event is verified at the edge, queued and processed exactly once. Riskier payments pause automatic delivery for a closer look.",
+          body: "Verified at the edge and processed exactly once. Riskier payments pause delivery for a closer look.",
         },
         {
           title: "Delivery",
-          body: "Instant listings deliver automatically. Others are delivered by the seller in the order chat. Account details are encrypted, and every time they're viewed is logged.",
+          body: "Instant listings deliver automatically, others through the order chat. Account details are encrypted.",
         },
         {
           title: "Protection period",
-          body: "The buyer checks what they received while the money stays held. The protection period is set per game and category, and fixed on the order when it's placed.",
+          body: "The buyer checks the goods while the money stays held, for a period set per game and category.",
         },
         {
           title: "Received",
-          body: "The buyer confirms receipt, or the order completes on its own when protection ends. Only then is the sale credited to the seller.",
+          body: "The buyer confirms, or the order completes when protection ends. Only then is the seller credited.",
         },
         {
           title: "Payout",
-          body: "Sellers withdraw their balance through PayPal, Payoneer, SEPA, SWIFT, Skrill, Bitcoin or USDC.",
+          body: "Sellers withdraw through PayPal, Payoneer, SEPA, SWIFT, Skrill, Bitcoin or USDC.",
         },
       ],
     },
@@ -327,11 +345,11 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "Structured disputes",
-            body: "Dispute reasons depend on what was bought. Both sides get clear deadlines to respond and add evidence, sellers can offer a partial refund or a replacement, and deadlines are enforced automatically around the clock.",
+            body: "Dispute reasons fit what was bought. Both sides get deadlines and evidence, sellers can offer a refund or replacement, and it's all enforced automatically.",
           },
           {
             title: "Layered fraud controls",
-            body: "Payment risk scores, purchase velocity and device signals decide whether an order delivers instantly or waits for review. Chargebacks and early fraud warnings flow straight into the order.",
+            body: "Risk scores, purchase velocity and device signals decide whether an order delivers instantly or waits for review. Chargebacks land on the order.",
           },
           {
             title: "Verified sellers",
@@ -354,7 +372,7 @@ export const caseStudies: readonly CaseStudy[] = [
         points: [
           {
             title: "A ledger, not a balance field",
-            body: "Every change to a wallet or seller balance is a ledger entry written in a database transaction with its own idempotency key. Replaying an event changes nothing.",
+            body: "Every balance change is a ledger entry written in a transaction with its own idempotency key. Replaying an event changes nothing.",
           },
           {
             title: "Webhooks at the edge",
@@ -412,15 +430,15 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "Accountable staff access",
-            body: "Staff roles have named permissions. Sensitive actions need a fresh identity check, personal data is masked by default, and every staff action is recorded in an audit log.",
+            body: "Named permissions per role. Sensitive actions need a fresh identity check, personal data is masked, and every action is audit-logged.",
           },
           {
             title: "AI-assisted review",
-            body: "Suspicious orders and accounts are summarized for reviewers with an AI assessment, and imported products are enriched automatically, so staff spend their time on decisions.",
+            body: "Suspicious orders and accounts arrive summarized with an AI assessment, and imports are enriched automatically, so staff spend time on decisions.",
           },
           {
             title: "Work that runs itself",
-            body: "Scheduled jobs enforce dispute deadlines, release held deliveries, complete orders when protection ends and send reminders, on Vercel Cron and Cloudflare Workers.",
+            body: "Scheduled jobs enforce deadlines, release held deliveries, complete orders and send reminders, on Vercel Cron and Cloudflare Workers.",
           },
         ],
       },
@@ -435,7 +453,7 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "Built to be found",
-            body: "Per-language sitemaps, structured data for products, ratings and FAQs, a Google Merchant feed, and IndexNow so search engines hear about changes quickly.",
+            body: "Per-language sitemaps, structured data, a Google Merchant feed and IndexNow, so search engines hear about changes quickly.",
           },
           {
             title: "Search that understands players",
@@ -454,7 +472,7 @@ export const caseStudies: readonly CaseStudy[] = [
         points: [
           {
             title: "Rules you can test",
-            body: "Order, payment and dispute rules are pure functions with their own tests. Over 3,200 test files cover the platform, including tests that walk whole dispute flows from start to finish.",
+            body: "Order, payment and dispute rules are pure, tested functions. Over 3,200 test files cover the platform, including whole dispute flows.",
           },
           {
             title: "A modular monolith",
@@ -462,7 +480,7 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "Hardened by default",
-            body: "Strict security headers, sanitized rich text, private file storage with signed links, bot protection on sign-up and sign-in, and rate limits that hold across servers.",
+            body: "Strict security headers, sanitized rich text, signed links to private files, bot protection on sign-in and rate limits across servers.",
           },
           {
             title: "Watched in production",
@@ -503,6 +521,10 @@ export const caseStudies: readonly CaseStudy[] = [
     role: "Product, design and engineering — built, released and maintained by Cadogy under the MIT license.",
     image: "/images/studio/sidecar.webp",
     mobileImage: "/images/studio/sidecar-mobile.webp",
+    hero: {
+      image: "/images/studio/sidecar-story.webp",
+      focus: "object-[50%_22%]",
+    },
     story: {
       headline: "OpenCode, in a panel beside your code.",
       tone: "sidecar",
@@ -548,27 +570,27 @@ export const caseStudies: readonly CaseStudy[] = [
       steps: [
         {
           title: "Prompt",
-          body: "Type in the message box, with @ mentions for files, folders, subagents and skills, pasted screenshots, and / for OpenCode's commands. Sidecar sends it to the OpenCode service on your machine.",
+          body: "Type with @ mentions, pasted screenshots and / commands. It goes to OpenCode running on your machine.",
         },
         {
           title: "Timeline",
-          body: "Each step appears as it happens: thinking time, every tool call with its input and output, and edits with your theme's syntax colors.",
+          body: "Every step appears as it happens: thinking time, each tool call with its input and output, and edits.",
         },
         {
           title: "Subagents",
-          body: "Each subagent gets a live row with its prompt, current activity, Stop and Open. Its report comes back as a line you can expand.",
+          body: "Each subagent gets a live row with its activity, Stop and Open. Its report comes back as one line.",
         },
         {
           title: "Permissions",
-          body: "When the agent needs approval, even deep inside a subagent, the request takes the message box's place until you answer. You can also tell the agent what to do instead.",
+          body: "Approval requests, even from deep inside a subagent, take the message box's place until you answer.",
         },
         {
           title: "Steer or queue",
-          body: "While the agent works, steer the running task or queue your next message. Budget Guard stops a runaway task at the cost or step limit you set.",
+          body: "Steer the running task or queue the next message. Budget Guard stops runaway tasks at your limit.",
         },
         {
           title: "Review",
-          body: "The agent's edits open in VS Code's own diff editor, kept apart from your own changes. Rewind or fork from any prompt to try another path.",
+          body: "Edits open in VS Code's diff editor, apart from yours. Rewind or fork from any prompt to try again.",
         },
       ],
     },
@@ -583,15 +605,15 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "Answer where you type",
-            body: "Permission requests and questions replace the message box until answered, with numbered choices and the option to give the agent new instructions. Sensitive paths get a warning.",
+            body: "Permission requests replace the message box until answered, with numbered choices or new instructions. Sensitive paths get a warning.",
           },
           {
             title: "Budget Guard",
-            body: "A local per-task limit on cost and steps. It warns at 80% and then stops the agent through OpenCode's own cancellation, with Continue once or Increase budget.",
+            body: "A per-task limit on cost and steps. It warns at 80%, then stops the agent through OpenCode's own cancellation.",
           },
           {
             title: "Agent changes kept apart",
-            body: "The agent's edits come from OpenCode's session snapshots, so edits you already had aren't counted. When the two can't be told apart, Sidecar says so instead of guessing.",
+            body: "The agent's edits come from OpenCode's snapshots, so yours aren't counted. When they can't be told apart, Sidecar says so.",
           },
           {
             title: "Rewind and fork",
@@ -610,7 +632,7 @@ export const caseStudies: readonly CaseStudy[] = [
         points: [
           {
             title: "OpenCode's own API",
-            body: "Sidecar talks to the OpenCode 2 service on your machine through its v2 HTTP API and a live event stream. Sessions, models, providers, agents, commands, skills and permission rules are all OpenCode's.",
+            body: "Sidecar uses OpenCode 2's v2 HTTP API and live event stream. Sessions, models, agents, skills and permission rules stay OpenCode's.",
           },
           {
             title: "Followed live",
@@ -637,11 +659,11 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "No credentials",
-            body: "Sign-in and providers stay with OpenCode. The local service password lives in memory, and workspace content is sent only when you attach it or the agent reads it under OpenCode's rules.",
+            body: "Sign-in stays with OpenCode. The service password lives in memory, and files are sent only when you attach them or the agent reads them.",
           },
           {
             title: "A locked-down view",
-            body: "The chat runs under a strict content security policy with a per-load nonce, every message from it is validated, and logs leave out prompts and file contents and redact secrets.",
+            body: "A strict content security policy with a per-load nonce, validated messages, and logs that leave out prompts and redact secrets.",
           },
           {
             title: "Trusted workspaces only",
@@ -663,11 +685,11 @@ export const caseStudies: readonly CaseStudy[] = [
           },
           {
             title: "Acceptance against live OpenCode",
-            body: "Scenarios run in isolated VS Code windows against a real OpenCode service. A read-only run on a real repository checks that its Git state is byte-for-byte unchanged.",
+            body: "Scenarios run in isolated VS Code windows against real OpenCode. A read-only run checks the repository is byte-for-byte unchanged.",
           },
           {
             title: "Native to VS Code",
-            body: "Theme colors only, across dark, light and high-contrast themes, a layout that works from a 300 px side bar to a wide editor tab, and keyboard access throughout.",
+            body: "Theme colors only, in dark, light and high-contrast themes, a layout from a 300 px side bar to a full tab, and full keyboard access.",
           },
         ],
       },

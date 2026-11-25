@@ -2,14 +2,27 @@ import matter from "gray-matter"
 import { Marked } from "marked"
 import { z } from "zod"
 
-import { COVER_VARIANTS, type CoverVariant } from "../domain/cover"
+import { highlightCode } from "./highlight"
+
+const coverSchema = z.object({
+  image: z.string().min(1),
+  alt: z.string().min(1),
+  credit: z.string().min(1).optional(),
+  creditUrl: z.url().optional(),
+})
 
 const frontmatterSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   topic: z.string().min(1).default("General"),
   tags: z.array(z.string().min(1)).default([]),
-  cover: z.enum(COVER_VARIANTS).optional(),
+  cover: coverSchema,
+})
+
+const figureSchema = z.object({
+  alt: z.string().min(1),
+  caption: z.string().min(1).optional(),
+  credit: z.string().min(1).optional(),
 })
 
 type ArticleMeta = {
@@ -18,12 +31,15 @@ type ArticleMeta = {
   readonly description: string
   readonly topic: string
   readonly tags: readonly string[]
-  readonly cover?: CoverVariant
+  readonly cover: z.infer<typeof coverSchema>
 }
+
+type MediaReference = { readonly path: string; readonly alt: string }
 
 export type CompiledArticle = {
   readonly meta: ArticleMeta
   readonly html: string
+  readonly media: readonly MediaReference[]
 }
 
 const BLOCKS = {
@@ -31,11 +47,22 @@ const BLOCKS = {
   callout: "aside",
   sources: "aside",
   faq: "section",
+  figure: "figure",
+  youtube: "figure",
 } as const
 
 type BlockName = keyof typeof BLOCKS
 
 const isBlockName = (name: string): name is BlockName => name in BLOCKS
+
+const YOUTUBE_ID = /^[\w-]{11}$/
+
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
 
 const slugifyHeading = (text: string) =>
   text
@@ -61,6 +88,9 @@ const createMarkdown = () => {
         const text = this.parser.parseInline(tokens)
         return `<h${depth} id="${uniqueId(text)}">${text}</h${depth}>\n`
       },
+      code({ text, lang }) {
+        return `${highlightCode(text, lang?.trim().split(/\s+/)[0])}\n`
+      },
     },
   })
 }
@@ -70,11 +100,11 @@ type Segment =
   | {
       readonly kind: "block"
       readonly name: BlockName
-      readonly tone?: string
+      readonly argument?: string
       readonly text: string
     }
 
-const OPEN = /^:::([a-z]+)(?:\s+([a-z]+))?\s*$/
+const OPEN = /^:::([a-z]+)(?:\s+(\S+))?\s*$/
 const CLOSE = /^:::\s*$/
 
 const segment = (body: string): readonly Segment[] => {
@@ -101,7 +131,7 @@ const segment = (body: string): readonly Segment[] => {
     result.push({
       kind: "block",
       name,
-      tone: open[2],
+      argument: open[2],
       text: lines.slice(index + 1, end).join("\n"),
     })
     index = end
@@ -110,12 +140,65 @@ const segment = (body: string): readonly Segment[] => {
   return result
 }
 
-const renderSegment = (markdown: Marked) => (part: Segment) => {
-  const inner = markdown.parse(part.text, { async: false })
-  if (part.kind === "markdown") return inner
-  const tag = BLOCKS[part.name]
-  const tone = part.tone ? ` data-tone="${part.tone}"` : ""
-  return `<${tag} data-block="${part.name}"${tone}>\n${inner}</${tag}>\n`
+const fields = (text: string) =>
+  Object.fromEntries(
+    text
+      .split(/\r?\n/)
+      .map((line) => /^(\w+):\s*(.+)$/.exec(line.trim()))
+      .flatMap((match) => (match ? [[match[1], match[2]]] : []))
+  )
+
+const renderFigure = (path: string | undefined, text: string) => {
+  if (!path) throw new Error(`":::figure" needs an image path`)
+  const parsed = figureSchema.safeParse(fields(text))
+  if (!parsed.success) throw new Error(`":::figure ${path}" needs alt text`)
+  const { alt, caption, credit } = parsed.data
+  const captionParts = [
+    caption ? escapeHtml(caption) : "",
+    credit ? `<span>${escapeHtml(credit)}</span>` : "",
+  ].filter(Boolean)
+  const figcaption =
+    captionParts.length > 0
+      ? `<figcaption>${captionParts.join(" ")}</figcaption>`
+      : ""
+  return {
+    html: `<figure><img src="media:${escapeHtml(path)}" alt="${escapeHtml(alt)}" loading="lazy">${figcaption}</figure>\n`,
+    media: [{ path, alt }],
+  }
+}
+
+const renderYoutube = (id: string | undefined, text: string) => {
+  if (!id || !YOUTUBE_ID.test(id))
+    throw new Error(`":::youtube" needs a valid YouTube video id`)
+  const title = escapeHtml(text.trim() || "Video")
+  return `<figure><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="${title}" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><figcaption>${title}</figcaption></figure>\n`
+}
+
+const renderSegment =
+  (markdown: Marked) =>
+  (part: Segment): { html: string; media: readonly MediaReference[] } => {
+    if (part.kind === "markdown")
+      return { html: markdown.parse(part.text, { async: false }), media: [] }
+    if (part.name === "figure") return renderFigure(part.argument, part.text)
+    if (part.name === "youtube")
+      return { html: renderYoutube(part.argument, part.text), media: [] }
+    const inner = markdown.parse(part.text, { async: false })
+    const tag = BLOCKS[part.name]
+    const tone = part.argument ? ` data-tone="${part.argument}"` : ""
+    return {
+      html: `<${tag} data-block="${part.name}"${tone}>\n${inner}</${tag}>\n`,
+      media: [],
+    }
+  }
+
+const coverCredit = ({ credit, creditUrl }: z.infer<typeof coverSchema>) => {
+  if (!credit) return ""
+  const text = escapeHtml(credit)
+  const linked = creditUrl
+    ? `<a href="${escapeHtml(creditUrl)}">${text}</a>`
+    : text
+  return `<p><em>Cover: ${linked}</em></p>
+`
 }
 
 export const compileArticle = (
@@ -131,7 +214,7 @@ export const compileArticle = (
         .join(", ")})`
     )
   const front = parsed.data
-  const markdown = createMarkdown()
+  const parts = segment(content).map(renderSegment(createMarkdown()))
   return {
     meta: {
       slug,
@@ -141,6 +224,10 @@ export const compileArticle = (
       tags: front.tags,
       cover: front.cover,
     },
-    html: segment(content).map(renderSegment(markdown)).join(""),
+    html: parts.map((part) => part.html).join("") + coverCredit(front.cover),
+    media: [
+      { path: front.cover.image, alt: front.cover.alt },
+      ...parts.flatMap((part) => part.media),
+    ],
   }
 }

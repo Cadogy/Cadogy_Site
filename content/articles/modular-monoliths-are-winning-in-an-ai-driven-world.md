@@ -3,6 +3,11 @@ title: "Modular monoliths: how to draw boundaries that actually hold"
 description: "A practical guide to modular monoliths: how to define modules, enforce boundaries in TypeScript, keep data ownership clean and know when a module has earned its own service."
 topic: Architecture
 tags: [Modular monolith, Microservices, TypeScript]
+cover:
+  image: media/modular-monoliths-are-winning-in-an-ai-driven-world/cover.jpg
+  alt: "Aerial view of a container port, with stacks of colorful shipping containers in neat rows"
+  credit: Photo by CHUTTERSNAP on Unsplash
+  creditUrl: https://unsplash.com/photos/kyCNGGKCvyw
 ---
 
 Most teams that "go microservices" are not solving a scaling problem. They are solving a code organization problem with a network. The network is the expensive part.
@@ -29,6 +34,12 @@ A modular monolith adds three rules on top of a single deployable:
 3. **Dependencies point one way.** If orders depend on billing, billing does not depend on orders. Cycles are a build error.
 
 Shopify is the best-documented example at scale. Rather than splitting its large Rails application into services, it reorganized the codebase into components with explicit boundaries, and later built Packwerk, a static analysis tool, to enforce them. Their engineering team considered microservices and chose modularity instead, citing the complexity of distributed systems.
+
+Kirsten Westeinde, who led the work at Shopify, explains how they did it:
+
+:::youtube gyZDWsLk_Ac
+Deconstructing the Monolith, Kirsten Westeinde, Shopify (Craft Conference 2022)
+:::
 
 ## Monolith, modular monolith or microservices?
 

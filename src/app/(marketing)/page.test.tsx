@@ -78,7 +78,7 @@ describe("home page", () => {
     const approach = screen.getByRole("region", { name: "Our approach" })
 
     expect(approach).toHaveTextContent(
-      "Senior engineers, start to finish. The people you talk to are the people building your product"
+      "Senior engineers, start to finish. The people you talk to are the people building your product. Decisions are fast. Nothing gets lost in handoffs. Every change is designed, reviewed and tested by someone accountable for it."
     )
     expect(
       within(approach)

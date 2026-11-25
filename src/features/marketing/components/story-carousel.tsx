@@ -21,7 +21,7 @@ export function StoryCarousel({
         <StoryCard
           key={study.slug}
           study={study}
-          className="w-[88%] shrink-0 carousel-dim snap-start snap-always md:w-[82%] xl:w-[min(82%,1100px)]"
+          className="w-[88%] shrink-0 carousel-dim snap-start md:w-[82%] xl:w-[min(82%,1100px)]"
         />
       ))}
     </Carousel>

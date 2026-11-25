@@ -248,3 +248,25 @@
 .wordpress-content [data-block="sources"] a {
   color: hsl(var(--muted-foreground));
 }
+
+.wordpress-content figure {
+  margin-top: 2.25em;
+  margin-bottom: 2.25em;
+}
+
+.wordpress-content figure img {
+  width: 100%;
+}
+
+.wordpress-content figcaption span {
+  display: block;
+  margin-top: 0.25em;
+  font-size: 0.8125rem;
+  opacity: 0.75;
+}
+
+.wordpress-content pre.shiki {
+  color: hsl(var(--foreground) / 0.9);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}

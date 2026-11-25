@@ -10,10 +10,15 @@ title: "How to protect your website with Cloudflare: a practical setup guide"
 description: "One or two sentences. Used as the meta description and the card summary."
 topic: Security        # Engineering, Architecture, Security, Payments or AI
 tags: [Cloudflare, WAF]
+cover:
+  image: media/<slug>/cover.jpg
+  alt: "What the photo shows"
+  credit: Photo by Name on Unsplash
+  creditUrl: https://unsplash.com/photos/<id>
 ---
 ```
 
-`topic` sets the WordPress category and the cover's color and icon.
+`topic` sets the WordPress category. Every article needs a real cover photo in `media/<slug>/`.
 
 ## Blocks
 
@@ -37,6 +42,16 @@ A direct answer in the first sentence. These become FAQ structured data.
 :::sources
 - [Primary source title, Publisher](https://example.com)
 :::
+
+:::figure media/<slug>/diagram.png
+alt: What the image shows
+caption: Optional caption.
+credit: Optional credit.
+:::
+
+:::youtube 47sSju0UhPk
+Video title (Channel)
+:::
 ```
 
 ## Writing rules
@@ -49,7 +64,7 @@ A direct answer in the first sentence. These become FAQ structured data.
 ## Commands
 
 ```bash
-npm run blog -- preview                 # covers and HTML in .blog-preview/
+npm run blog -- preview                 # validate articles and images, HTML in .blog-preview/
 npm run blog -- publish <slug>          # update, keeping the post's status
 npm run blog -- publish <slug> --live   # update and publish
 npm run blog -- publish --all --draft   # update everything as drafts

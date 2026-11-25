@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, onTestFinished } from "vitest"
 
@@ -48,11 +48,22 @@ describe("ServiceExplorer", () => {
     ).toHaveAttribute("aria-expanded", "false")
   })
 
-  it("opens the service named in the link that brought you here", () => {
+  it("opens the service named in the link that brought you here and brings it into view", async () => {
+    const scrolled: Element[] = []
+    const original = Element.prototype.scrollIntoView
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this)
+    }
     window.history.replaceState(null, "", "/services#infrastructure")
-    onTestFinished(() => window.history.replaceState(null, "", "/"))
+    onTestFinished(() => {
+      window.history.replaceState(null, "", "/")
+      Element.prototype.scrollIntoView = original
+    })
     render(<ServiceExplorer />)
 
     expect(openService()).toHaveAccessibleName(/Infrastructure & security/)
+    await waitFor(() =>
+      expect(scrolled.map((element) => element.id)).toContain("infrastructure")
+    )
   })
 })

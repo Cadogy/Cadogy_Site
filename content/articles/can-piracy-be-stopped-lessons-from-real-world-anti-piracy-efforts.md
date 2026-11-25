@@ -3,6 +3,11 @@ title: "Can piracy be stopped? What actually works for digital products"
 description: "You can't stop piracy, but you can make it unprofitable. What the evidence says about DRM, watermarking, license checks and account sharing, and how to protect a digital product without punishing paying customers."
 topic: Security
 tags: [Piracy, Content protection, DRM, Licensing]
+cover:
+  image: media/can-piracy-be-stopped-lessons-from-real-world-anti-piracy-efforts/cover.jpg
+  alt: "A pirate flag with a skull and crossbones flying on a pole"
+  credit: Photo by Bill Eccles on Unsplash
+  creditUrl: https://unsplash.com/photos/RvLyITzf4NU
 ---
 
 If you sell something digital, such as software, a course, an ebook, a game or a stock asset, someone will eventually share it for free. That isn't a sign you did something wrong. It's a sign people want what you made.

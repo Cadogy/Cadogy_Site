@@ -49,6 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return {}
   const title = decodeHtml(post.title.rendered)
   const description = extractExcerpt(post.excerpt.rendered, 160)
+  const image = featuredImageOf(post)
   return {
     title,
     description,
@@ -58,6 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         path: `/articles/${post.slug}`,
         title,
         description,
+        image,
       }),
       type: "article",
       publishedTime: `${post.date_gmt}Z`,
@@ -67,6 +69,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title,
       description,
+      images: [image],
     },
   }
 }

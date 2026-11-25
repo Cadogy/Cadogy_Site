@@ -47,4 +47,28 @@ describe("sanitizeArticleHtml", () => {
       sanitizeArticleHtml('<aside data-block="ad" data-tone="loud">x</aside>')
     ).toBe("<aside>x</aside>")
   })
+
+  it("keeps lazily loaded, cookie-free YouTube embeds and figure credits", () => {
+    const html =
+      '<figure><iframe src="https://www.youtube-nocookie.com/embed/47sSju0UhPk" title="Webhooks" loading="lazy" allowfullscreen></iframe><figcaption>Webhooks <span>Stripe</span></figcaption></figure>'
+    const clean = sanitizeArticleHtml(html)
+
+    expect(clean).toContain(
+      'src="https://www.youtube-nocookie.com/embed/47sSju0UhPk"'
+    )
+    expect(clean).toContain('loading="lazy"')
+    expect(clean).toContain("<span>Stripe</span>")
+  })
+})
+
+describe("highlighted code", () => {
+  it("keeps token colors but drops any other inline style", () => {
+    const clean = sanitizeArticleHtml(
+      '<pre class="shiki" style="background-color:#24292e"><code><span style="color:#F97583">const</span><span style="position:fixed">x</span></code></pre>'
+    )
+
+    expect(clean).toContain('<span style="color:#F97583">const</span>')
+    expect(clean).not.toContain("position")
+    expect(clean).not.toContain("background-color")
+  })
 })

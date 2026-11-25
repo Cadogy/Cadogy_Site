@@ -7,15 +7,17 @@ import { statement } from "../content"
 const STAGES = ["Designed", "Reviewed", "Tested", "Shipped"] as const
 
 export function Approach() {
-  const words = statement.rest.split(" ")
   return (
     <section aria-label="Our approach" className="border-t section">
       <div className="container-page grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
         <p className="text-statement lg:col-span-8">
-          <span className="read-in">{statement.lead}</span>{" "}
-          {words.map((word, index) => (
-            <span key={index} className="read-in text-muted-foreground">
-              {word}{" "}
+          <span className="read-in">{statement.lead}</span>
+          {statement.sentences.map((sentence) => (
+            <span key={sentence.key} className="read-in text-muted-foreground">
+              {" "}
+              {sentence.before}
+              <span className="read-in-key">{sentence.key}</span>
+              {sentence.after}
             </span>
           ))}
         </p>

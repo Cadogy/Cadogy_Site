@@ -8,9 +8,20 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname.value }))
 
 const { Logo } = await import("./logo")
 
+const clickLogo = async () => {
+  const scrollTo = vi.fn()
+  vi.stubGlobal("scrollTo", scrollTo)
+  onTestFinished(() => {
+    vi.unstubAllGlobals()
+  })
+  render(<Logo />)
+  await userEvent.click(screen.getByRole("link", { name: "Cadogy" }))
+  return scrollTo
+}
+
 describe("Logo", () => {
   it("links home", () => {
-    pathname.value = "/services"
+    pathname.value = "/work"
     render(<Logo />)
 
     expect(screen.getByRole("link", { name: "Cadogy" })).toHaveAttribute(
@@ -19,17 +30,18 @@ describe("Logo", () => {
     )
   })
 
-  it("scrolls back to the top when you're already on the homepage", async () => {
+  it("jumps straight to the top when you're already on the homepage", async () => {
     pathname.value = "/"
-    const scrollTo = vi.fn()
-    vi.stubGlobal("scrollTo", scrollTo)
-    onTestFinished(() => {
-      vi.unstubAllGlobals()
+
+    expect(await clickLogo()).toHaveBeenCalledWith({
+      top: 0,
+      behavior: "instant",
     })
-    render(<Logo />)
+  })
 
-    await userEvent.click(screen.getByRole("link", { name: "Cadogy" }))
+  it("leaves other pages alone so they don't flash before navigating", async () => {
+    pathname.value = "/work/playerbay"
 
-    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }))
+    expect(await clickLogo()).not.toHaveBeenCalled()
   })
 })

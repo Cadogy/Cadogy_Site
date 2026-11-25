@@ -18,21 +18,18 @@ export function LogoMark() {
   )
 }
 
+const LOGO_CLASS =
+  "inline-flex min-h-11 items-center gap-2 rounded-control text-base font-semibold tracking-tight"
+
 export function Logo() {
   const pathname = usePathname()
-  const toTop = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (pathname !== "/") return
-    event.preventDefault()
-    const reduce = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)"
-    ).matches
-    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" })
-  }
   return (
     <Link
       href="/"
-      onClick={toTop}
-      className="inline-flex min-h-11 items-center gap-2 rounded-control text-base font-semibold tracking-tight"
+      onClick={() => {
+        if (pathname === "/") window.scrollTo({ top: 0, behavior: "instant" })
+      }}
+      className={LOGO_CLASS}
     >
       <LogoMark />
       <span>Cadogy</span>

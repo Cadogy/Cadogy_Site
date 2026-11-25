@@ -72,7 +72,7 @@ export function StoryCard({
           quality={85}
           draggable={false}
           className={cn(
-            "object-cover transition-transform duration-700 ease-soft group-hover:scale-[1.02] motion-reduce:transition-none",
+            "object-cover",
             study.story.tone === "sidecar" ? "object-top" : "object-left-top"
           )}
         />

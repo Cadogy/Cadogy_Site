@@ -109,7 +109,6 @@ describe("Sidecar for OpenCode case study", () => {
     expect(within(facts).getByText("Unit tests")).toBeInTheDocument()
     expect(within(facts).getByText("414")).toBeInTheDocument()
     expect(within(facts).getByText("99")).toBeInTheDocument()
-    expect(within(facts).getByText(/Sidecar's source code/)).toBeInTheDocument()
   })
 
   it("keeps to our voice", async () => {
@@ -174,7 +173,7 @@ describe("case study story layout", () => {
     ).toHaveAttribute("href", "/work/opencode-sidecar")
   })
 
-  it("keeps the project details in a side column", async () => {
+  it("lists the project details", async () => {
     await renderSidecar()
     const details = screen.getByRole("complementary", {
       name: "Project details",

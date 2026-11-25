@@ -15,6 +15,7 @@ const fakeWordPress = (
     tags: [...(seed.tags ?? [])],
     posts: [...(seed.posts ?? [])],
     media: [] as { id: number; filename: string; alt: string }[],
+    deletedMedia: [] as number[],
     nextId: 100,
   }
   const client: WordPressClient = {
@@ -24,8 +25,18 @@ const fakeWordPress = (
       state[taxonomy].push(term)
       return term
     },
-    findPostBySlug: async (slug) =>
-      state.posts.find((post) => post.slug === slug) ?? null,
+    findPostBySlug: async (slug) => {
+      const post = state.posts.find((candidate) => candidate.slug === slug)
+      return post
+        ? {
+            id: post.id,
+            featuredMedia: Number(post.fields.featured_media ?? 0),
+          }
+        : null
+    },
+    deleteMedia: async (id) => {
+      state.deletedMedia.push(id)
+    },
     savePost: async (id, fields) => {
       const existing = state.posts.find((post) => post.id === id)
       if (existing) {
@@ -39,7 +50,7 @@ const fakeWordPress = (
     uploadMedia: async ({ filename, alt }) => {
       const media = { id: state.nextId++, filename, alt }
       state.media.push(media)
-      return media
+      return { id: media.id, url: `https://wp.example.com/uploads/${filename}` }
     },
   }
   return { client, state }
@@ -52,11 +63,19 @@ const article: CompiledArticle = {
     description: "Idempotency, retries and ordering, done properly.",
     topic: "Payments",
     tags: ["Stripe", "Webhooks"],
+    cover: { image: "media/stripe/cover.jpg", alt: "A payment terminal" },
   },
-  html: "<p>Body</p>",
+  html: '<p>Body</p><figure><img src="media:media/stripe/flow.png" alt="Flow"></figure>',
+  media: [
+    { path: "media/stripe/cover.jpg", alt: "A payment terminal" },
+    { path: "media/stripe/flow.png", alt: "Flow" },
+  ],
 }
 
-const cover = new Uint8Array([1, 2, 3])
+const files = {
+  "media/stripe/cover.jpg": new Uint8Array([1]),
+  "media/stripe/flow.png": new Uint8Array([2]),
+}
 
 describe("publishArticle", () => {
   it("creates a new post with its topic, tags, summary and cover", async () => {
@@ -64,13 +83,14 @@ describe("publishArticle", () => {
       categories: [{ id: 7, name: "payments" }],
     })
 
-    await publishArticle({ article, cover, client, status: "publish" })
+    await publishArticle({ article, files, client, status: "publish" })
 
     expect(state.posts).toHaveLength(1)
     expect(state.posts[0]?.fields).toMatchObject({
       slug: "stripe-webhooks",
       title: "Stripe webhooks that never double-charge",
-      content: "<p>Body</p>",
+      content:
+        '<p>Body</p><figure><img src="https://wp.example.com/uploads/stripe-webhooks-flow.webp" alt="Flow"></figure>',
       excerpt: "Idempotency, retries and ordering, done properly.",
       status: "publish",
       categories: [7],
@@ -78,10 +98,16 @@ describe("publishArticle", () => {
       featured_media: state.media[0]?.id,
     })
     expect(state.tags.map((tag) => tag.name)).toEqual(["Stripe", "Webhooks"])
-    expect(state.media[0]).toMatchObject({
-      filename: "stripe-webhooks.webp",
-      alt: "Stripe webhooks that never double-charge",
-    })
+    expect(state.media).toEqual([
+      expect.objectContaining({
+        filename: "stripe-webhooks-cover.webp",
+        alt: "A payment terminal",
+      }),
+      expect.objectContaining({
+        filename: "stripe-webhooks-flow.webp",
+        alt: "Flow",
+      }),
+    ])
   })
 
   it("updates the existing post instead of making a duplicate", async () => {
@@ -91,7 +117,7 @@ describe("publishArticle", () => {
 
     const result = await publishArticle({
       article,
-      cover,
+      files,
       client,
       status: "draft",
     })
@@ -110,7 +136,7 @@ describe("publishArticle", () => {
       tags: [{ id: 9, name: "stripe" }],
     })
 
-    await publishArticle({ article, cover, client, status: "publish" })
+    await publishArticle({ article, files, client, status: "publish" })
 
     expect(state.categories).toHaveLength(1)
     expect(state.tags.map((tag) => tag.name)).toEqual(["stripe", "Webhooks"])
@@ -123,7 +149,7 @@ describe("publishArticle", () => {
       ],
     })
 
-    await publishArticle({ article, cover, client })
+    await publishArticle({ article, files, client })
 
     expect(state.posts[0]?.fields.status).toBe("publish")
   })
@@ -131,8 +157,29 @@ describe("publishArticle", () => {
   it("starts a brand new post as a draft when no status is given", async () => {
     const { client, state } = fakeWordPress()
 
-    await publishArticle({ article, cover, client })
+    await publishArticle({ article, files, client })
 
     expect(state.posts[0]?.fields.status).toBe("draft")
+  })
+
+  it("deletes the cover it replaces so old images don't pile up", async () => {
+    const { client, state } = fakeWordPress({
+      posts: [
+        { id: 5, slug: "stripe-webhooks", fields: { featured_media: 40 } },
+      ],
+    })
+
+    await publishArticle({ article, files, client })
+
+    expect(state.deletedMedia).toEqual([40])
+    expect(state.posts[0]?.fields.featured_media).not.toBe(40)
+  })
+
+  it("deletes nothing when the post had no cover", async () => {
+    const { client, state } = fakeWordPress()
+
+    await publishArticle({ article, files, client })
+
+    expect(state.deletedMedia).toEqual([])
   })
 })

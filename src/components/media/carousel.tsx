@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 const GUTTER =
   "scroll-px-5 px-5 md:scroll-px-8 md:px-8 xl:scroll-px-[max(3rem,calc((100vw-1360px)/2+3rem))] xl:px-[max(3rem,calc((100vw-1360px)/2+3rem))]"
 
+const FLING_MS = 420
+
 export function Carousel({
   label,
   itemName,
@@ -23,7 +25,14 @@ export function Carousel({
   children: React.ReactNode
 }) {
   const trackRef = useRef<HTMLUListElement>(null)
-  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null)
+  const drag = useRef<{
+    x: number
+    left: number
+    moved: boolean
+    lastX: number
+    lastTime: number
+    velocity: number
+  } | null>(null)
   const [dragging, setDragging] = useState(false)
   const [edges, setEdges] = useState({ start: true, end: count < 2 })
 
@@ -33,6 +42,9 @@ export function Carousel({
       x: event.clientX,
       left: event.currentTarget.scrollLeft,
       moved: false,
+      lastX: event.clientX,
+      lastTime: performance.now(),
+      velocity: 0,
     }
   }
 
@@ -46,14 +58,25 @@ export function Carousel({
       setDragging(true)
       event.currentTarget.setPointerCapture?.(event.pointerId)
     }
+    const now = performance.now()
+    const elapsed = Math.max(now - start.lastTime, 1)
+    drag.current = {
+      ...(drag.current ?? start),
+      moved: true,
+      lastX: event.clientX,
+      lastTime: now,
+      velocity: (event.clientX - start.lastX) / elapsed,
+    }
     event.currentTarget.scrollLeft = start.left - distance
   }
 
   const endDrag = (event: React.PointerEvent<HTMLUListElement>) => {
-    const moved = drag.current?.moved
+    const ended = drag.current
     drag.current = null
-    if (!moved) return
-    event.currentTarget.releasePointerCapture?.(event.pointerId)
+    if (!ended?.moved) return
+    const track = event.currentTarget
+    track.releasePointerCapture?.(event.pointerId)
+    track.scrollBy({ left: -ended.velocity * FLING_MS, behavior: "smooth" })
     window.setTimeout(() => setDragging(false), 0)
   }
 

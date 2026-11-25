@@ -45,7 +45,13 @@ export function ServiceExplorer() {
   useEffect(() => {
     const sync = () => {
       const index = indexFromHash()
-      if (index >= 0) setActive(index)
+      if (index < 0) return
+      setActive(index)
+      requestAnimationFrame(() =>
+        document
+          .getElementById(services[index]?.slug ?? "")
+          ?.scrollIntoView({ block: "start" })
+      )
     }
     sync()
     window.addEventListener("hashchange", sync)

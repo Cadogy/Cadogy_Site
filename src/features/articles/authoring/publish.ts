@@ -6,7 +6,9 @@ type Term = { readonly id: number; readonly name: string }
 export type WordPressClient = {
   findTerms: (taxonomy: Taxonomy) => Promise<readonly Term[]>
   createTerm: (taxonomy: Taxonomy, name: string) => Promise<Term>
-  findPostBySlug: (slug: string) => Promise<{ readonly id: number } | null>
+  findPostBySlug: (
+    slug: string
+  ) => Promise<{ readonly id: number; readonly featuredMedia: number } | null>
   savePost: (
     id: number | null,
     fields: Record<string, unknown>
@@ -15,7 +17,8 @@ export type WordPressClient = {
     filename: string
     alt: string
     data: Uint8Array
-  }) => Promise<{ readonly id: number }>
+  }) => Promise<{ readonly id: number; readonly url: string }>
+  deleteMedia: (id: number) => Promise<void>
 }
 
 export type PostStatus = "draft" | "publish"
@@ -36,37 +39,65 @@ const termIds = async (
   }, Promise.resolve([]))
 }
 
+const baseName = (path: string) =>
+  (path.split("/").pop() ?? path).replace(/.[^.]+$/, "")
+
+const uploadAll = async ({
+  article,
+  files,
+  client,
+}: {
+  article: CompiledArticle
+  files: Readonly<Record<string, Uint8Array>>
+  client: WordPressClient
+}) =>
+  Promise.all(
+    article.media.map(async ({ path, alt }) => {
+      const data = files[path]
+      if (!data) throw new Error(`Missing image file: ${path}`)
+      const uploaded = await client.uploadMedia({
+        filename: `${article.meta.slug}-${baseName(path)}.webp`,
+        alt,
+        data,
+      })
+      return { path, ...uploaded }
+    })
+  )
+
 export const publishArticle = async ({
   article,
-  cover,
+  files,
   client,
   status,
 }: {
   article: CompiledArticle
-  cover: Uint8Array
+  files: Readonly<Record<string, Uint8Array>>
   client: WordPressClient
   status?: PostStatus
 }) => {
-  const { meta, html } = article
-  const [categories, tags, existing, media] = await Promise.all([
+  const { meta } = article
+  const [categories, tags, existing, uploads] = await Promise.all([
     termIds(client, "categories", [meta.topic]),
     termIds(client, "tags", meta.tags),
     client.findPostBySlug(meta.slug),
-    client.uploadMedia({
-      filename: `${meta.slug}.webp`,
-      alt: meta.title,
-      data: cover,
-    }),
+    uploadAll({ article, files, client }),
   ])
+  const cover = uploads.find((upload) => upload.path === meta.cover.image)
+  const content = uploads.reduce(
+    (html, upload) => html.split(`media:${upload.path}`).join(upload.url),
+    article.html
+  )
   const saved = await client.savePost(existing?.id ?? null, {
     slug: meta.slug,
     title: meta.title,
-    content: html,
+    content,
     excerpt: meta.description,
     ...(status ? { status } : existing ? {} : { status: "draft" }),
     categories,
     tags,
-    featured_media: media.id,
+    featured_media: cover?.id ?? 0,
   })
+  if (existing && existing.featuredMedia > 0)
+    await client.deleteMedia(existing.featuredMedia)
   return { id: saved.id, created: existing === null }
 }

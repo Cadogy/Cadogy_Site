@@ -4,10 +4,7 @@ import sharp from "sharp"
 
 import { compileArticle } from "../src/features/articles/authoring/compile"
 import { publishArticle } from "../src/features/articles/authoring/publish"
-import {
-  COVER_SIZE,
-  renderCover,
-} from "../src/features/articles/server/render-cover"
+import { planTidy } from "../src/features/articles/authoring/tidy"
 import { createWordPressClient } from "../src/features/articles/server/wordpress-client"
 
 const say = (message: string) =>
@@ -21,10 +18,12 @@ const REVALIDATE_URL =
 const PREVIEW = ".blog-preview"
 
 const usage = `Usage:
-  npm run blog -- preview [slug]         Render covers and HTML into ${PREVIEW}/
+  npm run blog -- preview [slug]         Check articles and images, write HTML into ${PREVIEW}/
   npm run blog -- publish <slug|--all>          Update posts, keeping their status (new posts start as drafts)
   npm run blog -- publish <slug|--all> --live   Update and publish
-  npm run blog -- publish <slug|--all> --draft  Update and unpublish`
+  npm run blog -- publish <slug|--all> --draft  Update and unpublish
+  npm run blog -- tidy                          List unused topics, tags and images
+  npm run blog -- tidy --apply                  Delete them`
 
 const slugs = async (only?: string) => {
   const files = (await readdir(CONTENT)).filter(
@@ -39,17 +38,24 @@ const slugs = async (only?: string) => {
 const load = async (slug: string) =>
   compileArticle(await readFile(join(CONTENT, `${slug}.md`), "utf8"), slug)
 
-const coverWebp = async ({ meta }: Awaited<ReturnType<typeof load>>) => {
-  const png = await renderCover({
-    slug: meta.slug,
-    topic: meta.topic,
-    variant: meta.cover,
-    size: COVER_SIZE,
-  })
-  return sharp(Buffer.from(await png.arrayBuffer()))
-    .webp({ lossless: true, effort: 6 })
+const MAX_WIDTH = 2400
+
+const toWebp = (file: Buffer) =>
+  sharp(file)
+    .rotate()
+    .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+    .webp({ quality: 84, effort: 6 })
     .toBuffer()
-}
+
+const mediaFiles = async ({ media }: Awaited<ReturnType<typeof load>>) =>
+  Object.fromEntries(
+    await Promise.all(
+      media.map(async ({ path }) => [
+        path,
+        new Uint8Array(await toWebp(await readFile(join(CONTENT, path)))),
+      ])
+    )
+  )
 
 const env = (name: string) => {
   const value = process.env[name]?.trim()
@@ -61,7 +67,7 @@ const preview = async (only?: string) => {
   await mkdir(PREVIEW, { recursive: true })
   for (const slug of await slugs(only)) {
     const article = await load(slug)
-    await writeFile(join(PREVIEW, `${slug}.webp`), await coverWebp(article))
+    await mediaFiles(article)
     await writeFile(join(PREVIEW, `${slug}.html`), article.html)
     say(`✓ ${slug} (${article.meta.topic}) → ${PREVIEW}/`)
   }
@@ -91,18 +97,46 @@ const refreshSite = async () => {
   )
 }
 
-const publish = async (only: string | undefined, flag?: string) => {
-  if (!only) throw new Error(usage)
-  const client = createWordPressClient({
+const wordpress = () =>
+  createWordPressClient({
     apiUrl: env("NEXT_PUBLIC_WP_API_URL"),
     username: env("WP_USERNAME"),
     password: env("WP_APP_PASSWORD"),
   })
+
+const tidy = async (apply: boolean) => {
+  const client = wordpress()
+  const [categories, tags, media, posts, settings] = await Promise.all([
+    client.listTerms("categories"),
+    client.listTerms("tags"),
+    client.listMedia(),
+    client.listPosts(),
+    client.siteSettings(),
+  ])
+  const plan = planTidy({ categories, tags, media, posts, ...settings })
+  plan.categories.forEach((term) => say(`  topic  ${term.name}`))
+  plan.tags.forEach((term) => say(`  tag    ${term.name}`))
+  plan.media.forEach((item) => say(`  image  ${item.url.split("/").pop()}`))
+  const total = plan.categories.length + plan.tags.length + plan.media.length
+  if (total === 0) return say("✓ Nothing to tidy")
+  if (!apply)
+    return say(`${total} unused items. Run with --apply to delete them.`)
+  for (const term of plan.categories)
+    await client.deleteTerm("categories", term.id)
+  for (const term of plan.tags) await client.deleteTerm("tags", term.id)
+  for (const item of plan.media) await client.deleteMedia(item.id)
+  say(`✓ Deleted ${total} unused items`)
+  await refreshSite()
+}
+
+const publish = async (only: string | undefined, flag?: string) => {
+  if (!only) throw new Error(usage)
+  const client = wordpress()
   for (const slug of await slugs(only)) {
     const article = await load(slug)
     const result = await publishArticle({
       article,
-      cover: await coverWebp(article),
+      files: await mediaFiles(article),
       client,
       status: statusFrom(flag),
     })
@@ -118,6 +152,7 @@ const main = async () => {
   const [command, target, flag] = process.argv.slice(2)
   if (command === "preview") return preview(target)
   if (command === "publish") return publish(target, flag)
+  if (command === "tidy") return tidy(target === "--apply")
   say(usage)
 }
 
