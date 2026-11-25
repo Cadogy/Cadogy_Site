@@ -12,6 +12,7 @@ import { JsonLd } from "@/components/seo/json-ld"
 
 import { FeaturedArticle } from "./featured-article"
 import { Pagination } from "./pagination"
+import { TopicScroller } from "./topic-scroller"
 
 const pageHref = (basePath: string, page: number, search?: string) => {
   const params = new URLSearchParams({
@@ -91,23 +92,21 @@ export function ArticleListing({
       </header>
 
       {topics.length > 0 ? (
-        <nav
-          aria-label="Topics"
-          className="-mx-1 mt-12 flex gap-6 overflow-x-auto px-1"
-        >
-          <TopicLink href="/articles" current={!activeTopic && !search}>
-            All articles
-          </TopicLink>
-          {topics.map((topic) => (
-            <TopicLink
-              key={topic.id}
-              href={`/articles/category/${topic.slug}`}
-              current={activeTopic === topic.slug}
-            >
-              {topic.name}
-            </TopicLink>
-          ))}
-        </nav>
+        <TopicScroller
+          className="mt-12 mb-6"
+          topics={[
+            {
+              label: "All articles",
+              href: "/articles",
+              current: !activeTopic && !search,
+            },
+            ...topics.map((topic) => ({
+              label: topic.name,
+              href: `/articles/category/${topic.slug}`,
+              current: activeTopic === topic.slug,
+            })),
+          ]}
+        />
       ) : null}
 
       <div className={cn("border-t pt-10", topics.length === 0 && "mt-12")}>
@@ -147,30 +146,5 @@ export function ArticleListing({
         />
       ) : null}
     </div>
-  )
-}
-
-function TopicLink({
-  href,
-  current,
-  children,
-}: {
-  href: string
-  current: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <Link
-      href={href}
-      aria-current={current ? "page" : undefined}
-      className={cn(
-        "relative inline-flex min-h-11 shrink-0 items-center text-sm whitespace-nowrap transition-colors",
-        current
-          ? "text-foreground after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-brand"
-          : "text-muted-foreground hover:text-foreground"
-      )}
-    >
-      {children}
-    </Link>
   )
 }

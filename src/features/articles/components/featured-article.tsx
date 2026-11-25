@@ -18,7 +18,7 @@ export function FeaturedArticle({ post }: { post: WP_Post }) {
   return (
     <section
       aria-label="Latest article"
-      className="group relative isolate grid transform-gpu overflow-hidden rounded-media border bg-card lg:grid-cols-12"
+      className="group relative isolate grid transform-gpu overflow-hidden rounded-media bg-card lg:grid-cols-12"
     >
       <div className="relative aspect-16/9 overflow-hidden lg:order-last lg:col-span-8 lg:aspect-auto lg:min-h-[26rem]">
         <Image
