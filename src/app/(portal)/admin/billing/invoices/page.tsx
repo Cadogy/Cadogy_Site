@@ -27,14 +27,19 @@ export default async function AdminInvoicesPage({ searchParams }: Props) {
   await requirePermission("billing:read")
   const { status = "all" } = await searchParams
   const now = new Date()
-  const [invoices, summary] = await Promise.all([
+  const [invoices, summary, clients] = await Promise.all([
     billing.listInvoices({}),
     billing.summary(),
+    billing.listClients({ includeArchived: true }),
   ])
-  const visible =
-    status === "all"
+  const matching = (value: string) =>
+    value === "all"
       ? invoices
-      : invoices.filter((invoice) => displayStatus(invoice, now) === status)
+      : invoices.filter((invoice) => displayStatus(invoice, now) === value)
+  const visible = matching(status)
+  const names = new Map(
+    clients.map((client) => [client.id, client.company || client.name])
+  )
 
   const kpis = [
     {
@@ -76,12 +81,14 @@ export default async function AdminInvoicesPage({ searchParams }: Props) {
                 ? "/admin/billing/invoices"
                 : `/admin/billing/invoices?status=${filter.value}`,
             active: status === filter.value,
+            count: matching(filter.value).length,
           }))}
         />
         <InvoiceList
           invoices={visible}
           now={now}
           hrefFor={(invoice) => `/admin/billing/invoices/${invoice.id}`}
+          clientName={(invoice) => names.get(invoice.clientId) ?? ""}
           emptyMessage="No invoices here yet."
         />
       </div>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import type { Role } from "@/features/auth/domain/permissions"
 import {
   BadgePercent,
+  ChevronLeft,
   CircleUser,
   CreditCard,
   FileText,
@@ -38,8 +39,15 @@ import {
 import { Logo } from "@/components/site/logo"
 
 import { ImpersonationBanner } from "./impersonation-banner"
-import { SIDEBAR_COOKIE, type NavIcon, type PortalNavGroup } from "./navigation"
+import {
+  SIDEBAR_COOKIE,
+  type NavCount,
+  type NavIcon,
+  type PortalNavGroup,
+} from "./navigation"
 import { UserMenu } from "./user-menu"
+
+type NavCounts = Partial<Record<NavCount, number>>
 
 type ShellUser = {
   readonly name: string
@@ -65,15 +73,31 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   account: CircleUser,
 }
 
+function Waiting({ count, collapsed }: { count: number; collapsed: boolean }) {
+  if (count <= 0) return null
+  return collapsed ? (
+    <span className="absolute top-2 right-4 size-2 rounded-full bg-brand">
+      <span className="sr-only">{count} waiting</span>
+    </span>
+  ) : (
+    <span className="ml-auto rounded-full bg-brand/15 px-2 py-0.5 text-xs text-brand tabular-nums">
+      {count}
+      <span className="sr-only"> waiting</span>
+    </span>
+  )
+}
+
 function NavGroups({
   groups,
   label,
+  counts = {},
   onNavigate,
   collapsed = false,
   large = false,
 }: {
   groups: readonly PortalNavGroup[]
   label: string
+  counts?: NavCounts
   onNavigate?: () => void
   collapsed?: boolean
   large?: boolean
@@ -99,7 +123,7 @@ function NavGroups({
                 title={collapsed ? item.label : undefined}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center gap-3 rounded-control px-3 transition-colors",
+                  "relative flex min-h-11 items-center gap-3 rounded-full px-3 transition-colors",
                   large ? "text-lg" : "text-sm",
                   collapsed && "justify-center px-0",
                   pillTabTone(active),
@@ -108,6 +132,12 @@ function NavGroups({
               >
                 <Icon className="size-[18px] shrink-0" aria-hidden="true" />
                 <span className={cn(collapsed && "sr-only")}>{item.label}</span>
+                {item.count ? (
+                  <Waiting
+                    count={counts[item.count] ?? 0}
+                    collapsed={collapsed}
+                  />
+                ) : null}
               </Link>
             )
           })}
@@ -117,7 +147,13 @@ function NavGroups({
   )
 }
 
-function MobileMenu({ groups }: { groups: readonly PortalNavGroup[] }) {
+function MobileMenu({
+  groups,
+  counts,
+}: {
+  groups: readonly PortalNavGroup[]
+  counts: NavCounts
+}) {
   const [open, setOpen] = useState(false)
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -128,6 +164,7 @@ function MobileMenu({ groups }: { groups: readonly PortalNavGroup[] }) {
           <NavGroups
             groups={groups}
             label="Portal menu"
+            counts={counts}
             onNavigate={() => setOpen(false)}
             large
           />
@@ -166,6 +203,7 @@ export function PortalShell({
   impersonating,
   onStopImpersonating,
   sidebarCollapsed = false,
+  counts = {},
   children,
 }: {
   groups: readonly PortalNavGroup[]
@@ -173,6 +211,7 @@ export function PortalShell({
   impersonating?: boolean
   onStopImpersonating?: () => Promise<void>
   sidebarCollapsed?: boolean
+  counts?: NavCounts
   children: React.ReactNode
 }) {
   const { collapsed, toggle } = useSidebar(sidebarCollapsed)
@@ -213,7 +252,12 @@ export function PortalShell({
             </Button>
           </div>
           <div className="flex-1 overflow-x-hidden overflow-y-auto px-3 py-4">
-            <NavGroups groups={groups} label="Portal" collapsed={collapsed} />
+            <NavGroups
+              groups={groups}
+              label="Portal"
+              counts={counts}
+              collapsed={collapsed}
+            />
           </div>
           <div
             className={cn("border-t p-3", collapsed && "flex justify-center")}
@@ -228,7 +272,7 @@ export function PortalShell({
               <Logo />
               <div className="flex items-center gap-1">
                 <UserMenu user={user} />
-                <MobileMenu groups={groups} />
+                <MobileMenu groups={groups} counts={counts} />
               </div>
             </div>
           </header>
@@ -245,15 +289,32 @@ export function PortalPageHeader({
   title,
   description,
   actions,
+  back,
+  meta,
 }: {
   title: string
-  description?: string
+  description?: React.ReactNode
   actions?: React.ReactNode
+  back?: { readonly href: string; readonly label: string }
+  meta?: React.ReactNode
 }) {
   return (
     <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div className="grid gap-2">
-        <h1 className="text-title">{title}</h1>
+        {back ? (
+          <Link
+            href={back.href}
+            className="-ml-1 inline-flex min-h-11 items-center gap-1 self-start text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+            <span className="sr-only">Back to </span>
+            {back.label}
+          </Link>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="text-title">{title}</h1>
+          {meta}
+        </div>
         {description ? (
           <p className="max-w-2xl text-muted-foreground">{description}</p>
         ) : null}

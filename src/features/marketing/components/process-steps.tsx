@@ -20,7 +20,7 @@ export function ProcessSteps({
             {step.body}
           </p>
           {withExamples ? (
-            <div className="relative isolate mt-8 aspect-15/8 transform-gpu overflow-hidden rounded-media border bg-card">
+            <div className="relative isolate mt-8 aspect-15/8 transform-gpu overflow-hidden rounded-media bg-card">
               <Image
                 src={step.example.image}
                 alt={step.example.alt}

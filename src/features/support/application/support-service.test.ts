@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   createSupportService,
+  needsStaffReply,
   type SupportTicket,
   type TicketNotification,
 } from "./support-service"
@@ -140,5 +141,42 @@ describe("support service", () => {
     expect(
       await service.reply(client, ticket.id, "Hello again there", "user")
     ).toMatchObject({ ok: false })
+  })
+})
+
+describe("needsStaffReply", () => {
+  const ticket = (
+    overrides: Pick<SupportTicket, "status" | "lastReplyBy">
+  ): SupportTicket => ({
+    id: "t1",
+    userId: client.id,
+    subject: "Help",
+    category: "general",
+    priority: "medium",
+    messages: [],
+    lastReplyAt: NOW,
+    createdAt: NOW,
+    ...overrides,
+  })
+
+  it("counts a ticket the client spoke on last", () => {
+    expect(
+      needsStaffReply(ticket({ status: "open", lastReplyBy: "user" }))
+    ).toBe(true)
+    expect(
+      needsStaffReply(ticket({ status: "in-progress", lastReplyBy: "user" }))
+    ).toBe(true)
+  })
+
+  it("leaves out tickets waiting on the client or already finished", () => {
+    expect(
+      needsStaffReply(ticket({ status: "open", lastReplyBy: "admin" }))
+    ).toBe(false)
+    expect(
+      needsStaffReply(ticket({ status: "resolved", lastReplyBy: "user" }))
+    ).toBe(false)
+    expect(
+      needsStaffReply(ticket({ status: "closed", lastReplyBy: "user" }))
+    ).toBe(false)
   })
 })

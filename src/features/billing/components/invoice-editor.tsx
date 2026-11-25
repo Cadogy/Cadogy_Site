@@ -30,8 +30,8 @@ import {
 
 type ClientOption = { readonly id: string; readonly label: string }
 
-const newLine = (): EditorLine => ({
-  key: crypto.randomUUID(),
+const newLine = (key = crypto.randomUUID()): EditorLine => ({
+  key,
   description: "",
   quantity: "1",
   unitPrice: "",
@@ -51,7 +51,7 @@ export function InvoiceEditor({
   const [state, setState] = useState<EditorState>(
     initial.lineItems.length > 0
       ? initial
-      : { ...initial, lineItems: [newLine()] }
+      : { ...initial, lineItems: [newLine("first-line")] }
   )
   const [feedback, setFeedback] = useState<ActionState>(null)
   const [pending, startTransition] = useTransition()

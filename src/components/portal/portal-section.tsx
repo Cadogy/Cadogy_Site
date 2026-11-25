@@ -33,12 +33,14 @@ export function PortalSection({
     >
       <div
         className={cn(
-          "mb-6 flex flex-col gap-4",
-          !split && "sm:flex-row sm:items-start sm:justify-between",
+          "mb-6 flex gap-4",
+          split
+            ? "flex-col"
+            : "flex-row flex-wrap items-start justify-between gap-y-3",
           split && "lg:mb-0"
         )}
       >
-        <div className="grid gap-1">
+        <div className="grid min-w-0 flex-[1_1_16rem] gap-1">
           <h2 id={id} className="text-lg font-medium">
             {title}
           </h2>
@@ -67,13 +69,15 @@ export function PortalSection({
 const STAT_COLUMNS: Record<number, string> = {
   1: "",
   2: "",
-  3: "lg:grid-cols-3",
-  4: "lg:grid-cols-4",
+  3: "@2xl:grid-cols-3",
+  4: "@3xl:grid-cols-4",
 }
 
 export function StatList({
   stats,
+  size = "default",
 }: {
+  size?: "default" | "large"
   stats: readonly {
     readonly label: string
     readonly value: React.ReactNode
@@ -81,22 +85,31 @@ export function StatList({
   }[]
 }) {
   return (
-    <dl
-      className={cn(
-        "grid grid-cols-2 gap-x-8 gap-y-8 border-t pt-6",
-        STAT_COLUMNS[Math.min(stats.length, 4)]
-      )}
-    >
-      {stats.map((stat) => (
-        <div key={stat.label} className="grid content-start gap-1">
-          <dt className="text-meta">{stat.label}</dt>
-          <dd className="text-h3 tabular-nums">{stat.value}</dd>
-          {stat.detail ? (
-            <dd className="text-sm text-muted-foreground">{stat.detail}</dd>
-          ) : null}
-        </div>
-      ))}
-    </dl>
+    <div className="@container border-t pt-6">
+      <dl
+        className={cn(
+          "grid grid-cols-2 gap-x-8 gap-y-8",
+          STAT_COLUMNS[Math.min(stats.length, 4)]
+        )}
+      >
+        {stats.map((stat) => (
+          <div key={stat.label} className="grid min-w-0 content-start gap-1">
+            <dt className="text-meta">{stat.label}</dt>
+            <dd
+              className={cn(
+                "tabular-nums",
+                size === "large" ? "text-h3 sm:text-h2" : "text-h3"
+              )}
+            >
+              {stat.value}
+            </dd>
+            {stat.detail ? (
+              <dd className="text-sm text-muted-foreground">{stat.detail}</dd>
+            ) : null}
+          </div>
+        ))}
+      </dl>
+    </div>
   )
 }
 
@@ -109,6 +122,7 @@ export function FilterTabs({
     readonly label: string
     readonly href: string
     readonly active: boolean
+    readonly count?: number
   }[]
 }) {
   return (
@@ -121,9 +135,19 @@ export function FilterTabs({
           key={item.href}
           href={item.href}
           aria-current={item.active ? "page" : undefined}
-          className={pillTabClass(item.active)}
+          className={cn(pillTabClass(item.active), "gap-2")}
         >
           {item.label}
+          {item.count === undefined ? null : (
+            <span
+              className={cn(
+                "text-xs tabular-nums",
+                item.active ? "opacity-70" : "text-muted-foreground"
+              )}
+            >
+              {item.count}
+            </span>
+          )}
         </Link>
       ))}
     </nav>

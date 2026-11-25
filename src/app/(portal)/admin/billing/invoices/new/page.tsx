@@ -18,6 +18,7 @@ export default async function NewInvoicePage() {
   return (
     <>
       <PortalPageHeader
+        back={{ href: "/admin/billing/invoices", label: "Invoices" }}
         title="New invoice"
         description="Who is this invoice for?"
       />

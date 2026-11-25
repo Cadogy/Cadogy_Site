@@ -44,7 +44,7 @@ export function BentoGrid({
         <li
           key={item.id}
           className={cn(
-            "group relative isolate flex transform-gpu reveal flex-col overflow-hidden rounded-media border bg-card",
+            "group relative isolate flex transform-gpu reveal flex-col overflow-hidden rounded-media bg-card",
             SPAN[item.span].cell
           )}
         >
@@ -59,7 +59,7 @@ export function BentoGrid({
             />
             <div
               className={cn(
-                "relative isolate z-10 transform-gpu overflow-hidden rounded-t-panel border-x border-t bg-card md:min-h-80 md:flex-1",
+                "relative isolate z-10 transform-gpu overflow-hidden rounded-t-panel bg-card md:min-h-80 md:flex-1",
                 SPAN[item.span].art
               )}
             >
@@ -73,7 +73,7 @@ export function BentoGrid({
               />
             </div>
           </div>
-          <div className="mt-auto border-t p-6 sm:px-8">
+          <div className="mt-auto p-6 sm:px-8">
             <div className="flex items-baseline gap-3">
               <span className="font-mono text-xs text-muted-foreground tabular-nums">
                 {String(index + 1).padStart(2, "0")}

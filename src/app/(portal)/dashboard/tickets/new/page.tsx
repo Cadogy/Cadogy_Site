@@ -9,6 +9,7 @@ export default function NewTicketPage() {
   return (
     <div className="max-w-2xl">
       <PortalPageHeader
+        back={{ href: "/dashboard/tickets", label: "Support" }}
         title="New support request"
         description="We will reply here and email you when we do."
       />

@@ -21,8 +21,9 @@ export default async function TicketPage({ params }: Props) {
   return (
     <div className="max-w-3xl">
       <PortalPageHeader
+        back={{ href: "/dashboard/tickets", label: "Support" }}
         title={ticket.subject}
-        actions={<TicketStatusBadge status={ticket.status} />}
+        meta={<TicketStatusBadge status={ticket.status} />}
       />
       <TicketThread ticket={ticket} viewerIsClient clientLabel="You" />
       <div className="mt-8 border-t pt-6">

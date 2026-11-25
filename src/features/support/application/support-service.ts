@@ -40,6 +40,12 @@ export type SupportTicket = {
   readonly createdAt: Date
 }
 
+const ACTIVE: readonly TicketStatus[] = ["open", "in-progress"]
+
+export const needsStaffReply = (
+  ticket: Pick<SupportTicket, "status" | "lastReplyBy">
+) => ticket.lastReplyBy === "user" && ACTIVE.includes(ticket.status)
+
 export type Participant = {
   readonly id: string
   readonly email: string

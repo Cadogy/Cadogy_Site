@@ -51,6 +51,7 @@ export default async function ClientPage({ params }: Props) {
   return (
     <>
       <PortalPageHeader
+        back={{ href: "/admin/billing/clients", label: "Clients" }}
         title={clientDisplayName(client)}
         description={client.email}
         actions={

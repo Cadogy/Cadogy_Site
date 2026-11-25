@@ -10,21 +10,28 @@ vi.mock("next/navigation", () => ({
 }))
 vi.mock("@/features/auth/client", () => ({ authClient: { signOut: vi.fn() } }))
 
-const { PortalShell } = await import("./portal-shell")
+const { PortalShell, PortalPageHeader } = await import("./portal-shell")
 
-const renderShell = ({ sidebarCollapsed = false } = {}) =>
+const renderShell = ({
+  sidebarCollapsed = false,
+  counts = {},
+}: {
+  sidebarCollapsed?: boolean
+  counts?: { inquiries?: number; tickets?: number }
+} = {}) =>
   render(
     <PortalShell
       groups={portalNavigation("admin")}
       user={{ name: "Dylan", email: "dylan@example.com", role: "admin" }}
       sidebarCollapsed={sidebarCollapsed}
+      counts={counts}
     >
       <h1>Invoices</h1>
     </PortalShell>
   )
 
 describe("PortalShell", () => {
-  it("groups the sidebar into studio and personal sections and marks the current page", () => {
+  it("groups the sidebar by job and marks the current page", () => {
     renderShell()
     const sidebar = screen.getByRole("navigation", { name: "Portal" })
 
@@ -32,7 +39,7 @@ describe("PortalShell", () => {
       within(sidebar).getByRole("heading", { name: "Studio" })
     ).toBeInTheDocument()
     expect(
-      within(sidebar).getByRole("heading", { name: "My account" })
+      within(sidebar).getByRole("heading", { name: "Inbox" })
     ).toBeInTheDocument()
     expect(
       within(sidebar).getByRole("link", { name: "Invoices" })
@@ -40,6 +47,27 @@ describe("PortalShell", () => {
     expect(
       within(sidebar).getByRole("link", { name: "Overview" })
     ).not.toHaveAttribute("aria-current")
+  })
+
+  it("shows how many inquiries and tickets are waiting", () => {
+    renderShell({ counts: { inquiries: 3, tickets: 1 } })
+    const sidebar = screen.getByRole("navigation", { name: "Portal" })
+
+    expect(
+      within(sidebar).getByRole("link", { name: "Inquiries 3 waiting" })
+    ).toBeInTheDocument()
+    expect(
+      within(sidebar).getByRole("link", { name: "Tickets 1 waiting" })
+    ).toBeInTheDocument()
+  })
+
+  it("shows no badge when nothing is waiting", () => {
+    renderShell({ counts: { inquiries: 0 } })
+    const sidebar = screen.getByRole("navigation", { name: "Portal" })
+
+    expect(
+      within(sidebar).getByRole("link", { name: "Inquiries" })
+    ).toBeInTheDocument()
   })
 
   it("opens a full-screen menu with every destination on smaller screens", async () => {
@@ -91,6 +119,24 @@ describe("PortalShell", () => {
 
     expect(
       screen.getByRole("button", { name: "Expand sidebar" })
+    ).toBeInTheDocument()
+  })
+})
+
+describe("PortalPageHeader", () => {
+  it("links back to the list a detail page belongs to", () => {
+    render(
+      <PortalPageHeader
+        title="CAD-2026-0004"
+        back={{ href: "/admin/billing/invoices", label: "Invoices" }}
+      />
+    )
+
+    expect(
+      screen.getByRole("link", { name: "Back to Invoices" })
+    ).toHaveAttribute("href", "/admin/billing/invoices")
+    expect(
+      screen.getByRole("heading", { level: 1, name: "CAD-2026-0004" })
     ).toBeInTheDocument()
   })
 })

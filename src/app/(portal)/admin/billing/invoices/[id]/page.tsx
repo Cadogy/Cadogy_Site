@@ -7,6 +7,7 @@ import { draftFromInvoice } from "@/features/billing/components/editor-model"
 import { InvoiceActions } from "@/features/billing/components/invoice-actions"
 import { InvoiceDocument } from "@/features/billing/components/invoice-document"
 import { InvoiceEditor } from "@/features/billing/components/invoice-editor"
+import { StatusBadge } from "@/features/billing/components/status-badge"
 import { refundableAmount } from "@/features/billing/domain/credits"
 import {
   clientDisplayName,
@@ -43,7 +44,11 @@ export default async function AdminInvoicePage({ params }: Props) {
     return (
       <>
         <PortalPageHeader
-          title="Draft invoice"
+          back={{ href: "/admin/billing/invoices", label: "Invoices" }}
+          title={
+            client ? `Draft for ${clientDisplayName(client)}` : "Draft invoice"
+          }
+          meta={<StatusBadge status="draft" />}
           description="Drafts can be edited freely. Issuing assigns a number and emails the client."
         />
         <InvoiceEditor
@@ -74,8 +79,19 @@ export default async function AdminInvoicePage({ params }: Props) {
   return (
     <>
       <PortalPageHeader
+        back={{ href: "/admin/billing/invoices", label: "Invoices" }}
         title={`Invoice ${invoice.number}`}
-        description={client ? clientDisplayName(client) : undefined}
+        meta={<StatusBadge status={invoiceBadge(invoice, new Date())} />}
+        description={
+          client ? (
+            <Link
+              href={`/admin/billing/clients/${client.id}`}
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              {clientDisplayName(client)}
+            </Link>
+          ) : undefined
+        }
       />
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_320px]">
         <InvoiceDocument
@@ -127,14 +143,6 @@ export default async function AdminInvoicePage({ params }: Props) {
                 {invoice.internalNotes}
               </p>
             </PortalSection>
-          ) : null}
-          {client ? (
-            <Link
-              href={`/admin/billing/clients/${client.id}`}
-              className="print-hidden inline-flex min-h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:underline"
-            >
-              View client
-            </Link>
           ) : null}
         </div>
       </div>

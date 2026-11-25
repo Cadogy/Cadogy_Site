@@ -228,6 +228,7 @@ export default async function ClientBillingPage({ searchParams }: Props) {
             invoices={invoices}
             now={now}
             hrefFor={(invoice) => invoicePublicPath(invoice.publicToken)}
+            showClient={accounts.length > 1}
             emptyMessage={`No invoices yet. Invoices sent to ${user.email} will appear here.`}
           />
         </PortalSection>

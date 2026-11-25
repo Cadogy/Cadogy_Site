@@ -11,6 +11,7 @@ export default async function NewClientPage() {
   return (
     <>
       <PortalPageHeader
+        back={{ href: "/admin/billing/clients", label: "Clients" }}
         title="Add client"
         description="Billing details used on every invoice."
       />

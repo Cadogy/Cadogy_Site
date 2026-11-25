@@ -21,7 +21,7 @@ function Capture({
   eager?: boolean
 }) {
   return (
-    <div className="relative isolate aspect-video transform-gpu overflow-hidden rounded-media border bg-card">
+    <div className="relative isolate aspect-video transform-gpu overflow-hidden rounded-media bg-card">
       <Image
         key={service.capture.image}
         src={service.capture.image}

@@ -25,6 +25,7 @@ export default async function AdminTicketPage({ params }: Props) {
   return (
     <div className="max-w-3xl">
       <PortalPageHeader
+        back={{ href: "/admin/tickets", label: "Tickets" }}
         title={ticket.subject}
         description={client?.email}
         actions={

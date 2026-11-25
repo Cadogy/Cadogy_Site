@@ -45,7 +45,9 @@ export function TicketList({
                 {waitingLabel(ticket)}
               </span>
             </span>
-            <TicketStatusBadge status={ticket.status} />
+            <span className="self-start sm:self-center">
+              <TicketStatusBadge status={ticket.status} />
+            </span>
           </Link>
         </li>
       ))}

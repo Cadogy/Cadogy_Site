@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { EmptyState } from "@/components/ui/empty-state"
 
-import { PortalSection, StatList } from "./portal-section"
+import { FilterTabs, PortalSection, StatList } from "./portal-section"
 
 describe("PortalSection", () => {
   it("is a region named by its heading, with its description and actions", () => {
@@ -69,5 +69,35 @@ describe("EmptyState", () => {
 
     expect(screen.getByText("No clients yet.")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Add one" })).toBeInTheDocument()
+  })
+})
+
+describe("FilterTabs", () => {
+  it("shows how many items each filter holds and marks the current one", () => {
+    render(
+      <FilterTabs
+        label="Filter invoices"
+        items={[
+          { label: "All", href: "/i", active: true, count: 7 },
+          {
+            label: "Overdue",
+            href: "/i?status=overdue",
+            active: false,
+            count: 1,
+          },
+          { label: "Void", href: "/i?status=void", active: false },
+        ]}
+      />
+    )
+    const nav = screen.getByRole("navigation", { name: "Filter invoices" })
+
+    expect(within(nav).getByRole("link", { name: "All 7" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    )
+    expect(
+      within(nav).getByRole("link", { name: "Overdue 1" })
+    ).not.toHaveAttribute("aria-current")
+    expect(within(nav).getByRole("link", { name: "Void" })).toBeInTheDocument()
   })
 })

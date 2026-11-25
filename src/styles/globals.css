@@ -67,6 +67,7 @@
 
 @utility stack-sections {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   row-gap: 3rem;
   & > section:first-child {
     border-top-width: 0;

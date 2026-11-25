@@ -44,7 +44,7 @@ export function SessionList({
             />
             <div className="grid min-w-0 flex-1">
               <span className="font-medium">{session.device}</span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm [overflow-wrap:anywhere] text-muted-foreground">
                 {session.ip || "Unknown network"} · Active{" "}
                 {session.lastActiveLabel}
               </span>
