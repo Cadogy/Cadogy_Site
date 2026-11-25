@@ -2,7 +2,7 @@
 title: "Modular monoliths: how to draw boundaries that actually hold"
 description: "A practical guide to modular monoliths: how to define modules, enforce boundaries in TypeScript, keep data ownership clean and know when a module has earned its own service."
 topic: Architecture
-tags: [Architecture, Modular monolith, Microservices, TypeScript]
+tags: [Modular monolith, Microservices, TypeScript]
 ---
 
 Most teams that "go microservices" are not solving a scaling problem. They are solving a code organization problem with a network. The network is the expensive part.

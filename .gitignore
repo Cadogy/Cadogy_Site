@@ -79,6 +79,7 @@ prd.json
 
 # Internal planning (kept local)
 /docs/spec/
+/docs/runbooks/
 
 # Editors and operating systems
 .vscode/*
