@@ -16,7 +16,7 @@ import { CtaBand } from "@/features/marketing/components/cta-band"
 import { ArrowLeft, ChevronRight } from "lucide-react"
 
 import { absoluteUrl } from "@/config/site"
-import { openGraphFor } from "@/lib/seo/open-graph"
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { faqSchema } from "@/lib/seo/structured-data"
 import {
   decodeHtml,
@@ -47,31 +47,16 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPostBySlug((await params).slug)
   if (!post) return {}
-  const title = decodeHtml(post.title.rendered)
-  const description = extractExcerpt(post.excerpt.rendered, 160)
-  const image = featuredImageOf(post)
-  return {
-    title,
-    description,
-    alternates: { canonical: `/articles/${post.slug}` },
-    openGraph: {
-      ...openGraphFor({
-        path: `/articles/${post.slug}`,
-        title,
-        description,
-        image,
-      }),
-      type: "article",
+  return pageMetadata({
+    title: decodeHtml(post.title.rendered),
+    description: extractExcerpt(post.excerpt.rendered, 160),
+    path: `/articles/${post.slug}`,
+    image: featuredImageOf(post),
+    article: {
       publishedTime: `${post.date_gmt}Z`,
       modifiedTime: `${post.modified_gmt}Z`,
     },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [image],
-    },
-  }
+  })
 }
 
 export default async function ArticlePage({ params }: Props) {

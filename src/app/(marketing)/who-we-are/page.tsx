@@ -10,17 +10,18 @@ import { Mail } from "lucide-react"
 import { FaLinkedin } from "react-icons/fa6"
 
 import { siteConfig } from "@/config/site"
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { breadcrumbSchema, personSchema } from "@/lib/seo/structured-data"
 import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/seo/json-ld"
 import { OnThisPage } from "@/components/site/on-this-page"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "About",
   description:
     "Cadogy was founded in 2020 by Charles Knapp and Dylan Safra: a small, senior software studio that designs, builds and runs production software.",
-  alternates: { canonical: "/who-we-are" },
-}
+  path: "/who-we-are",
+})
 
 const stack = [
   "TypeScript",

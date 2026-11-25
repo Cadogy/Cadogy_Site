@@ -5,9 +5,9 @@ topic: Engineering
 tags: [Next.js, Core Web Vitals, Performance, SEO]
 cover:
   image: media/core-web-vitals-nextjs/cover.jpg
-  alt: "A car's digital dashboard glowing blue in the dark"
-  credit: Photo by Jahanzeb Ahsan on Unsplash
-  creditUrl: https://unsplash.com/photos/c7li8A0E2Wg
+  alt: "A car streaking through the night with motion blur"
+  credit: Photo by Andrew Lvov on Unsplash
+  creditUrl: https://unsplash.com/photos/SggyvR1WFXw
 ---
 
 Core Web Vitals are Google's measure of how a page feels to real visitors: how fast the main content shows up, how quickly the page responds when someone taps, and whether things jump around while it loads. They're a ranking signal, and more importantly, slow and jumpy pages lose people.

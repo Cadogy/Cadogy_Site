@@ -7,7 +7,7 @@ import { GeistSans } from "geist/font/sans"
 import { env } from "@/env"
 import { siteConfig } from "@/config/site"
 import { themeColors } from "@/config/theme-colors"
-import { openGraphFor } from "@/lib/seo/open-graph"
+import { TITLE_TEMPLATE } from "@/lib/seo/page-metadata"
 import { cn } from "@/lib/utils"
 
 export const viewport: Viewport = {
@@ -17,21 +17,23 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-const defaultTitle = `${siteConfig.name} — ${siteConfig.tagline}`
+const defaultTitle = `${siteConfig.name} · ${siteConfig.tagline}`
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: { default: defaultTitle, template: `%s · ${siteConfig.name}` },
+  title: { default: defaultTitle, template: TITLE_TEMPLATE },
   description: siteConfig.description,
   applicationName: siteConfig.name,
   authors: siteConfig.founders.map((founder) => ({ name: founder.name })),
   creator: siteConfig.name,
   publisher: siteConfig.name,
-  openGraph: openGraphFor({
-    path: "/",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: siteConfig.name,
     title: defaultTitle,
     description: siteConfig.description,
-  }),
+  },
   twitter: {
     card: "summary_large_image",
     title: defaultTitle,

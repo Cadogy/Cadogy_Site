@@ -51,11 +51,15 @@ describe("StoryCarousel", () => {
     expect(track.scrollLeft).toBe(300)
   })
 
-  it("keeps gliding after a quick flick, so you can skip past several stories", () => {
+  it("glides on after a flick and eases to a natural stop", () => {
     render(<StoryCarousel studies={caseStudies} />)
     const track = screen.getByRole("list", { name: "Case studies" })
-    const scrollBy = vi.fn()
-    track.scrollBy = scrollBy
+    const frames: FrameRequestCallback[] = []
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      frames.push(callback)
+      return frames.length
+    })
+    vi.stubGlobal("cancelAnimationFrame", () => {})
     const now = vi.spyOn(performance, "now")
 
     now.mockReturnValue(0)
@@ -65,15 +69,26 @@ describe("StoryCarousel", () => {
       clientX: 800,
     })
     now.mockReturnValue(16)
-    fireEvent.pointerMove(track, { pointerType: "mouse", clientX: 700 })
+    fireEvent.pointerMove(track, { pointerType: "mouse", clientX: 760 })
     now.mockReturnValue(32)
-    fireEvent.pointerMove(track, { pointerType: "mouse", clientX: 560 })
-    fireEvent.pointerUp(track, { pointerType: "mouse", clientX: 560 })
-    now.mockRestore()
+    fireEvent.pointerMove(track, { pointerType: "mouse", clientX: 720 })
+    fireEvent.pointerUp(track, { pointerType: "mouse", clientX: 720 })
+    const released = track.scrollLeft
 
-    expect(scrollBy).toHaveBeenCalledWith(
-      expect.objectContaining({ left: expect.any(Number), behavior: "smooth" })
+    const positions: number[] = []
+    for (let frame = 0; frame < 400 && frames.length > 0; frame++) {
+      frames.shift()?.(frame * 16)
+      positions.push(track.scrollLeft)
+    }
+    now.mockRestore()
+    vi.unstubAllGlobals()
+
+    const steps = positions.map(
+      (position, index) => position - (positions[index - 1] ?? released)
     )
-    expect(scrollBy.mock.calls[0]?.[0].left).toBeGreaterThan(400)
+    expect(track.scrollLeft).toBeGreaterThan(released + 50)
+    expect(track.scrollLeft).toBeLessThan(released + 1500)
+    expect(steps.at(-1) ?? 0).toBeLessThan(steps[0] ?? 0)
+    expect(frames).toHaveLength(0)
   })
 })

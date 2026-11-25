@@ -62,6 +62,7 @@ export function ProjectDetails({
                 {displayHost(href)}
               </TextLink>
             ))}
+            {study.status ? <span>{study.status}</span> : null}
           </dd>
         </div>
         <div className="grid gap-3 border-t pt-6 sm:col-span-3 lg:grid-cols-[8rem_1fr] lg:items-baseline">

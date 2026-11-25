@@ -1,4 +1,4 @@
-import { revalidateTag } from "next/cache"
+import { revalidatePath, revalidateTag } from "next/cache"
 
 import { env } from "@/env"
 import { hasBearerSecret } from "@/lib/security/bearer-secret"
@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
   revalidateTag("wordpress", { expire: 0 })
+  revalidatePath("/", "layout")
   return Response.json(
     { revalidated: true },
     { headers: { "Cache-Control": "no-store" } }

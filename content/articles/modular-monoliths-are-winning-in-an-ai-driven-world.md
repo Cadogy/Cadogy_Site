@@ -5,9 +5,9 @@ topic: Architecture
 tags: [Modular monolith, Microservices, TypeScript]
 cover:
   image: media/modular-monoliths-are-winning-in-an-ai-driven-world/cover.jpg
-  alt: "Aerial view of a container port, with stacks of colorful shipping containers in neat rows"
-  credit: Photo by CHUTTERSNAP on Unsplash
-  creditUrl: https://unsplash.com/photos/kyCNGGKCvyw
+  alt: "A grid of identical windows on a brutalist concrete building"
+  credit: Photo by Christer Gundersen on Unsplash
+  creditUrl: https://unsplash.com/photos/z7bIOuxTyNo
 ---
 
 Most teams that "go microservices" are not solving a scaling problem. They are solving a code organization problem with a network. The network is the expensive part.

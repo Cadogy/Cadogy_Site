@@ -18,6 +18,7 @@
   --color-violet: hsl(var(--violet));
   --color-story-playerbay: hsl(var(--story-playerbay));
   --color-story-sidecar: hsl(var(--story-sidecar));
+  --color-story-graceful-era: hsl(var(--story-graceful-era));
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
@@ -263,6 +264,7 @@
     --violet: 262 90% 74%;
     --story-playerbay: 222 72% 42%;
     --story-sidecar: 220 8% 15%;
+    --story-graceful-era: 158 33% 20%;
     --success: 145 55% 58%;
     --warning: 38 92% 62%;
     --destructive: 0 75% 64%;

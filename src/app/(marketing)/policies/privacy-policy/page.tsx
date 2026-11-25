@@ -5,12 +5,13 @@ import {
 } from "@/features/marketing/components/policy-page"
 
 import { siteConfig } from "@/config/site"
+import { pageMetadata } from "@/lib/seo/page-metadata"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy policy",
   description: "How Cadogy collects, uses and protects personal information.",
-  alternates: { canonical: "/policies/privacy-policy" },
-}
+  path: "/policies/privacy-policy",
+})
 
 const sections: readonly PolicySection[] = [
   {

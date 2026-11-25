@@ -2,7 +2,11 @@ import type { MetadataRoute } from "next"
 import { caseStudies } from "@/features/marketing/content"
 
 import { absoluteUrl } from "@/config/site"
-import { getAllPosts, getCategories } from "@/lib/wordpress-api"
+import {
+  featuredImageOf,
+  getAllPosts,
+  getCategories,
+} from "@/lib/wordpress-api"
 
 export const revalidate = 3600
 
@@ -40,11 +44,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...caseStudies.map((study) => ({
       url: absoluteUrl(`/work/${study.slug}`),
       priority: 0.8,
+      images: [absoluteUrl(study.image)],
     })),
     ...posts.map((post) => ({
       url: absoluteUrl(`/articles/${post.slug}`),
       lastModified: new Date(`${post.modified_gmt}Z`),
       priority: 0.6,
+      images: [absoluteUrl(featuredImageOf(post))],
     })),
     ...categories
       .filter((category) => category.count > 0)

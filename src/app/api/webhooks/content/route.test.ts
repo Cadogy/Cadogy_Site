@@ -2,8 +2,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const revalidateTag = vi.hoisted(() => vi.fn())
+const revalidatePath = vi.hoisted(() => vi.fn())
 
-vi.mock("next/cache", () => ({ revalidateTag }))
+vi.mock("next/cache", () => ({ revalidateTag, revalidatePath }))
 vi.mock("@/env", () => ({
   env: { CONTENT_REVALIDATE_SECRET: "s".repeat(32) },
 }))
@@ -24,6 +25,7 @@ describe("content webhook", () => {
 
     expect(response.status).toBe(200)
     expect(revalidateTag).toHaveBeenCalledWith("wordpress", { expire: 0 })
+    expect(revalidatePath).toHaveBeenCalledWith("/", "layout")
   })
 
   it("rejects callers without the secret", async () => {

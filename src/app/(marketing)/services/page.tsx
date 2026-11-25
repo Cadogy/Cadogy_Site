@@ -6,6 +6,7 @@ import { SectionHeading } from "@/features/marketing/components/section-heading"
 import { ServiceExplorer } from "@/features/marketing/components/service-explorer"
 import { waysToWork } from "@/features/marketing/content"
 
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import {
   breadcrumbSchema,
   serviceCatalogSchema,
@@ -13,12 +14,12 @@ import {
 import { ComparisonTable } from "@/components/ui/comparison-table"
 import { JsonLd } from "@/components/seo/json-ld"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Services",
   description:
     "Product engineering, payments, AI integration and infrastructure from a senior software studio with a track record in production.",
-  alternates: { canonical: "/services" },
-}
+  path: "/services",
+})
 
 export default function ServicesPage() {
   return (

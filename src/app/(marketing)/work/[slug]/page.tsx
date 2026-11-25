@@ -15,7 +15,7 @@ import { CtaBand } from "@/features/marketing/components/cta-band"
 import { caseStudies } from "@/features/marketing/content"
 import { ChevronRight } from "lucide-react"
 
-import { openGraphFor } from "@/lib/seo/open-graph"
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
 import { JsonLd } from "@/components/seo/json-ld"
 
@@ -33,18 +33,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const study = findStudy((await params).slug)
   if (!study) return {}
-  const title = `${study.name} case study`
-  return {
-    title,
+  return pageMetadata({
+    title: `${study.name} case study`,
     description: study.summary,
-    alternates: { canonical: `/work/${study.slug}` },
-    openGraph: openGraphFor({
-      path: `/work/${study.slug}`,
-      title,
-      description: study.summary,
-      image: study.image,
-    }),
-  }
+    path: `/work/${study.slug}`,
+    image: study.image,
+  })
 }
 
 export default async function CaseStudyPage({ params }: Props) {

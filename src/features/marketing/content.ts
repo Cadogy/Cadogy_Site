@@ -26,6 +26,7 @@ export type CaseStudy = {
   readonly name: string
   readonly website?: string
   readonly links: readonly string[]
+  readonly status?: string
   readonly category: string
   readonly summary: string
   readonly role: string
@@ -36,7 +37,7 @@ export type CaseStudy = {
   readonly hero: { readonly image: string; readonly focus: string }
   readonly story: {
     readonly headline: string
-    readonly tone: "playerbay" | "sidecar"
+    readonly tone: "playerbay" | "sidecar" | "graceful-era"
     readonly image?: string
   }
   readonly challenge: readonly string[]
@@ -727,6 +728,204 @@ export const caseStudies: readonly CaseStudy[] = [
       "Puppeteer",
       "GitHub Actions",
       "Open VSX",
+    ],
+  },
+  {
+    slug: "graceful-era-vitality",
+    name: "Graceful Era Vitality",
+    links: [],
+    status: "In private preview ahead of launch",
+    category: "Wellness brand",
+    summary:
+      "The website for a new midlife wellness brand for women: warm, botanical and careful with every claim, built to grow a waitlist now and open on launch day.",
+    role: "Website design, engineering and launch preparation, built around the brand's own identity.",
+    image: "/images/studio/graceful-era.webp",
+    mobileImage: "/images/studio/graceful-era-mobile.webp",
+    hero: {
+      image: "/images/studio/graceful-era-hero.webp",
+      focus: "object-top",
+    },
+    imageAlt:
+      "Graceful Era Vitality's contact page: an arched portrait of a woman with a cup of tea, a Rooted in Costa Rica seal and a handwritten welcome note beside the message form",
+    story: {
+      headline: "A warm, careful home for a midlife wellness brand.",
+      tone: "graceful-era",
+      image: "/images/studio/graceful-era-story.webp",
+    },
+    challenge: [
+      "Graceful Era Vitality is a new wellness brand for women in midlife. It needed a website that feels warm and personal, carries the brand's botanical identity and can grow into a place women come back to, not a one-page bottle shop.",
+      "Supplement copy is regulated territory. Words like treats, cures and prevents are off limits, and every statement about origin and quality has to be one the brand can stand behind. The site had to make careful wording easy to keep and hard to lose.",
+      "It also had to launch in stages: shared privately while products and copy were finalized, visible to search engines the whole time, and collecting a waitlist before anything goes on sale.",
+    ],
+    productLabel: "Status",
+    promisesHeading: {
+      lead: "What visitors are promised",
+      rest: "— and what the site has to guarantee behind the scenes.",
+    },
+    promises: [
+      "No treatment or cure claims",
+      "Clear reasons, not overclaims",
+      "Origin stated as it really is",
+      "A calm read on any screen",
+    ],
+    facts: [
+      { value: "261", label: "Automated tests" },
+      { value: "None", label: "Treatment claims" },
+      { value: "3", label: "Bot-protected forms" },
+      { value: "3", label: "Hero crops, one per screen size" },
+      { value: "72", label: "Starter files removed" },
+    ],
+    factsSource:
+      "Counted from the Graceful Era Vitality codebase and its test run in November 2026, ahead of launch.",
+    flow: {
+      title: "How the launch works",
+      intro:
+        "From the first private preview to opening day, the site can be shown, found and trusted before anything is for sale.",
+      steps: [
+        {
+          title: "Private preview",
+          body: "Every page sits behind a viewing password. Locked visitors get the preview page from the server, so the real content never reaches their browser.",
+        },
+        {
+          title: "Found early",
+          body: "Search engines and link previews pass the lock, so pages are indexed and shared links unfurl properly before launch.",
+        },
+        {
+          title: "Waitlist",
+          body: "Visitors join with an email and a Cloudflare Turnstile check. Repeat sign-ups are recognized, and a confirmation email goes out.",
+        },
+        {
+          title: "Feedback rounds",
+          body: "Client feedback ships in reviewed rounds, and the tests that describe each section change with it.",
+        },
+        {
+          title: "Self-serve settings",
+          body: "The team edits SEO titles, the footer, contact details and social links from an admin page, with no deploy.",
+        },
+        {
+          title: "Launch",
+          body: "Opening the site is one environment setting. Pages, sitemap, structured data and llms.txt are already in place.",
+        },
+      ],
+    },
+    chapters: [
+      {
+        title: "A brand you can feel",
+        intro:
+          "The site carries the brand's calm, botanical identity onto every screen.",
+        points: [
+          {
+            title: "Art-directed for every screen",
+            body: "The hero photo is framed separately for phones, tablets and desktops, using a cropping tool we built into development mode.",
+          },
+          {
+            title: "Botanicals that frame the words",
+            body: "Hand-drawn botanicals are cut out as transparent layers and placed around each section, so they frame the content instead of sitting behind it.",
+          },
+          {
+            title: "Type with character",
+            body: "A classical serif for headings, a handwritten script for a few signature lines and a clean sans for reading.",
+          },
+          {
+            title: "One palette everywhere",
+            body: "Parchment cream, deep forest and warm gold are defined once as design tokens and used on every page.",
+          },
+          {
+            title: "Gentle motion",
+            body: "Soft parallax on the story page and an animated journey through the formulas. Both hold still for visitors who prefer reduced motion.",
+          },
+          {
+            title: "An origin seal",
+            body: "A Costa Rican Origin seal carries the brand's story through the site, from the story page to the contact form and footer.",
+          },
+        ],
+      },
+      {
+        title: "Claims you can stand behind",
+        intro:
+          "Supplement copy is regulated. The site makes careful wording the default.",
+        points: [
+          {
+            title: "Supportive, never curative",
+            body: "Copy says supports and helps you feel. It never says treats, cures or prevents.",
+          },
+          {
+            title: "Guarded by tests",
+            body: "Tests check the FAQ, the product content and llms.txt for the required disclaimer and careful wording, so a later edit can't quietly overclaim.",
+          },
+          {
+            title: "Origin stated precisely",
+            body: "Costa Rica is described as the brand's formulation and manufacturing relationship, never as a claim that every botanical is grown there.",
+          },
+          {
+            title: "One source for product content",
+            body: "Product copy lives in one typed catalog, where each botanical carries notes on what it may not claim.",
+          },
+        ],
+      },
+      {
+        title: "Ready before launch",
+        intro: "Launch-day work is done before launch day.",
+        points: [
+          {
+            title: "A preview you can't peek behind",
+            body: "The lock runs on the server, in the request proxy. Locked visitors are served the preview page in place of the real one, so there's no overlay to remove in the browser.",
+          },
+          {
+            title: "Bots kept off every form",
+            body: "Sign-in, the waitlist and the contact form all verify a Cloudflare Turnstile check on the server.",
+          },
+          {
+            title: "Messages that reach a person",
+            body: "Contact messages are validated and delivered by email through Resend, with a clear error if anything fails.",
+          },
+          {
+            title: "Built to be found",
+            body: "Page titles, descriptions, the sitemap, Open Graph images and FAQ structured data all come from one SEO config.",
+          },
+          {
+            title: "Readable by AI assistants",
+            body: "An llms.txt file describes the brand in plain language, including what it does not claim.",
+          },
+        ],
+      },
+      {
+        title: "Engineering quality",
+        intro:
+          "A brand site still deserves a codebase that's easy to change safely.",
+        points: [
+          {
+            title: "261 behavior tests",
+            body: "Tests across 52 files cover the page sections, the forms, the preview gate and the admin guards.",
+          },
+          {
+            title: "No dead code",
+            body: "The typecheck fails on unused code and a dead-code guard runs with the tests. The cleanup removed 72 unused files and 37 unused packages.",
+          },
+          {
+            title: "A current stack",
+            body: "Upgraded to Next.js 16 and React 19 with Turbopack, along with Mongoose 9, Zod 4 and TypeScript 6.",
+          },
+          {
+            title: "Accounts only where needed",
+            body: "The starter's public signup, billing and dashboards were removed. What's left is staff sign-in, password reset and a guarded settings page.",
+          },
+        ],
+      },
+    ],
+    stack: [
+      "Next.js",
+      "React",
+      "TypeScript",
+      "Tailwind CSS",
+      "MongoDB",
+      "Mongoose",
+      "NextAuth",
+      "Cloudflare Turnstile",
+      "Resend",
+      "Framer Motion",
+      "Vitest",
+      "Vercel",
     ],
   },
 ]

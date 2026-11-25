@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { ArticleListing } from "@/features/articles/components/article-listing"
 import { getTopics, parsePage } from "@/features/articles/topics"
 
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { decodeHtml, getCategories, getPosts } from "@/lib/wordpress-api"
 
 type Props = {
@@ -18,13 +19,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = await findCategory(slug)
   if (!category) return {}
   const name = decodeHtml(category.name)
-  return {
+  return pageMetadata({
     title: `${name} articles`,
     description:
       category.description ||
       `Articles on ${name.toLowerCase()} from Cadogy: practical lessons from designing, building and running production software.`,
-    alternates: { canonical: `/articles/category/${slug}` },
-  }
+    path: `/articles/category/${slug}`,
+  })
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {

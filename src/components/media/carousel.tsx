@@ -9,7 +9,13 @@ import { Button } from "@/components/ui/button"
 const GUTTER =
   "scroll-px-5 px-5 md:scroll-px-8 md:px-8 xl:scroll-px-[max(3rem,calc((100vw-1360px)/2+3rem))] xl:px-[max(3rem,calc((100vw-1360px)/2+3rem))]"
 
-const FLING_MS = 420
+const FRICTION = 0.95
+const FRAME_MS = 16
+const MAX_SPEED = 2.5
+const REST_SPEED = 0.02
+
+const clampSpeed = (speed: number) =>
+  Math.max(-MAX_SPEED, Math.min(MAX_SPEED, speed))
 
 export function Carousel({
   label,
@@ -34,10 +40,13 @@ export function Carousel({
     velocity: number
   } | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [free, setFree] = useState(false)
+  const glide = useRef(0)
   const [edges, setEdges] = useState({ start: true, end: count < 2 })
 
   const onPointerDown = (event: React.PointerEvent<HTMLUListElement>) => {
     if (event.pointerType !== "mouse" || event.button !== 0) return
+    cancelAnimationFrame(glide.current)
     drag.current = {
       x: event.clientX,
       left: event.currentTarget.scrollLeft,
@@ -56,6 +65,7 @@ export function Carousel({
     if (!start.moved) {
       drag.current = { ...start, moved: true }
       setDragging(true)
+      setFree(true)
       event.currentTarget.setPointerCapture?.(event.pointerId)
     }
     const now = performance.now()
@@ -65,7 +75,9 @@ export function Carousel({
       moved: true,
       lastX: event.clientX,
       lastTime: now,
-      velocity: (event.clientX - start.lastX) / elapsed,
+      velocity: clampSpeed(
+        0.8 * ((event.clientX - start.lastX) / elapsed) + 0.2 * start.velocity
+      ),
     }
     event.currentTarget.scrollLeft = start.left - distance
   }
@@ -76,8 +88,13 @@ export function Carousel({
     if (!ended?.moved) return
     const track = event.currentTarget
     track.releasePointerCapture?.(event.pointerId)
-    track.scrollBy({ left: -ended.velocity * FLING_MS, behavior: "smooth" })
     window.setTimeout(() => setDragging(false), 0)
+    const step = (speed: number) => {
+      if (Math.abs(speed) < REST_SPEED) return
+      track.scrollLeft -= speed * FRAME_MS
+      glide.current = requestAnimationFrame(() => step(speed * FRICTION))
+    }
+    glide.current = requestAnimationFrame(() => step(ended.velocity))
   }
 
   const onClickCapture = (event: React.MouseEvent<HTMLUListElement>) => {
@@ -99,7 +116,14 @@ export function Carousel({
     const track = trackRef.current
     const card = track?.firstElementChild
     if (!track || !(card instanceof HTMLElement)) return
-    track.scrollBy({ left: direction * (card.offsetWidth + 16) })
+    cancelAnimationFrame(glide.current)
+    setFree(false)
+    const reduce =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
+    track.scrollBy({
+      left: direction * (card.offsetWidth + 16),
+      behavior: reduce ? "auto" : "smooth",
+    })
   }
 
   return (
@@ -136,11 +160,10 @@ export function Carousel({
         onClickCapture={onClickCapture}
         onDragStart={(event) => event.preventDefault()}
         className={cn(
-          "flex cursor-grab [scrollbar-width:none] gap-4 overflow-x-auto overscroll-x-contain pb-2 select-none motion-safe:scroll-smooth [&::-webkit-scrollbar]:hidden",
+          "flex cursor-grab [scrollbar-width:none] gap-4 overflow-x-auto overscroll-x-contain pb-2 select-none [&::-webkit-scrollbar]:hidden",
           GUTTER,
-          dragging
-            ? "cursor-grabbing snap-none motion-safe:scroll-auto"
-            : "snap-x snap-mandatory"
+          dragging && "cursor-grabbing",
+          free ? "snap-none" : "snap-x snap-mandatory"
         )}
       >
         {children}

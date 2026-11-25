@@ -4,14 +4,15 @@ import { PageHeader } from "@/features/marketing/components/page-header"
 import { StoryCard } from "@/features/marketing/components/story-card"
 import { caseStudies } from "@/features/marketing/content"
 
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
 import { JsonLd } from "@/components/seo/json-ld"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Work",
   description: "Software we've designed, built and still run in production.",
-  alternates: { canonical: "/work" },
-}
+  path: "/work",
+})
 
 export default function WorkPage() {
   return (

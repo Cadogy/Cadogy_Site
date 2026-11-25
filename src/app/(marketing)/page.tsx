@@ -16,6 +16,7 @@ import { caseStudies, hero } from "@/features/marketing/content"
 import { ChevronRight } from "lucide-react"
 
 import { siteConfig } from "@/config/site"
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { faqSchema, websiteSchema } from "@/lib/seo/structured-data"
 import { getLatestPosts } from "@/lib/wordpress-api"
 import { Button } from "@/components/ui/button"
@@ -25,13 +26,12 @@ import { JsonLd } from "@/components/seo/json-ld"
 
 export const revalidate = 3600
 
-export const metadata: Metadata = {
-  title: {
-    absolute:
-      "Cadogy — Senior software studio for web apps, payments & platforms",
-  },
-  alternates: { canonical: "/" },
-}
+export const metadata: Metadata = pageMetadata({
+  title: `${siteConfig.name} · Senior software studio for web apps, payments and platforms`,
+  absoluteTitle: true,
+  description: siteConfig.description,
+  path: "/",
+})
 
 const BEHIND_PRODUCT = [0.72, 0.9] as const
 

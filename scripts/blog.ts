@@ -38,7 +38,7 @@ const slugs = async (only?: string) => {
 const load = async (slug: string) =>
   compileArticle(await readFile(join(CONTENT, `${slug}.md`), "utf8"), slug)
 
-const MAX_WIDTH = 2400
+const MAX_WIDTH = 3000
 
 const toWebp = (file: Buffer) =>
   sharp(file)

@@ -2,14 +2,15 @@ import type { Metadata } from "next"
 import { ArticleListing } from "@/features/articles/components/article-listing"
 import { getTopics, parsePage } from "@/features/articles/topics"
 
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { getPosts } from "@/lib/wordpress-api"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Articles",
   description:
     "Practical writing on software engineering, payments, infrastructure and security from the Cadogy team.",
-  alternates: { canonical: "/articles" },
-}
+  path: "/articles",
+})
 
 type Props = { searchParams: Promise<{ page?: string; search?: string }> }
 

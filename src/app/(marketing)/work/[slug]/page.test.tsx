@@ -120,6 +120,74 @@ describe("Sidecar for OpenCode case study", () => {
   })
 })
 
+const renderGracefulEra = async () =>
+  render(
+    await CaseStudyPage({
+      params: Promise.resolve({ slug: "graceful-era-vitality" }),
+    })
+  )
+
+describe("Graceful Era Vitality case study", () => {
+  it("has a single h1 and never sends visitors to the password-protected preview", async () => {
+    await renderGracefulEra()
+
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Graceful Era Vitality"
+    )
+    expect(
+      screen.queryByRole("link", { name: /gracefulera\.com/ })
+    ).not.toBeInTheDocument()
+  })
+
+  it("states the launch status in the project details instead of a link", async () => {
+    await renderGracefulEra()
+    const details = screen.getByRole("complementary", {
+      name: "Project details",
+    })
+
+    expect(
+      within(details).getByText("In private preview ahead of launch")
+    ).toBeInTheDocument()
+    expect(within(details).queryAllByRole("link")).toHaveLength(0)
+  })
+
+  it("states figures counted from the site's code and tests", async () => {
+    await renderGracefulEra()
+    const facts = screen.getByRole("region", { name: "At a glance" })
+
+    expect(within(facts).getByText("Automated tests")).toBeInTheDocument()
+    expect(within(facts).getByText("261")).toBeInTheDocument()
+    expect(within(facts).getByText("Treatment claims")).toBeInTheDocument()
+  })
+
+  it("walks through the launch, from private preview to opening day", async () => {
+    await renderGracefulEra()
+    const flow = screen.getByRole("region", { name: "How the launch works" })
+
+    expect(within(flow).getAllByRole("listitem").length).toBeGreaterThanOrEqual(
+      5
+    )
+  })
+
+  it("keeps the client's formulas, ingredients, suppliers and personal details private", async () => {
+    const { container } = await renderGracefulEra()
+    const text = container.textContent ?? ""
+
+    expect(text).not.toMatch(
+      /\bRadiance\b|\bRestore\b|Green Labs|cohosh|ashwagandha|\bmaca\b|magnesium|vitamin|\d+\s?mg\b|30 years|pharmac/i
+    )
+  })
+
+  it("keeps to our voice", async () => {
+    const { container } = await renderGracefulEra()
+
+    expect(container.textContent).not.toMatch(
+      /cutting-edge|world-class|revolutionary|synergy|AI-accelerated/i
+    )
+  })
+})
+
 describe("case study videos", () => {
   it("offers the Sidecar demo without loading YouTube until it's played", async () => {
     await renderSidecar()
@@ -152,7 +220,7 @@ describe("case study sharing metadata", () => {
       siteName: "Cadogy",
       locale: "en_US",
       url: "/work/playerbay",
-      title: "PlayerBay case study",
+      title: "PlayerBay case study · Cadogy",
       images: [{ url: "/images/studio/playerbay.webp" }],
     })
   })

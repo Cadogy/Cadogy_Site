@@ -8,7 +8,11 @@ import { SignalGrid } from "@/components/media/signal-grid"
 
 import { displayHost, type CaseStudy } from "../../content"
 
-const TONES = { playerbay: "--brand", sidecar: "--violet" } as const
+const TONES = {
+  playerbay: "--brand",
+  sidecar: "--violet",
+  "graceful-era": "--success",
+} as const
 const FROM_BELOW = [0.5, 1] as const
 
 export function CaseStudyHero({ study }: { study: CaseStudy }) {

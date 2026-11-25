@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { ArticleListing } from "@/features/articles/components/article-listing"
 import { getTopics, parsePage } from "@/features/articles/topics"
 
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { decodeHtml, getPosts, getTags } from "@/lib/wordpress-api"
 
 type Props = {
@@ -19,9 +20,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!tag) return {}
   const name = decodeHtml(tag.name)
   return {
-    title: `Articles tagged ${name}`,
-    description: `Articles about ${name} from Cadogy: practical lessons from designing, building and running production software.`,
-    alternates: { canonical: `/articles/tag/${slug}` },
+    ...pageMetadata({
+      title: `Articles tagged ${name}`,
+      description: `Articles about ${name} from Cadogy: practical lessons from designing, building and running production software.`,
+      path: `/articles/tag/${slug}`,
+    }),
+    robots: { index: false, follow: true },
   }
 }
 

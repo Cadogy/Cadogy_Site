@@ -11,6 +11,7 @@ import type { CaseStudy } from "../content"
 const TONES = {
   playerbay: "bg-story-playerbay",
   sidecar: "bg-story-sidecar",
+  "graceful-era": "bg-story-graceful-era",
 } as const
 
 export function StoryCard({
@@ -73,7 +74,7 @@ export function StoryCard({
           draggable={false}
           className={cn(
             "object-cover",
-            study.story.tone === "sidecar" ? "object-top" : "object-left-top"
+            study.story.tone === "playerbay" ? "object-left-top" : "object-top"
           )}
         />
       </div>

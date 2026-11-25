@@ -7,15 +7,16 @@ import { Mail } from "lucide-react"
 
 import { env } from "@/env"
 import { siteConfig } from "@/config/site"
+import { pageMetadata } from "@/lib/seo/page-metadata"
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
 import { JsonLd } from "@/components/seo/json-ld"
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Start a project",
   description:
     "Tell us what you're building. You'll hear back directly from one of Cadogy's founders.",
-  alternates: { canonical: "/contact" },
-}
+  path: "/contact",
+})
 
 const steps = [
   "We read every message ourselves and reply personally.",
