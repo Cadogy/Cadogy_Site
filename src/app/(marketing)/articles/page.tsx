@@ -1,5 +1,10 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
-import { ArticleListing } from "@/features/articles/components/article-listing"
+import {
+  ArticleListing,
+  ArticleResults,
+  ArticleResultsSkeleton,
+} from "@/features/articles/components/article-listing"
 import { getTopics, parsePage } from "@/features/articles/topics"
 
 import { pageMetadata } from "@/lib/seo/page-metadata"
@@ -14,30 +19,39 @@ export const metadata: Metadata = pageMetadata({
 
 type Props = { searchParams: Promise<{ page?: string; search?: string }> }
 
-export default async function ArticlesPage({ searchParams }: Props) {
+async function Results({ searchParams }: Props) {
   const { page: rawPage, search } = await searchParams
   const page = parsePage(rawPage)
-  const [{ posts, totalPages }, topics] = await Promise.all([
-    getPosts({ page, perPage: 12, search: search?.slice(0, 100) ?? "" }),
-    getTopics(),
-  ])
-
+  const query = search?.slice(0, 100) ?? ""
+  const { posts, totalPages } = await getPosts({
+    page,
+    perPage: 12,
+    search: query,
+  })
   return (
-    <ArticleListing
-      label="Articles"
-      title={search ? `Results for “${search}”` : "Notes from the studio"}
-      lead={
-        search
-          ? undefined
-          : "What we learn building and running production software, written down so you don't have to learn it the hard way."
-      }
+    <ArticleResults
       posts={posts}
       page={page}
       totalPages={totalPages}
       basePath="/articles"
-      crumbs={[{ name: "Articles", path: "/articles" }]}
-      search={search}
-      topics={topics}
+      search={query || undefined}
+      featured={page === 1 && !query}
     />
+  )
+}
+
+export default async function ArticlesPage({ searchParams }: Props) {
+  return (
+    <ArticleListing
+      label="Articles"
+      title="Notes from the studio"
+      lead="What we learn building and running production software, written down so you don't have to learn it the hard way."
+      crumbs={[{ name: "Articles", path: "/articles" }]}
+      topics={await getTopics()}
+    >
+      <Suspense fallback={<ArticleResultsSkeleton featured />}>
+        <Results searchParams={searchParams} />
+      </Suspense>
+    </ArticleListing>
   )
 }

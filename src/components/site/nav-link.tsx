@@ -1,23 +1,40 @@
 "use client"
 
+import { Suspense } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import { isActivePath } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
-export function NavLink({
-  href,
-  children,
-  className,
-  onNavigate,
-}: {
+type NavLinkProps = {
   href: string
   children: React.ReactNode
   className?: string
   onNavigate?: () => void
-}) {
-  const active = isActivePath(usePathname(), href)
+}
+
+export function NavLink(props: NavLinkProps) {
+  return (
+    <Suspense fallback={<PlainNavLink {...props} active={false} />}>
+      <ActiveNavLink {...props} />
+    </Suspense>
+  )
+}
+
+function ActiveNavLink(props: NavLinkProps) {
+  return (
+    <PlainNavLink {...props} active={isActivePath(usePathname(), props.href)} />
+  )
+}
+
+function PlainNavLink({
+  href,
+  children,
+  className,
+  onNavigate,
+  active,
+}: NavLinkProps & { active: boolean }) {
   return (
     <Link
       href={href}

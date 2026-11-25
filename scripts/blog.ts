@@ -136,7 +136,7 @@ const STATUS_FLAGS = { "--live": "publish", "--draft": "draft" } as const
 const statusFrom = (flag?: string) =>
   flag === "--live" || flag === "--draft" ? STATUS_FLAGS[flag] : undefined
 
-const refreshSite = async () => {
+const refreshSite = async (slugs: readonly string[] = []) => {
   const secret = process.env.CONTENT_REVALIDATE_SECRET?.trim()
   if (!secret) {
     say(
@@ -146,7 +146,11 @@ const refreshSite = async () => {
   }
   const response = await fetch(REVALIDATE_URL, {
     method: "POST",
-    headers: { authorization: `Bearer ${secret}` },
+    headers: {
+      authorization: `Bearer ${secret}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ slugs }),
   })
   say(
     response.ok
@@ -190,7 +194,8 @@ const tidy = async (apply: boolean) => {
 const publish = async (only: string | undefined, flag?: string) => {
   if (!only) throw new Error(usage)
   const client = wordpress()
-  for (const slug of await slugs(only)) {
+  const published = await slugs(only)
+  for (const slug of published) {
     const article = await load(slug)
     const result = await publishArticle({
       article,
@@ -202,7 +207,7 @@ const publish = async (only: string | undefined, flag?: string) => {
       `✓ ${slug}: ${result.created ? "created" : "updated"} post ${result.id}`
     )
   }
-  await refreshSite()
+  await refreshSite(published)
 }
 
 const main = async () => {

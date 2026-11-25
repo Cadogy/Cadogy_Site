@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 }
 
+export const instant = false
+
 type Props = { params: Promise<{ token: string }> }
 
 export default async function AccessRequestPage({ params }: Props) {

@@ -1,6 +1,11 @@
 import { render, screen, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
+vi.mock("next/cache", () => ({
+  cacheLife: () => undefined,
+  cacheTag: () => undefined,
+}))
+
 vi.mock("@/lib/wordpress-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/wordpress-api")>()),
   getPostBySlug: async () => ({

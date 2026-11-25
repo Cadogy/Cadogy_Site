@@ -1,9 +1,17 @@
 import { render, screen, within } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import type { WP_Post, WP_Term } from "@/types/wordpress"
 
-import { ArticleListing } from "./article-listing"
+import {
+  ArticleListing,
+  ArticleResults,
+  ArticleResultsSkeleton,
+} from "./article-listing"
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}))
 
 const term = (overrides: Partial<WP_Term> = {}): WP_Term => ({
   id: 3,
@@ -75,21 +83,29 @@ const posts = [
   }),
 ]
 
-const listing = (
-  overrides: Partial<Parameters<typeof ArticleListing>[0]> = {}
-) =>
+type ResultsProps = Parameters<typeof ArticleResults>[0]
+
+const listing = ({
+  activeTopic,
+  ...results
+}: Partial<ResultsProps> & { activeTopic?: string } = {}) =>
   render(
     <ArticleListing
       label="Articles"
       title="Notes from the studio"
-      posts={posts}
-      page={1}
-      totalPages={1}
-      basePath="/articles"
       topics={[term(), term({ id: 4, name: "Culture", slug: "culture" })]}
       crumbs={[{ name: "Articles", path: "/articles" }]}
-      {...overrides}
-    />
+      activeTopic={activeTopic}
+    >
+      <ArticleResults
+        posts={posts}
+        page={1}
+        totalPages={1}
+        basePath="/articles"
+        featured={!activeTopic}
+        {...results}
+      />
+    </ArticleListing>
   )
 
 describe("ArticleListing", () => {
@@ -120,7 +136,7 @@ describe("ArticleListing", () => {
   })
 
   it("shows every article as a card once you're past the first page", () => {
-    listing({ page: 2, totalPages: 2 })
+    listing({ page: 2, totalPages: 2, featured: false })
 
     expect(
       screen.queryByRole("region", { name: "Latest article" })
@@ -142,7 +158,7 @@ describe("ArticleListing", () => {
   })
 
   it("numbers the pages and links to the next one", () => {
-    listing({ page: 2, totalPages: 3, search: "stripe" })
+    listing({ page: 2, totalPages: 3, search: "stripe", featured: false })
 
     const pages = within(screen.getByRole("navigation", { name: "Pagination" }))
     expect(pages.getByRole("link", { name: "Page 2" })).toHaveAttribute(
@@ -157,5 +173,39 @@ describe("ArticleListing", () => {
       "href",
       "/articles?search=stripe&page=3"
     )
+  })
+
+  it("says what you searched for above the results", () => {
+    listing({ search: "stripe", featured: false })
+
+    expect(
+      screen.getByRole("heading", { name: "Results for “stripe”" })
+    ).toBeInTheDocument()
+  })
+
+  it("keeps the title, search and topics on screen while results load", () => {
+    render(
+      <ArticleListing
+        label="Articles"
+        title="Notes from the studio"
+        topics={[term()]}
+        crumbs={[{ name: "Articles", path: "/articles" }]}
+      >
+        <ArticleResultsSkeleton featured />
+      </ArticleListing>
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Notes from the studio" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("searchbox", { name: "Search articles" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("navigation", { name: "Topics" })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("status", { name: "Loading articles" })
+    ).toBeInTheDocument()
   })
 })

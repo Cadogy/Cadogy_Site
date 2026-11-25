@@ -1,8 +1,14 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { ArticleListing } from "@/features/articles/components/article-listing"
+import {
+  ArticleListing,
+  ArticleResults,
+  ArticleResultsSkeleton,
+} from "@/features/articles/components/article-listing"
 import { getTopics, parsePage } from "@/features/articles/topics"
 
+import type { WP_Term } from "@/types/wordpress"
 import { pageMetadata } from "@/lib/seo/page-metadata"
 import { decodeHtml, getPosts, getTags } from "@/lib/wordpress-api"
 
@@ -29,33 +35,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function TagPage({ params, searchParams }: Props) {
-  const [{ slug }, { page: rawPage }] = await Promise.all([
-    params,
-    searchParams,
-  ])
-  const tag = await findTag(slug)
-  if (!tag) notFound()
-
-  const page = parsePage(rawPage)
-  const [{ posts, totalPages }, topics] = await Promise.all([
-    getPosts({ page, perPage: 12, tagId: tag.id }),
-    getTopics(),
-  ])
-
+async function Results({
+  tag,
+  searchParams,
+}: {
+  tag: WP_Term
+  searchParams: Props["searchParams"]
+}) {
+  const page = parsePage((await searchParams).page)
+  const { posts, totalPages } = await getPosts({
+    page,
+    perPage: 12,
+    tagId: tag.id,
+  })
   return (
-    <ArticleListing
-      label="Tag"
-      title={`#${decodeHtml(tag.name)}`}
+    <ArticleResults
       posts={posts}
       page={page}
       totalPages={totalPages}
-      basePath={`/articles/tag/${slug}`}
+      basePath={`/articles/tag/${tag.slug}`}
+      featured={page === 1}
+    />
+  )
+}
+
+export async function generateStaticParams() {
+  return (await getTags())
+    .filter((term) => term.count > 0)
+    .map((term) => ({ slug: term.slug }))
+}
+
+export default async function TagPage({ params, searchParams }: Props) {
+  const tag = await findTag((await params).slug)
+  if (!tag) notFound()
+  const title = `#${decodeHtml(tag.name)}`
+  return (
+    <ArticleListing
+      label="Tag"
+      title={title}
       crumbs={[
         { name: "Articles", path: "/articles" },
-        { name: `#${decodeHtml(tag.name)}`, path: `/articles/tag/${slug}` },
+        { name: title, path: `/articles/tag/${tag.slug}` },
       ]}
-      topics={topics}
-    />
+      topics={await getTopics()}
+    >
+      <Suspense fallback={<ArticleResultsSkeleton featured />}>
+        <Results tag={tag} searchParams={searchParams} />
+      </Suspense>
+    </ArticleListing>
   )
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { connection } from "next/server"
 import { ContactForm } from "@/features/contact/components/contact-form"
@@ -24,9 +25,17 @@ const steps = [
   "You get a written proposal with scope, timeline and cost.",
 ] as const
 
-export default async function ContactPage() {
+async function InquiryForm() {
   await connection()
+  return (
+    <ContactForm
+      formToken={freshFormToken()}
+      turnstileSiteKey={env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+    />
+  )
+}
 
+export default function ContactPage() {
   return (
     <div>
       <div className="container-page grid gap-14 pt-20 pb-24 md:pt-28 lg:grid-cols-12 lg:gap-16 xl:pt-36">
@@ -64,10 +73,9 @@ export default async function ContactPage() {
           aria-label="Project inquiry form"
           className="lg:col-span-7 lg:pt-2"
         >
-          <ContactForm
-            formToken={freshFormToken()}
-            turnstileSiteKey={env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-          />
+          <Suspense>
+            <InquiryForm />
+          </Suspense>
         </section>
       </div>
     </div>

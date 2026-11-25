@@ -24,7 +24,6 @@ import { TextLink } from "@/components/ui/text-link"
 import { SignalGrid } from "@/components/media/signal-grid"
 import { JsonLd } from "@/components/seo/json-ld"
 
-export const revalidate = 3600
 
 export const metadata: Metadata = pageMetadata({
   title: `${siteConfig.name} · Senior software studio for web apps, payments and platforms`,

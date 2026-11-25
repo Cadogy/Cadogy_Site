@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import { cookies } from "next/headers"
 import { requireSession } from "@/features/auth/server/session"
@@ -11,11 +12,27 @@ import { PortalShell } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 
-export default async function PortalLayout({
+export default function PortalLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  return (
+    <Suspense fallback={<PortalPending />}>
+      <PortalFrame>{children}</PortalFrame>
+    </Suspense>
+  )
+}
+
+function PortalPending() {
+  return (
+    <div aria-busy="true" className="min-h-dvh">
+      <span className="sr-only">Loading your portal</span>
+    </div>
+  )
+}
+
+async function PortalFrame({ children }: { children: React.ReactNode }) {
   const user = await requireSession()
   const sidebar = (await cookies()).get(SIDEBAR_COOKIE)?.value
   return (

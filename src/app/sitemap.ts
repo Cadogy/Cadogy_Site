@@ -8,7 +8,6 @@ import {
   getCategories,
 } from "@/lib/wordpress-api"
 
-export const revalidate = 3600
 
 const STATIC_ROUTES = [
   { path: "/", priority: 1 },

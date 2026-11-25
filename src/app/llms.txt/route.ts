@@ -1,7 +1,6 @@
 import { buildLlmsTxt } from "@/lib/seo/llms"
 import { decodeHtml, extractExcerpt, getAllPosts } from "@/lib/wordpress-api"
 
-export const revalidate = 3600
 
 const loadArticles = async () => {
   try {
@@ -18,9 +17,6 @@ const loadArticles = async () => {
 
 export async function GET() {
   return new Response(buildLlmsTxt({ articles: await loadArticles() }), {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
-    },
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
   })
 }

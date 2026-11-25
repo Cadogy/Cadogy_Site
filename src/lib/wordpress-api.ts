@@ -1,9 +1,11 @@
 import "server-only"
 
+import { cacheLife, cacheTag } from "next/cache"
+import { contentTags } from "@/features/articles/cache-tags"
+
 import { env } from "@/env"
 import type { WP_Post, WP_Term } from "@/types/wordpress"
 
-const REVALIDATE_SECONDS = 3600
 const PAGE_SIZE_MAX = 100
 
 const PLACEHOLDER_IMAGE = "/images/placeholder/article-placeholder.svg"
@@ -48,15 +50,34 @@ export const formatDate = (isoDate: string) =>
     new Date(isoDate.endsWith("Z") ? isoDate : `${isoDate}Z`)
   )
 
-const fetchWordPress = async (path: string, params: Record<string, string>) => {
-  const url = `${env.NEXT_PUBLIC_WP_API_URL}/${path}?${new URLSearchParams(params)}`
-  const response = await fetch(url, {
-    next: { revalidate: REVALIDATE_SECONDS, tags: ["wordpress"] },
-  })
+const isPastLastPage = async (response: Response) =>
+  response.status === 400 &&
+  (await response
+    .clone()
+    .json()
+    .then((body: unknown) =>
+      Boolean(
+        body &&
+        typeof body === "object" &&
+        "code" in body &&
+        body.code === "rest_post_invalid_page_number"
+      )
+    )
+    .catch(() => false))
+
+const NO_POSTS = { posts: [], totalPages: 1, totalPosts: 0 }
+
+const requestWordPress = (path: string, params: Record<string, string>) =>
+  fetch(`${env.NEXT_PUBLIC_WP_API_URL}/${path}?${new URLSearchParams(params)}`)
+
+const ensureOk = (response: Response, path: string) => {
   if (!response.ok)
     throw new Error(`WordPress request failed (${response.status}): ${path}`)
   return response
 }
+
+const fetchWordPress = async (path: string, params: Record<string, string>) =>
+  ensureOk(await requestWordPress(path, params), path)
 
 export const getPosts = async ({
   page = 1,
@@ -71,7 +92,10 @@ export const getPosts = async ({
   categoryId?: string | number
   tagId?: string | number
 } = {}) => {
-  const response = await fetchWordPress("posts", {
+  "use cache"
+  cacheLife("content")
+  cacheTag(...contentTags.posts())
+  const response = await requestWordPress("posts", {
     _embed: "true",
     status: "publish",
     per_page: String(perPage),
@@ -80,7 +104,8 @@ export const getPosts = async ({
     ...(categoryId ? { categories: String(categoryId) } : {}),
     ...(tagId ? { tags: String(tagId) } : {}),
   })
-  const posts: WP_Post[] = await response.json()
+  if (await isPastLastPage(response)) return NO_POSTS
+  const posts: WP_Post[] = await ensureOk(response, "posts").json()
   return {
     posts,
     totalPages: Number(response.headers.get("X-WP-TotalPages") ?? 1),
@@ -98,6 +123,9 @@ export const getLatestPosts = async (count: number) => {
 }
 
 export const getPostBySlug = async (slug: string): Promise<WP_Post | null> => {
+  "use cache"
+  cacheLife("content")
+  cacheTag(...contentTags.post(slug))
   const response = await fetchWordPress("posts", {
     _embed: "true",
     status: "publish",
@@ -107,13 +135,20 @@ export const getPostBySlug = async (slug: string): Promise<WP_Post | null> => {
   return posts[0] ?? null
 }
 
-export const getCategories = async (): Promise<WP_Term[]> =>
-  (
-    await fetchWordPress("categories", { per_page: String(PAGE_SIZE_MAX) })
+const getTerms = async (
+  taxonomy: "categories" | "tags"
+): Promise<WP_Term[]> => {
+  "use cache"
+  cacheLife("content")
+  cacheTag(...contentTags.terms())
+  return (
+    await fetchWordPress(taxonomy, { per_page: String(PAGE_SIZE_MAX) })
   ).json()
+}
 
-export const getTags = async (): Promise<WP_Term[]> =>
-  (await fetchWordPress("tags", { per_page: String(PAGE_SIZE_MAX) })).json()
+export const getCategories = () => getTerms("categories")
+
+export const getTags = () => getTerms("tags")
 
 export const getAllPosts = async (): Promise<WP_Post[]> => {
   const first = await getPosts({ perPage: PAGE_SIZE_MAX })

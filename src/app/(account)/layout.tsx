@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
 
@@ -27,7 +28,7 @@ export default function AccountLayout({
           id="main"
           className="flex flex-1 items-start justify-center px-5 pt-10 pb-16 sm:items-center sm:py-12 md:px-8"
         >
-          {children}
+          <Suspense>{children}</Suspense>
         </main>
       </div>
       <div className="relative hidden border-l bg-card lg:block">

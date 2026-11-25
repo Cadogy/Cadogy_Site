@@ -2,11 +2,9 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 
-const pathname = vi.hoisted(() => ({ value: "/" }))
+import { Logo } from "./logo"
 
-vi.mock("next/navigation", () => ({ usePathname: () => pathname.value }))
-
-const { Logo } = await import("./logo")
+const visit = (path: string) => window.history.pushState({}, "", path)
 
 const clickLogo = async () => {
   const scrollTo = vi.fn()
@@ -21,7 +19,7 @@ const clickLogo = async () => {
 
 describe("Logo", () => {
   it("links home", () => {
-    pathname.value = "/work"
+    visit("/work")
     render(<Logo />)
 
     expect(screen.getByRole("link", { name: "Cadogy" })).toHaveAttribute(
@@ -31,7 +29,7 @@ describe("Logo", () => {
   })
 
   it("jumps straight to the top when you're already on the homepage", async () => {
-    pathname.value = "/"
+    visit("/")
 
     expect(await clickLogo()).toHaveBeenCalledWith({
       top: 0,
@@ -40,7 +38,7 @@ describe("Logo", () => {
   })
 
   it("leaves other pages alone so they don't flash before navigating", async () => {
-    pathname.value = "/work/playerbay"
+    visit("/work/playerbay")
 
     expect(await clickLogo()).not.toHaveBeenCalled()
   })

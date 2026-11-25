@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache"
 import Link from "next/link"
 import { caseStudies, services } from "@/features/marketing/content"
 import { FaGithub, FaInstagram, FaLinkedin } from "react-icons/fa6"
@@ -54,7 +55,13 @@ const socials = [
   },
 ] as const
 
-export function SiteFooter() {
+const copyrightYear = async () => {
+  "use cache"
+  cacheLife("days")
+  return new Date().getFullYear()
+}
+
+export async function SiteFooter() {
   return (
     <footer className="relative isolate overflow-hidden border-t">
       <DotField className="-z-10" />
@@ -96,7 +103,7 @@ export function SiteFooter() {
       <div className="container-page">
         <div className="flex flex-col-reverse items-start justify-between gap-4 pb-8 sm:flex-row sm:items-center">
           <p className="text-meta">
-            © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
+            © {await copyrightYear()} {siteConfig.name}. All rights reserved.
           </p>
           <ul className="-ml-3 flex items-center gap-1 sm:-mr-3 sm:ml-0">
             {socials.map(({ label, href, Icon }) => (

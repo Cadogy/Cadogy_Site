@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
 
 export function LogoMark() {
   return (
@@ -22,12 +21,12 @@ const LOGO_CLASS =
   "inline-flex min-h-11 items-center gap-2 rounded-control text-base font-semibold tracking-tight"
 
 export function Logo() {
-  const pathname = usePathname()
   return (
     <Link
       href="/"
       onClick={() => {
-        if (pathname === "/") window.scrollTo({ top: 0, behavior: "instant" })
+        if (window.location.pathname === "/")
+          window.scrollTo({ top: 0, behavior: "instant" })
       }}
       className={LOGO_CLASS}
     >

@@ -4,13 +4,12 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { PostAuthor } from "@/features/articles/components/post-author"
 import { ShareArticle } from "@/features/articles/components/share-article"
-import { faqFromArticleHtml } from "@/features/articles/faq"
 import {
   authorOf,
   countWords,
   readingMinutes,
 } from "@/features/articles/post-facts"
-import { sanitizeArticleHtml } from "@/features/articles/sanitize"
+import { getArticle } from "@/features/articles/server/article"
 import { ArticleCard } from "@/features/marketing/components/article-card"
 import { CtaBand } from "@/features/marketing/components/cta-band"
 import { ArrowLeft, ChevronRight } from "lucide-react"
@@ -33,8 +32,6 @@ import { JsonLd } from "@/components/seo/json-ld"
 import { OnThisPage } from "@/components/site/on-this-page"
 
 type Props = { params: Promise<{ slug: string }> }
-
-export const revalidate = 3600
 
 export async function generateStaticParams() {
   try {
@@ -60,8 +57,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ArticlePage({ params }: Props) {
-  const post = await getPostBySlug((await params).slug)
-  if (!post) notFound()
+  const article = await getArticle((await params).slug)
+  if (!article) notFound()
+  const { post, content, questions } = article
 
   const title = decodeHtml(post.title.rendered)
   const description = extractExcerpt(post.excerpt.rendered, 200)
@@ -73,8 +71,6 @@ export default async function ArticlePage({ params }: Props) {
   const categories = post._embedded?.["wp:term"]?.[0] ?? []
   const tags = post._embedded?.["wp:term"]?.[1] ?? []
   const image = featuredImageOf(post)
-  const content = sanitizeArticleHtml(post.content.rendered)
-  const questions = faqFromArticleHtml(content)
 
   return (
     <>
@@ -132,7 +128,7 @@ export default async function ArticlePage({ params }: Props) {
           </aside>
 
           <div className="min-w-0 lg:col-span-7">
-            <div className="relative isolate aspect-16/9 transform-gpu overflow-hidden rounded-media border bg-card">
+            <div className="relative isolate aspect-16/9 transform-gpu overflow-hidden rounded-media bg-card">
               <Image
                 src={image}
                 alt=""
@@ -157,7 +153,7 @@ export default async function ArticlePage({ params }: Props) {
                     <li key={tag.id}>
                       <Link
                         href={`/articles/tag/${tag.slug}`}
-                        className="inline-flex min-h-10 items-center rounded-control border px-3 text-sm text-muted-foreground hover:text-foreground"
+                        className="inline-flex min-h-10 items-center rounded-full bg-foreground/6 px-3.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
                       >
                         #{decodeHtml(tag.name)}
                       </Link>

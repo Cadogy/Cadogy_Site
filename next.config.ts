@@ -5,6 +5,11 @@ import { buildHeaderRules } from "./src/config/http-headers"
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  cacheComponents: true,
+  partialPrefetching: false,
+  cacheLife: {
+    content: { stale: 300, revalidate: 3600, expire: 86400 },
+  },
   images: {
     qualities: [75, 85],
     remotePatterns: [{ protocol: "https", hostname: "wp.cadogy.com" }],

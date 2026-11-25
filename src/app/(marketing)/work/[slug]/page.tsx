@@ -24,8 +24,6 @@ type Props = { params: Promise<{ slug: string }> }
 const findStudy = (slug: string) =>
   caseStudies.find((study) => study.slug === slug)
 
-export const dynamicParams = false
-
 export function generateStaticParams() {
   return caseStudies.map((study) => ({ slug: study.slug }))
 }

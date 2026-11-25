@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 }
 
+export const instant = false
+
 type Props = {
   params: Promise<{ token: string }>
   searchParams: Promise<{ payment?: string }>
