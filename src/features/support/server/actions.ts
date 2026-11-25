@@ -7,16 +7,14 @@ import {
   requireSession,
 } from "@/features/auth/server/session"
 
+import { toState, type ActionState } from "@/lib/action-state"
+import { isOneOf } from "@/lib/is-one-of"
+
 import {
   TICKET_STATUSES,
   type TicketStatus,
 } from "../application/support-service"
 import { support } from "./support"
-
-export type TicketActionState = {
-  readonly ok: boolean
-  readonly message: string
-} | null
 
 const refresh = (id?: string) => {
   revalidatePath("/dashboard/tickets")
@@ -28,9 +26,9 @@ const refresh = (id?: string) => {
 }
 
 export async function openTicketAction(
-  _previous: TicketActionState,
+  _previous: ActionState,
   formData: FormData
-): Promise<TicketActionState> {
+): Promise<ActionState> {
   const user = await requireSession("/dashboard/tickets/new")
   const result = await support.open(user, Object.fromEntries(formData))
   if (!result.ok) return { ok: false, message: result.error }
@@ -41,9 +39,9 @@ export async function openTicketAction(
 export async function replyToTicketAction(
   ticketId: string,
   as: "user" | "admin",
-  _previous: TicketActionState,
+  _previous: ActionState,
   formData: FormData
-): Promise<TicketActionState> {
+): Promise<ActionState> {
   const author =
     as === "admin"
       ? await requirePermission("support:write")
@@ -55,9 +53,7 @@ export async function replyToTicketAction(
     as
   )
   refresh(ticketId)
-  return result.ok
-    ? { ok: true, message: "Reply sent." }
-    : { ok: false, message: result.error }
+  return toState(result, "Reply sent.")
 }
 
 export async function setTicketStatusAction(
@@ -65,7 +61,7 @@ export async function setTicketStatusAction(
   status: TicketStatus
 ) {
   await requirePermission("support:write")
-  if (!TICKET_STATUSES.includes(status)) return
+  if (!isOneOf(TICKET_STATUSES)(status)) return
   await support.setStatus(ticketId, status)
   refresh(ticketId)
 }

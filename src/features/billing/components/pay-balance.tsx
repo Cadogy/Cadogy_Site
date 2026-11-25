@@ -4,12 +4,16 @@ import { useState, useTransition } from "react"
 import Link from "next/link"
 import { CreditCard, Loader2 } from "lucide-react"
 
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
 
-import { formatAmountsByCurrency, formatMoney } from "../domain/format"
+import {
+  formatAmountsByCurrency,
+  formatMoney,
+  sumByCurrency,
+} from "../domain/format"
 import type { Currency } from "../domain/schema"
-import type { ActionState } from "../server/actions"
-import { ActionMessage } from "./action-controls"
 
 export type PayableInvoice = {
   readonly id: string
@@ -22,12 +26,11 @@ export type PayableInvoice = {
 }
 
 const totalsOf = (invoices: readonly PayableInvoice[]) =>
-  invoices.reduce<Partial<Record<Currency, number>>>(
-    (totals, invoice) => ({
-      ...totals,
-      [invoice.currency]: (totals[invoice.currency] ?? 0) + invoice.amountDue,
-    }),
-    {}
+  sumByCurrency(
+    invoices.map((invoice) => ({
+      currency: invoice.currency,
+      amount: invoice.amountDue,
+    }))
   )
 
 export function PayBalance({

@@ -1,8 +1,5 @@
 import type { Metadata } from "next"
-import {
-  ActionButton,
-  ActionForm,
-} from "@/features/billing/components/action-controls"
+import { requirePermission } from "@/features/auth/server/session"
 import { CatalogItemFields } from "@/features/billing/components/service-fields"
 import { formatMoney, intervalLabel } from "@/features/billing/domain/format"
 import { billingEngine } from "@/features/billing/server/billing"
@@ -11,6 +8,7 @@ import {
   setCatalogItemArchivedAction,
 } from "@/features/billing/server/engine-actions"
 
+import { ActionButton, ActionForm } from "@/components/ui/action-controls"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
@@ -18,6 +16,7 @@ import { PortalPageHeader } from "@/components/portal/portal-shell"
 export const metadata: Metadata = { title: "Services" }
 
 export default async function CatalogPage() {
+  await requirePermission("billing:read")
   const items = await billingEngine.listCatalog({ includeArchived: true })
   const active = items.filter((item) => !item.archived)
   const archived = items.filter((item) => item.archived)

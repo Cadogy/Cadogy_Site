@@ -1,5 +1,8 @@
 import { z } from "zod"
 
+import { CONTACT_ROLES } from "./contacts"
+import type { InvoiceAdjustment } from "./invoice"
+
 export const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD"] as const
 export const INVOICE_STATUSES = [
   "draft",
@@ -19,7 +22,9 @@ export const PAYMENT_METHODS = [
 
 const email = z.string().trim().toLowerCase().pipe(z.email())
 
-const minorUnits = z.number().int().nonnegative().max(1_000_000_000_00)
+export const minorUnits = z.number().int().nonnegative().max(1_000_000_000_00)
+
+export const wholeQuantity = z.number().int().positive().max(10_000)
 
 const quantity = z
   .number()
@@ -73,7 +78,7 @@ export const clientInputSchema = z.object({
 export const contactInputSchema = z.object({
   email: email,
   name: z.string().trim().max(120).default(""),
-  role: z.enum(["billing", "viewer"]),
+  role: z.enum(CONTACT_ROLES),
 })
 
 export const invoiceDraftInputSchema = z.object({
@@ -114,10 +119,7 @@ export type InvoiceAmounts = {
   readonly discount: Discount | null
   readonly taxRateBps: number
   readonly payments: readonly Pick<Payment, "amount">[]
-  readonly adjustments?: readonly {
-    readonly kind: "refund" | "invoice_credit"
-    readonly amount: number
-  }[]
+  readonly adjustments?: readonly Pick<InvoiceAdjustment, "kind" | "amount">[]
 }
 
 export type InvoiceTotals = {

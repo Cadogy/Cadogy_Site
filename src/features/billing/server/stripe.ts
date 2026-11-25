@@ -7,7 +7,8 @@ import { env } from "@/env"
 import type { PaymentGateway } from "../application/engine-ports"
 import type { BillingClient, SavedCard } from "../application/ports"
 import { verifyWebhook } from "../application/webhook-verification"
-import type { Invoice } from "../domain/invoice"
+import { clientDisplayName } from "../domain/format"
+import { invoicePublicPath, type Invoice } from "../domain/invoice"
 import type { Currency } from "../domain/schema"
 import { calculateInvoiceTotals } from "../domain/totals"
 
@@ -15,44 +16,78 @@ const stripe = env.STRIPE_SECRET_KEY ? new Stripe(env.STRIPE_SECRET_KEY) : null
 
 export const isStripeConfigured = () => stripe !== null
 
-export const createInvoiceCheckout = async (invoice: Invoice) => {
-  if (!stripe) throw new Error("Stripe is not configured")
-  const { amountDue } = calculateInvoiceTotals(invoice)
-  const invoiceUrl = `${env.NEXT_PUBLIC_APP_URL}/invoice/${invoice.publicToken}`
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_email: invoice.clientSnapshot?.email,
-    client_reference_id: invoice.id,
-    metadata: { invoiceId: invoice.id, invoiceNumber: invoice.number ?? "" },
-    payment_intent_data: {
-      description: `Cadogy invoice ${invoice.number}`,
-      metadata: { invoiceId: invoice.id },
-    },
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: invoice.currency.toLowerCase(),
-          unit_amount: amountDue,
-          product_data: { name: `Invoice ${invoice.number}` },
-        },
-      },
-    ],
-    success_url: `${invoiceUrl}?payment=success`,
-    cancel_url: invoiceUrl,
-  })
-
-  if (!session.url) throw new Error("Stripe did not return a checkout URL")
-  return session.url
-}
-
 const requireStripe = () => {
   if (!stripe) throw new Error("Stripe is not configured")
   return stripe
 }
 
-export const createBatchCheckout = async ({
+const sessionUrl = (session: Stripe.Checkout.Session) => {
+  if (!session.url) throw new Error("Stripe did not return a checkout URL")
+  return session.url
+}
+
+const BILLING_RETURN_URL = `${env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
+
+const paymentCheckout = async ({
+  description,
+  productName,
+  amount,
+  currency,
+  email,
+  clientReferenceId,
+  sessionMetadata,
+  intentMetadata,
+  returnUrl,
+}: {
+  description: string
+  productName: string
+  amount: number
+  currency: Currency
+  email: string | undefined
+  clientReferenceId?: string
+  sessionMetadata: Record<string, string>
+  intentMetadata: Record<string, string>
+  returnUrl: string
+}) =>
+  sessionUrl(
+    await requireStripe().checkout.sessions.create({
+      mode: "payment",
+      customer_email: email,
+      client_reference_id: clientReferenceId,
+      metadata: sessionMetadata,
+      payment_intent_data: { description, metadata: intentMetadata },
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: currency.toLowerCase(),
+            unit_amount: amount,
+            product_data: { name: productName },
+          },
+        },
+      ],
+      success_url: `${returnUrl}?payment=success`,
+      cancel_url: returnUrl,
+    })
+  )
+
+export const createInvoiceCheckout = (invoice: Invoice) =>
+  paymentCheckout({
+    description: `Cadogy invoice ${invoice.number}`,
+    productName: `Invoice ${invoice.number}`,
+    amount: calculateInvoiceTotals(invoice).amountDue,
+    currency: invoice.currency,
+    email: invoice.clientSnapshot?.email,
+    clientReferenceId: invoice.id,
+    sessionMetadata: {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.number ?? "",
+    },
+    intentMetadata: { invoiceId: invoice.id },
+    returnUrl: `${env.NEXT_PUBLIC_APP_URL}${invoicePublicPath(invoice.publicToken)}`,
+  })
+
+export const createBatchCheckout = ({
   invoiceIds,
   amount,
   currency,
@@ -63,35 +98,20 @@ export const createBatchCheckout = async ({
   currency: Currency
   email: string
 }) => {
-  const client = requireStripe()
-  const returnUrl = `${env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
   const label =
     invoiceIds.length === 1
       ? "Cadogy invoice"
       : `${invoiceIds.length} Cadogy invoices`
-  const session = await client.checkout.sessions.create({
-    mode: "payment",
-    customer_email: email,
-    metadata: { kind: "batch", invoiceIds: invoiceIds.join(",") },
-    payment_intent_data: {
-      description: label,
-      metadata: { invoiceIds: invoiceIds.join(",") },
-    },
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: currency.toLowerCase(),
-          unit_amount: amount,
-          product_data: { name: label },
-        },
-      },
-    ],
-    success_url: `${returnUrl}?payment=success`,
-    cancel_url: returnUrl,
+  return paymentCheckout({
+    description: label,
+    productName: label,
+    amount,
+    currency,
+    email,
+    sessionMetadata: { kind: "batch", invoiceIds: invoiceIds.join(",") },
+    intentMetadata: { invoiceIds: invoiceIds.join(",") },
+    returnUrl: BILLING_RETURN_URL,
   })
-  if (!session.url) throw new Error("Stripe did not return a checkout URL")
-  return session.url
 }
 
 const customerFor = async (client: BillingClient) => {
@@ -99,25 +119,23 @@ const customerFor = async (client: BillingClient) => {
   if (existing) return existing
   const customer = await requireStripe().customers.create({
     email: client.email,
-    name: client.company || client.name,
+    name: clientDisplayName(client),
     metadata: { clientId: client.id },
   })
   return customer.id
 }
 
-export const createCardSetupCheckout = async (client: BillingClient) => {
-  const returnUrl = `${env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
-  const session = await requireStripe().checkout.sessions.create({
-    mode: "setup",
-    currency: client.currency.toLowerCase(),
-    customer: await customerFor(client),
-    metadata: { kind: "setup", clientId: client.id },
-    success_url: `${returnUrl}?card=saved`,
-    cancel_url: returnUrl,
-  })
-  if (!session.url) throw new Error("Stripe did not return a checkout URL")
-  return session.url
-}
+export const createCardSetupCheckout = async (client: BillingClient) =>
+  sessionUrl(
+    await requireStripe().checkout.sessions.create({
+      mode: "setup",
+      currency: client.currency.toLowerCase(),
+      customer: await customerFor(client),
+      metadata: { kind: "setup", clientId: client.id },
+      success_url: `${BILLING_RETURN_URL}?card=saved`,
+      cancel_url: BILLING_RETURN_URL,
+    })
+  )
 
 export const readSavedCard = async (
   setupIntentId: string

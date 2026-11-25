@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
 
 import { CinematicCarousel, type CinematicSlide } from "./cinematic-carousel"
 
@@ -154,5 +154,37 @@ describe("CinematicCarousel", () => {
     expect(
       screen.queryByRole("button", { name: /Show slide 2/ })
     ).not.toBeInTheDocument()
+  })
+
+  it("glides between slides, but jumps for visitors who prefer reduced motion", async () => {
+    const scrolls = vi.fn()
+    const original = HTMLElement.prototype.scrollTo
+    HTMLElement.prototype.scrollTo = scrolls
+    onTestFinished(() => {
+      HTMLElement.prototype.scrollTo = original
+      vi.unstubAllGlobals()
+    })
+    const user = userEvent.setup()
+
+    const { unmount } = render(
+      <CinematicCarousel label="Featured" slides={slides} />
+    )
+    await user.click(screen.getByRole("button", { name: "Next slide" }))
+    expect(scrolls).toHaveBeenLastCalledWith(
+      expect.objectContaining({ behavior: "smooth" })
+    )
+    unmount()
+
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("reduce"),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }))
+    render(<CinematicCarousel label="Featured" slides={slides} />)
+    await user.click(screen.getByRole("button", { name: "Next slide" }))
+    expect(scrolls).toHaveBeenLastCalledWith(
+      expect.objectContaining({ behavior: "auto" })
+    )
   })
 })

@@ -1,8 +1,8 @@
 import { useId } from "react"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { pillTabClass } from "@/components/ui/pill-tab"
 
 export function PortalSection({
   title,
@@ -100,24 +100,6 @@ export function StatList({
   )
 }
 
-export function SectionLink({
-  href,
-  children,
-}: {
-  href: string
-  children: React.ReactNode
-}) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-    >
-      {children}
-      <ArrowRight className="size-3.5" aria-hidden="true" />
-    </Link>
-  )
-}
-
 export function FilterTabs({
   label,
   items,
@@ -139,12 +121,7 @@ export function FilterTabs({
           key={item.href}
           href={item.href}
           aria-current={item.active ? "page" : undefined}
-          className={cn(
-            "inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm transition-colors",
-            item.active
-              ? "bg-foreground/8 text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          )}
+          className={pillTabClass(item.active)}
         >
           {item.label}
         </Link>

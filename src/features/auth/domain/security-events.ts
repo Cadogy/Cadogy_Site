@@ -123,15 +123,28 @@ const LABELS: Record<SecurityEventType, string> = {
 
 export const securityEventLabel = (type: SecurityEventType) => LABELS[type]
 
+export const SIGN_IN_EVENTS: readonly SecurityEventType[] = [
+  "sign_in",
+  "sign_in_backup_code",
+  "sign_in_passkey",
+  "sign_in_magic_link",
+]
+
+const FAILURE_EVENTS: readonly SecurityEventType[] = [
+  "sign_in_failed",
+  "two_factor_failed",
+  "account_locked",
+]
+
+export const isSignInEvent = (type: SecurityEventType) =>
+  SIGN_IN_EVENTS.includes(type)
+
+export const isFailureEvent = (type: SecurityEventType) =>
+  FAILURE_EVENTS.includes(type)
+
 const GROUPS: Record<string, readonly SecurityEventType[]> = {
-  sign_ins: [
-    "sign_in",
-    "sign_in_backup_code",
-    "sign_in_passkey",
-    "sign_in_magic_link",
-    "sign_out",
-  ],
-  failures: ["sign_in_failed", "two_factor_failed", "account_locked"],
+  sign_ins: [...SIGN_IN_EVENTS, "sign_out"],
+  failures: FAILURE_EVENTS,
   studio: [
     "role_changed",
     "owner_bootstrapped",

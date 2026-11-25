@@ -1,5 +1,5 @@
-import Image from "next/image"
-import { ArrowUpRight } from "lucide-react"
+import { TextLink } from "@/components/ui/text-link"
+import { ProductCapture } from "@/components/media/product-capture"
 
 import { displayHost, type CaseStudy } from "../content"
 import { ArrowLink } from "./arrow-link"
@@ -15,26 +15,12 @@ export function CaseStudyFeature({
   return (
     <article className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
       <div className="lg:order-2">
-        <div className="relative aspect-3/4 overflow-hidden rounded-media bg-card sm:hidden">
-          <Image
-            src={study.mobileImage}
-            alt={study.imageAlt}
-            fill
-            sizes="100vw"
-            quality={85}
-            className="object-cover object-left-top"
-          />
-        </div>
-        <div className="relative hidden aspect-video overflow-hidden rounded-media bg-card sm:block">
-          <Image
-            src={study.image}
-            alt={study.imageAlt}
-            fill
-            sizes="(min-width: 1024px) 60vw, 100vw"
-            quality={85}
-            className="object-cover object-top"
-          />
-        </div>
+        <ProductCapture
+          image={study.image}
+          mobileImage={study.mobileImage}
+          alt={study.imageAlt}
+          sizes="(min-width: 1024px) 60vw, 100vw"
+        />
       </div>
       <div>
         <p className="text-meta">{study.category} · Built and run by Cadogy</p>
@@ -55,15 +41,9 @@ export function CaseStudyFeature({
             Read the case study
           </ArrowLink>
           {study.website ? (
-            <a
-              href={study.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
+            <TextLink href={study.website} external>
               Visit {displayHost(study.website)}
-              <ArrowUpRight className="size-3.5" aria-hidden="true" />
-            </a>
+            </TextLink>
           ) : null}
         </div>
       </div>

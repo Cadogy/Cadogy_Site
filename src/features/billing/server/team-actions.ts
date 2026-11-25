@@ -6,14 +6,16 @@ import {
   requireSession,
 } from "@/features/auth/server/session"
 
+import { toState, type ActionState } from "@/lib/action-state"
 import { sendTeamInvite } from "@/lib/email"
 
 import type { TeamActor } from "../application/billing-service"
 import type { ContactRole } from "../domain/contacts"
+import { clientDisplayName } from "../domain/format"
 import { accessRequests } from "./access"
 import { billing } from "./billing"
 
-type ActionResult = { readonly ok: boolean; readonly message: string }
+type ActionResult = NonNullable<ActionState>
 
 type InviteInput = {
   readonly email: string
@@ -39,11 +41,32 @@ const invite = async (
   const result = await billing.addContact(clientId, input, actor)
   if (!result.ok) return { ok: false, message: result.error }
   await sendTeamInvite(input.email.trim().toLowerCase(), {
-    company: result.value.company || result.value.name,
+    company: clientDisplayName(result.value),
     role: input.role,
   })
   refresh(clientId)
   return { ok: true, message: `Invited ${input.email}. We've emailed them.` }
+}
+
+const changeRole = async (
+  clientId: string,
+  email: string,
+  role: ContactRole,
+  actor: TeamActor
+): Promise<ActionResult> => {
+  const result = await billing.setContactRole(clientId, email, role, actor)
+  refresh(clientId)
+  return toState(result, "Access updated.")
+}
+
+const remove = async (
+  clientId: string,
+  email: string,
+  actor: TeamActor
+): Promise<ActionResult> => {
+  const result = await billing.removeContact(clientId, email, actor)
+  refresh(clientId)
+  return toState(result, `Removed ${email}.`)
 }
 
 const contactActor = (user: {
@@ -66,12 +89,7 @@ export async function setTeamContactRoleAction(
   role: ContactRole
 ): Promise<ActionResult> {
   const actor = contactActor(await requireSession("/dashboard/team"))
-  if (!actor) return VIEWING_AS_CLIENT
-  const result = await billing.setContactRole(clientId, email, role, actor)
-  refresh(clientId)
-  return result.ok
-    ? { ok: true, message: "Access updated." }
-    : { ok: false, message: result.error }
+  return actor ? changeRole(clientId, email, role, actor) : VIEWING_AS_CLIENT
 }
 
 export async function removeTeamContactAction(
@@ -79,12 +97,7 @@ export async function removeTeamContactAction(
   email: string
 ): Promise<ActionResult> {
   const actor = contactActor(await requireSession("/dashboard/team"))
-  if (!actor) return VIEWING_AS_CLIENT
-  const result = await billing.removeContact(clientId, email, actor)
-  refresh(clientId)
-  return result.ok
-    ? { ok: true, message: `Removed ${email}.` }
-    : { ok: false, message: result.error }
+  return actor ? remove(clientId, email, actor) : VIEWING_AS_CLIENT
 }
 
 export async function inviteClientContactAction(
@@ -101,12 +114,7 @@ export async function setClientContactRoleAction(
   role: ContactRole
 ): Promise<ActionResult> {
   const admin = await requirePermission("billing:write")
-  const actor: TeamActor = { kind: "staff", id: admin.id }
-  const result = await billing.setContactRole(clientId, email, role, actor)
-  refresh(clientId)
-  return result.ok
-    ? { ok: true, message: "Access updated." }
-    : { ok: false, message: result.error }
+  return changeRole(clientId, email, role, { kind: "staff", id: admin.id })
 }
 
 export async function removeClientContactAction(
@@ -114,12 +122,7 @@ export async function removeClientContactAction(
   email: string
 ): Promise<ActionResult> {
   const admin = await requirePermission("billing:write")
-  const actor: TeamActor = { kind: "staff", id: admin.id }
-  const result = await billing.removeContact(clientId, email, actor)
-  refresh(clientId)
-  return result.ok
-    ? { ok: true, message: `Removed ${email}.` }
-    : { ok: false, message: result.error }
+  return remove(clientId, email, { kind: "staff", id: admin.id })
 }
 
 export async function resendInvoiceAction(
@@ -128,9 +131,7 @@ export async function resendInvoiceAction(
   const admin = await requirePermission("billing:write")
   const result = await billing.resendInvoice(invoiceId, admin.id)
   revalidatePath(`/admin/billing/invoices/${invoiceId}`)
-  return result.ok
-    ? { ok: true, message: "Invoice sent to the billing contacts." }
-    : { ok: false, message: result.error }
+  return toState(result, "Invoice sent to the billing contacts.")
 }
 
 export async function requestInvoiceAccessAction(

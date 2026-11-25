@@ -16,13 +16,11 @@
   --color-warning: hsl(var(--warning));
 
   --color-brand: hsl(var(--brand));
-  --color-brand-foreground: hsl(var(--brand-foreground));
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
   --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
 
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
@@ -31,10 +29,6 @@
   --color-muted-foreground: hsl(var(--muted-foreground));
 
   --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
 
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
@@ -42,26 +36,6 @@
   --radius-field: 0.75rem;
   --radius-panel: 1rem;
   --radius-media: 1.25rem;
-
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
 }
 
 @utility container-page {
@@ -166,6 +140,29 @@
   );
 }
 
+@utility paper-palette {
+  color-scheme: light;
+  --background: 48 33% 97%;
+  --foreground: 60 3% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 60 3% 8%;
+  --primary: 60 3% 8%;
+  --primary-foreground: 48 33% 97%;
+  --secondary: 48 14% 92%;
+  --muted: 48 14% 92%;
+  --muted-foreground: 40 4% 36%;
+  --accent: 48 14% 90%;
+  --brand: 221 75% 48%;
+  --success: 145 63% 28%;
+  --warning: 32 90% 36%;
+  --destructive: 0 70% 45%;
+  --border: 60 3% 8% / 0.1;
+  --input: 60 3% 8% / 0.18;
+  --ring: 221 75% 48%;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
 @layer base {
   :root {
     color-scheme: dark;
@@ -173,18 +170,13 @@
     --foreground: 50 12% 94%;
     --card: 240 5% 7.5%;
     --card-foreground: 50 12% 94%;
-    --popover: 240 5% 7.5%;
-    --popover-foreground: 50 12% 94%;
     --primary: 50 12% 94%;
     --primary-foreground: 240 5% 4%;
     --secondary: 240 4% 11%;
-    --secondary-foreground: 50 12% 94%;
     --muted: 240 4% 11%;
     --muted-foreground: 50 3% 60%;
     --accent: 240 4% 13%;
-    --accent-foreground: 50 12% 94%;
     --brand: 220 100% 72%;
-    --brand-foreground: 240 5% 4%;
     --success: 145 55% 58%;
     --warning: 38 92% 62%;
     --destructive: 0 75% 64%;
@@ -195,29 +187,7 @@
   }
 
   .paper {
-    color-scheme: light;
-    --background: 48 33% 97%;
-    --foreground: 60 3% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 60 3% 8%;
-    --primary: 60 3% 8%;
-    --primary-foreground: 48 33% 97%;
-    --secondary: 48 14% 92%;
-    --secondary-foreground: 60 3% 8%;
-    --muted: 48 14% 92%;
-    --muted-foreground: 40 4% 36%;
-    --accent: 48 14% 90%;
-    --accent-foreground: 60 3% 8%;
-    --brand: 221 75% 48%;
-    --brand-foreground: 0 0% 100%;
-    --success: 145 63% 28%;
-    --warning: 32 90% 36%;
-    --destructive: 0 70% 45%;
-    --border: 60 3% 8% / 0.1;
-    --input: 60 3% 8% / 0.18;
-    --ring: 221 75% 48%;
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    @apply paper-palette;
   }
 
   *,
@@ -267,29 +237,7 @@
 
 @media print {
   :root {
-    color-scheme: light;
-    --background: 48 33% 97%;
-    --foreground: 60 3% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 60 3% 8%;
-    --primary: 60 3% 8%;
-    --primary-foreground: 48 33% 97%;
-    --secondary: 48 14% 92%;
-    --secondary-foreground: 60 3% 8%;
-    --muted: 48 14% 92%;
-    --muted-foreground: 40 4% 36%;
-    --accent: 48 14% 90%;
-    --accent-foreground: 60 3% 8%;
-    --brand: 221 75% 48%;
-    --brand-foreground: 0 0% 100%;
-    --success: 145 63% 28%;
-    --warning: 32 90% 36%;
-    --destructive: 0 70% 45%;
-    --border: 60 3% 8% / 0.1;
-    --input: 60 3% 8% / 0.18;
-    --ring: 221 75% 48%;
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+    @apply paper-palette;
   }
   @page {
     margin: 16mm;

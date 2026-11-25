@@ -7,10 +7,12 @@ import {
   type Role,
 } from "@/features/auth/domain/permissions"
 
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
 import { NativeSelect } from "@/components/ui/native-select"
 
-import { changeRoleAction, type RoleActionState } from "./actions"
+import { changeRoleAction } from "./actions"
 
 export function RoleSelect({
   userId,
@@ -22,7 +24,7 @@ export function RoleSelect({
   role: Role
 }) {
   const [next, setNext] = useState<Role>(role)
-  const [state, setState] = useState<RoleActionState>(null)
+  const [state, setState] = useState<ActionState>(null)
   const [pending, startTransition] = useTransition()
 
   const save = () => {
@@ -63,16 +65,7 @@ export function RoleSelect({
           Save
         </Button>
       </div>
-      {state ? (
-        <p
-          role={state.ok ? "status" : "alert"}
-          className={
-            state.ok ? "text-sm text-success" : "text-sm text-destructive"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <ActionMessage state={state} />
     </div>
   )
 }

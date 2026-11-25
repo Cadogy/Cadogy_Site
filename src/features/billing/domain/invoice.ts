@@ -33,10 +33,23 @@ export type InvoiceEvent = {
   readonly detail?: string
 }
 
+export const CREDIT_NOTE_KINDS = [
+  "refund",
+  "invoice_credit",
+  "balance_credit",
+] as const
+
+export type CreditNoteKind = (typeof CREDIT_NOTE_KINDS)[number]
+
+export const ADJUSTMENT_KINDS = [
+  "refund",
+  "invoice_credit",
+] as const satisfies readonly CreditNoteKind[]
+
 export type InvoiceAdjustment = {
   readonly creditNoteId: string
   readonly number: string
-  readonly kind: "refund" | "invoice_credit"
+  readonly kind: (typeof ADJUSTMENT_KINDS)[number]
   readonly amount: number
 }
 
@@ -79,9 +92,4 @@ export type InvoiceBadge =
   | "settled_by_credit"
   | "disputed"
 
-export type Result<T> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly error: string }
-
-export const ok = <T>(value: T): Result<T> => ({ ok: true, value })
-export const fail = <T>(error: string): Result<T> => ({ ok: false, error })
+export const invoicePublicPath = (token: string) => `/invoice/${token}`

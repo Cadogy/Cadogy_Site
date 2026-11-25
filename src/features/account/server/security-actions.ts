@@ -2,11 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
+import { deletionEligibility } from "@/features/auth/server/account-deletion"
 import { auth } from "@/features/auth/server/auth"
 import { requireSession } from "@/features/auth/server/session"
 import { APIError } from "better-auth/api"
-
-import { deletionEligibility } from "./security"
 
 type ActionResult = { readonly ok: boolean; readonly message: string }
 

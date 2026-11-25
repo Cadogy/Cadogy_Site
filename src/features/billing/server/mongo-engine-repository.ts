@@ -2,7 +2,7 @@ import "server-only"
 
 import { isValidObjectId } from "mongoose"
 
-import { connectToDatabase } from "@/lib/mongodb"
+import { isDuplicateKeyError, withDatabase, withoutId } from "@/lib/mongodb"
 
 import {
   DEFAULT_SETTINGS,
@@ -26,22 +26,6 @@ import {
 } from "./models"
 
 const SETTINGS_ID = "default"
-const DUPLICATE_KEY = 11000
-
-const isDuplicateKeyError = (error: unknown) =>
-  typeof error === "object" &&
-  error !== null &&
-  "code" in error &&
-  error.code === DUPLICATE_KEY
-
-const withDatabase =
-  <Args extends unknown[], R>(fn: (...args: Args) => Promise<R>) =>
-  async (...args: Args): Promise<R> => {
-    await connectToDatabase()
-    return fn(...args)
-  }
-
-const withoutId = <T extends { id: string }>({ id: _id, ...rest }: T) => rest
 
 const toCatalogItem = (doc: CatalogItemDoc): CatalogItem => ({
   id: doc._id.toString(),

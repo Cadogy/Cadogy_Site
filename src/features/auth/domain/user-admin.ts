@@ -1,3 +1,5 @@
+import { fail, ok, type Result } from "@/lib/result"
+
 import { can, isStaff, type Role } from "./permissions"
 
 export type UserAction =
@@ -5,12 +7,8 @@ export type UserAction =
 
 type Member = { readonly id: string; readonly role: Role }
 
-type Outcome =
-  | { readonly ok: true; readonly value: null }
-  | { readonly ok: false; readonly error: string }
-
-const allowed: Outcome = { ok: true, value: null }
-const denied = (error: string): Outcome => ({ ok: false, error })
+const allowed = ok(null)
+const denied = (error: string) => fail<null>(error)
 
 const checkImpersonation = (actor: Member, target: Member) => {
   if (!can(actor.role, "security:impersonate"))
@@ -28,7 +26,7 @@ export const checkUserAction = ({
   readonly actor: Member
   readonly target: Member
   readonly action: UserAction
-}): Outcome => {
+}): Result<null> => {
   if (actor.id === target.id)
     return denied("Use your own account settings for this.")
   if (action === "impersonate") return checkImpersonation(actor, target)
@@ -47,7 +45,7 @@ export const canDeleteAccount = ({
 }: {
   readonly role: Role
   readonly openInvoices: number
-}): Outcome => {
+}): Result<null> => {
   if (role !== "client")
     return denied(
       "Staff accounts are removed by an owner. Ask them to change your role first."

@@ -7,20 +7,12 @@ import {
   requirePermission,
 } from "@/features/auth/server/session"
 
+import { toState, type ActionState } from "@/lib/action-state"
+
 import { parseMoneyInput } from "../domain/format"
-import type { Result } from "../domain/invoice"
 import { billing, credits } from "./billing"
+import { text } from "./form-fields"
 import { createInvoiceCheckout, isStripeConfigured } from "./stripe"
-
-export type ActionState = {
-  readonly ok: boolean
-  readonly message: string
-} | null
-
-const toState = <T>(result: Result<T>, success: string): ActionState =>
-  result.ok
-    ? { ok: true, message: success }
-    : { ok: false, message: result.error }
 
 const refreshBilling = (invoiceId?: string) => {
   revalidatePath("/admin")
@@ -29,9 +21,6 @@ const refreshBilling = (invoiceId?: string) => {
   revalidatePath("/dashboard/billing")
   if (invoiceId) revalidatePath(`/admin/billing/invoices/${invoiceId}`)
 }
-
-const text = (formData: FormData, key: string) =>
-  String(formData.get(key) ?? "").trim()
 
 const clientFromForm = (formData: FormData) => ({
   name: text(formData, "name"),

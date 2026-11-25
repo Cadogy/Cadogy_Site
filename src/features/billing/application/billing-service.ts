@@ -1,3 +1,5 @@
+import { fail, firstIssue, ok, type Result } from "@/lib/result"
+
 import {
   addContact as addContactTo,
   billingRecipients,
@@ -6,13 +8,12 @@ import {
   removeContact as removeContactFrom,
   type ContactRole,
 } from "../domain/contacts"
+import { DAY_MS, startOfUtcDay } from "../domain/dates"
+import { addByCurrency, type AmountsByCurrency } from "../domain/format"
 import {
-  fail,
-  ok,
   type ClientSnapshot,
   type Invoice,
   type InvoiceEvent,
-  type Result,
 } from "../domain/invoice"
 import {
   displayStatus,
@@ -28,10 +29,9 @@ import {
   contactInputSchema,
   invoiceDraftInputSchema,
   paymentInputSchema,
-  type Currency,
   type InvoiceDraftInput,
 } from "../domain/schema"
-import { calculateInvoiceTotals } from "../domain/totals"
+import { calculateInvoiceTotals, sum } from "../domain/totals"
 import type {
   BillingClient,
   BillingNotification,
@@ -41,7 +41,6 @@ import type {
   SavedCard,
 } from "./ports"
 
-const DAY_MS = 86_400_000
 const VIEW_DEBOUNCE_MS = 60 * 60 * 1000
 
 export type TeamActor =
@@ -55,8 +54,6 @@ type Dependencies = {
   readonly generateToken: () => string
 }
 
-type AmountsByCurrency = Partial<Record<Currency, number>>
-
 export type BillingSummary = {
   readonly outstanding: AmountsByCurrency
   readonly overdue: AmountsByCurrency
@@ -64,14 +61,6 @@ export type BillingSummary = {
   readonly openCount: number
   readonly overdueCount: number
 }
-
-const startOfUtcDay = (date: Date) =>
-  new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-  )
-
-const firstIssue = (error: { issues: readonly { message: string }[] }) =>
-  error.issues[0]?.message ?? "Invalid input"
 
 const snapshotOf = (client: BillingClient): ClientSnapshot => ({
   name: client.name,
@@ -82,15 +71,6 @@ const snapshotOf = (client: BillingClient): ClientSnapshot => ({
 })
 
 const recipientsOf = (client: BillingClient) => billingRecipients(client)
-
-const addAmount = (
-  totals: AmountsByCurrency,
-  currency: Currency,
-  amount: number
-) => ({
-  ...totals,
-  [currency]: (totals[currency] ?? 0) + amount,
-})
 
 const withEvent = (invoice: Invoice, event: InvoiceEvent): Invoice => ({
   ...invoice,
@@ -553,20 +533,26 @@ export const createBillingService = ({
         const { amountDue } = calculateInvoiceTotals(invoice)
         const isOpen = invoice.status === "open"
         const isOverdue = displayStatus(invoice, now) === "overdue"
-        const recentPayments = invoice.payments
-          .filter((payment) => payment.paidAt.getTime() >= since)
-          .reduce((total, payment) => total + payment.amount, 0)
+        const recentPayments = sum(
+          invoice.payments
+            .filter((payment) => payment.paidAt.getTime() >= since)
+            .map((payment) => payment.amount)
+        )
 
         return {
           outstanding: isOpen
-            ? addAmount(acc.outstanding, invoice.currency, amountDue)
+            ? addByCurrency(acc.outstanding, invoice.currency, amountDue)
             : acc.outstanding,
           overdue: isOverdue
-            ? addAmount(acc.overdue, invoice.currency, amountDue)
+            ? addByCurrency(acc.overdue, invoice.currency, amountDue)
             : acc.overdue,
           paidLast30Days:
             recentPayments > 0
-              ? addAmount(acc.paidLast30Days, invoice.currency, recentPayments)
+              ? addByCurrency(
+                  acc.paidLast30Days,
+                  invoice.currency,
+                  recentPayments
+                )
               : acc.paidLast30Days,
           openCount: acc.openCount + (isOpen ? 1 : 0),
           overdueCount: acc.overdueCount + (isOverdue ? 1 : 0),

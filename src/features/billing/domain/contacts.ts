@@ -1,4 +1,4 @@
-import { fail, ok, type Result } from "./invoice"
+import { fail, ok, type Result } from "@/lib/result"
 
 export const CONTACT_ROLES = ["billing", "viewer"] as const
 

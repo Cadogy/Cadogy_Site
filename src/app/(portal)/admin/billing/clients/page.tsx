@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { requirePermission } from "@/features/auth/server/session"
+import { clientDisplayName } from "@/features/billing/domain/format"
 import { billing } from "@/features/billing/server/billing"
 
 import { cn } from "@/lib/utils"
@@ -12,6 +14,7 @@ export const metadata: Metadata = { title: "Clients" }
 type Props = { searchParams: Promise<{ archived?: string }> }
 
 export default async function ClientsPage({ searchParams }: Props) {
+  await requirePermission("billing:read")
   const showArchived = (await searchParams).archived === "1"
   const clients = await billing.listClients({ includeArchived: showArchived })
 
@@ -59,7 +62,7 @@ export default async function ClientsPage({ searchParams }: Props) {
               >
                 <span>
                   <span className="block font-medium">
-                    {client.company || client.name}
+                    {clientDisplayName(client)}
                   </span>
                   <span className="block text-sm text-muted-foreground">
                     {client.company ? `${client.name} · ` : ""}

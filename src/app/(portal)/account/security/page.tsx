@@ -15,6 +15,7 @@ import {
 } from "@/features/account/server/security-actions"
 import { requireSession } from "@/features/auth/server/session"
 
+import { EmptyState } from "@/components/ui/empty-state"
 import { PortalSection } from "@/components/portal/portal-section"
 
 export const metadata: Metadata = { title: "Security" }
@@ -85,9 +86,7 @@ export default async function AccountSecurityPage({ searchParams }: Props) {
         description="Sign-ins and security changes on your account."
       >
         {activity.length === 0 ? (
-          <p className="border-t pt-4 text-muted-foreground">
-            No activity yet.
-          </p>
+          <EmptyState>No activity yet.</EmptyState>
         ) : (
           <ul className="rule-list">
             {activity.map((event) => (

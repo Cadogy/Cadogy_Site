@@ -18,7 +18,9 @@ describe("site URL", () => {
   })
 
   it("uses the configured app URL when one is set", async () => {
-    const { absoluteUrl } = await loadSiteWithAppUrl("https://preview.example.com")
+    const { absoluteUrl } = await loadSiteWithAppUrl(
+      "https://preview.example.com"
+    )
 
     expect(absoluteUrl("/work")).toBe("https://preview.example.com/work")
   })

@@ -3,12 +3,12 @@ import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
 
 import type { CatalogItem } from "../application/engine-ports"
-import { intervalLabel } from "../domain/format"
+import { intervalLabel, toMoneyInput } from "../domain/format"
 import { BILLING_INTERVALS, type BillingInterval } from "../domain/recurring"
-import { CURRENCIES } from "../domain/schema"
+import { CURRENCIES, type Currency } from "../domain/schema"
 
 const toPriceInput = (minorUnits: number | undefined) =>
-  minorUnits === undefined ? undefined : (minorUnits / 100).toFixed(2)
+  minorUnits === undefined ? undefined : toMoneyInput(minorUnits)
 
 export function PriceField({
   id,
@@ -63,6 +63,50 @@ export function IntervalField({
   )
 }
 
+export function QuantityField({
+  id,
+  defaultValue = 1,
+  hint,
+}: {
+  id: string
+  defaultValue?: number
+  hint?: string
+}) {
+  return (
+    <Field id={id} label="Quantity" hint={hint}>
+      {(control) => (
+        <Input
+          {...control}
+          name="quantity"
+          type="number"
+          min={1}
+          defaultValue={defaultValue}
+        />
+      )}
+    </Field>
+  )
+}
+
+export function CurrencyField({
+  id,
+  defaultValue = "USD",
+}: {
+  id: string
+  defaultValue?: Currency
+}) {
+  return (
+    <Field id={id} label="Currency">
+      {(control) => (
+        <NativeSelect {...control} name="currency" defaultValue={defaultValue}>
+          {CURRENCIES.map((currency) => (
+            <option key={currency}>{currency}</option>
+          ))}
+        </NativeSelect>
+      )}
+    </Field>
+  )
+}
+
 export function CatalogItemFields({ item }: { item?: CatalogItem }) {
   const prefix = item ? `catalog-${item.id}` : "catalog-new"
   return (
@@ -87,19 +131,10 @@ export function CatalogItemFields({ item }: { item?: CatalogItem }) {
           id={`${prefix}-interval`}
           defaultValue={item?.interval}
         />
-        <Field id={`${prefix}-currency`} label="Currency">
-          {(control) => (
-            <NativeSelect
-              {...control}
-              name="currency"
-              defaultValue={item?.currency ?? "USD"}
-            >
-              {CURRENCIES.map((currency) => (
-                <option key={currency}>{currency}</option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
+        <CurrencyField
+          id={`${prefix}-currency`}
+          defaultValue={item?.currency}
+        />
       </div>
     </div>
   )

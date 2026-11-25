@@ -1,12 +1,16 @@
 import { z } from "zod"
 
+import { fail, firstIssue, ok, type Result } from "@/lib/result"
+
 import {
   allocatePayment,
   consolidateCharges,
   dueReminders,
   reminderKey,
 } from "../domain/collections"
-import { fail, ok, type Invoice, type Result } from "../domain/invoice"
+import { DAY_MS, startOfUtcDay } from "../domain/dates"
+import { addByCurrency, type AmountsByCurrency } from "../domain/format"
+import { type Invoice } from "../domain/invoice"
 import {
   ADD_ON_STATUSES,
   addInterval,
@@ -14,8 +18,13 @@ import {
   dueCharges,
   type AddOnStatus,
 } from "../domain/recurring"
-import { CURRENCIES, type Currency } from "../domain/schema"
-import { calculateInvoiceTotals } from "../domain/totals"
+import {
+  CURRENCIES,
+  minorUnits,
+  wholeQuantity,
+  type Currency,
+} from "../domain/schema"
+import { calculateInvoiceTotals, sum } from "../domain/totals"
 import type { createBillingService } from "./billing-service"
 import type {
   BillingSettings,
@@ -36,10 +45,8 @@ type Dependencies = {
 }
 
 const SYSTEM = "system"
-const DAY_MS = 86_400_000
 const MONTHS_PER_INTERVAL = { month: 1, quarter: 3, year: 12 } as const
 
-const minorUnits = z.number().int().nonnegative().max(1_000_000_000_00)
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a YYYY-MM-DD date")
 
 const catalogItemSchema = z.object({
@@ -55,14 +62,14 @@ const addOnSchema = z.object({
   name: z.string().trim().min(1).max(200).optional(),
   unitAmount: minorUnits.positive().optional(),
   interval: z.enum(BILLING_INTERVALS).optional(),
-  quantity: z.number().int().positive().max(10_000).default(1),
+  quantity: wholeQuantity.default(1),
   startDate: isoDate.optional(),
 })
 
 const chargeSchema = z.object({
   description: z.string().trim().min(1).max(500),
   unitAmount: minorUnits.positive(),
-  quantity: z.number().int().positive().max(10_000).default(1),
+  quantity: wholeQuantity.default(1),
 })
 
 const settingsSchema = z.object({
@@ -71,14 +78,6 @@ const settingsSchema = z.object({
   reminderOffsets: z.array(z.number().int().min(-60).max(120)).max(8),
   autoBillEnabled: z.boolean(),
 })
-
-const firstIssue = (error: { issues: readonly { message: string }[] }) =>
-  error.issues[0]?.message ?? "Invalid input"
-
-const startOfUtcDay = (date: Date) =>
-  new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
-  )
 
 const parseDay = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
 
@@ -203,7 +202,7 @@ export const createBillingEngine = ({
     const parsed = addOnSchema
       .pick({ name: true, unitAmount: true })
       .extend({
-        quantity: z.number().int().positive().max(10_000).optional(),
+        quantity: wholeQuantity.optional(),
       })
       .safeParse(input)
     if (!parsed.success) return fail(firstIssue(parsed.error))
@@ -355,7 +354,7 @@ export const createBillingEngine = ({
         return inserted.filter((charge) => charge !== null).length
       })
     )
-    return created.reduce((total, count) => total + count, 0)
+    return sum(created)
   }
 
   const collectWithSavedCard = async (invoice: Invoice) => {
@@ -465,10 +464,7 @@ export const createBillingEngine = ({
     const [currency] = [...currencies]
     if (!currency || currencies.size > 1)
       return fail("Pay invoices in different currencies separately")
-    const amount = selected.reduce(
-      (total, invoice) => total + amountDue(invoice),
-      0
-    )
+    const amount = sum(selected.map(amountDue))
     if (amount === 0) return fail("Nothing is due on these invoices")
     return ok({
       invoiceIds: selected.map((invoice) => invoice.id),
@@ -522,17 +518,14 @@ export const createBillingEngine = ({
 
   const monthlyRecurringRevenue = async () => {
     const addOns = await repository.addOns.list({})
-    return addOns.reduce<Partial<Record<Currency, number>>>((totals, addOn) => {
+    return addOns.reduce<AmountsByCurrency>((totals, addOn) => {
       if (addOn.status !== "active" || addOn.interval === "one_time")
         return totals
       const monthly = Math.round(
         (addOn.unitAmount * addOn.quantity) /
           MONTHS_PER_INTERVAL[addOn.interval]
       )
-      return {
-        ...totals,
-        [addOn.currency]: (totals[addOn.currency] ?? 0) + monthly,
-      }
+      return addByCurrency(totals, addOn.currency, monthly)
     }, {})
   }
 

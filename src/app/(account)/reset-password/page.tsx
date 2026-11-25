@@ -16,8 +16,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
       ) : (
         <div className="grid gap-4">
           <FormAlert>
-            This reset link is invalid or has expired. Please request a new
-            one.
+            This reset link is invalid or has expired. Please request a new one.
           </FormAlert>
           <Link
             href="/forgot-password"

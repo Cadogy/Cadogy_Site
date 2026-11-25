@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
-const { default: CaseStudyPage } = await import("./page")
+const { default: CaseStudyPage, generateMetadata } = await import("./page")
 
 const renderPlayerBay = async () =>
   render(
@@ -138,5 +138,21 @@ describe("case study videos", () => {
     expect(
       screen.queryByRole("region", { name: "Watch the demo" })
     ).not.toBeInTheDocument()
+  })
+})
+
+describe("case study sharing metadata", () => {
+  it("keeps the site-wide Open Graph details alongside the study's own", async () => {
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ slug: "playerbay" }),
+    })
+
+    expect(metadata.openGraph).toMatchObject({
+      siteName: "Cadogy",
+      locale: "en_US",
+      url: "/work/playerbay",
+      title: "PlayerBay case study",
+      images: [{ url: "/images/studio/playerbay-case-study.webp" }],
+    })
   })
 })

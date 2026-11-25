@@ -1,11 +1,10 @@
 import type { Metadata } from "next"
-import {
-  TICKET_STATUSES,
-  type TicketStatus,
-} from "@/features/support/application/support-service"
+import { requirePermission } from "@/features/auth/server/session"
+import { TICKET_STATUSES } from "@/features/support/application/support-service"
 import { TicketList } from "@/features/support/components/ticket-list"
 import { support } from "@/features/support/server/support"
 
+import { isOneOf } from "@/lib/is-one-of"
 import { FilterTabs } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
@@ -13,10 +12,10 @@ export const metadata: Metadata = { title: "Tickets" }
 
 type Props = { searchParams: Promise<{ status?: string }> }
 
-const isStatus = (value: string | undefined): value is TicketStatus =>
-  TICKET_STATUSES.some((status) => status === value)
+const isStatus = isOneOf(TICKET_STATUSES)
 
 export default async function AdminTicketsPage({ searchParams }: Props) {
+  await requirePermission("support:read", "/admin/tickets")
   const { status } = await searchParams
   const filter = isStatus(status) ? status : undefined
   const tickets = await support.listAll(filter)

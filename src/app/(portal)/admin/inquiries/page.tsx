@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { requirePermission } from "@/features/auth/server/session"
 import { formatDate } from "@/features/billing/domain/format"
 import { InquiryStatusSelect } from "@/features/contact/components/inquiry-status-select"
 import {
@@ -7,11 +8,11 @@ import {
   labelFor,
   PROJECT_TYPES,
   TIMELINES,
-  type InquiryStatus,
 } from "@/features/contact/domain/schema"
 import { listInquiries } from "@/features/contact/server/admin"
 import { Mail } from "lucide-react"
 
+import { isOneOf } from "@/lib/is-one-of"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { FilterTabs } from "@/components/portal/portal-section"
@@ -21,10 +22,10 @@ export const metadata: Metadata = { title: "Inquiries" }
 
 type Props = { searchParams: Promise<{ status?: string }> }
 
-const isStatus = (value: string | undefined): value is InquiryStatus =>
-  INQUIRY_STATUSES.some((status) => status === value)
+const isStatus = isOneOf(INQUIRY_STATUSES)
 
 export default async function InquiriesPage({ searchParams }: Props) {
+  await requirePermission("inquiries:read", "/admin/inquiries")
   const { status } = await searchParams
   const filter = isStatus(status) ? status : undefined
   const inquiries = await listInquiries(filter)

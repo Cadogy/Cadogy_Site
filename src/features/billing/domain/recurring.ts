@@ -1,3 +1,5 @@
+import { DAY_MS } from "./dates"
+import { formatDate } from "./format"
 import type { Currency } from "./schema"
 
 export const BILLING_INTERVALS = [
@@ -40,7 +42,6 @@ export type NewCharge = {
   readonly periodEnd: Date | null
 }
 
-const DAY_MS = 86_400_000
 const MONTHS: Record<Exclude<BillingInterval, "one_time">, number> = {
   month: 1,
   quarter: 3,
@@ -69,12 +70,6 @@ const shortDate = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   timeZone: "UTC",
 })
-const longDate = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-})
 
 export const chargeDescription = ({
   name,
@@ -91,8 +86,8 @@ export const chargeDescription = ({
   if (!periodStart || !periodEnd) return label
   const sameYear = periodStart.getUTCFullYear() === periodEnd.getUTCFullYear()
   const range = sameYear
-    ? `${shortDate.format(periodStart)} – ${longDate.format(periodEnd)}`
-    : `${longDate.format(periodStart)} – ${longDate.format(periodEnd)}`
+    ? `${shortDate.format(periodStart)} – ${formatDate(periodEnd)}`
+    : `${formatDate(periodStart)} – ${formatDate(periodEnd)}`
   return `${label} (${range})`
 }
 

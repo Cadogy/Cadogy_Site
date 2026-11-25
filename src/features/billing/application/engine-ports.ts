@@ -17,7 +17,9 @@ export type StoredAddOn = AddOn & {
   readonly canceledAt: Date | null
 }
 
-type ChargeStatus = "pending" | "invoiced" | "void"
+export const CHARGE_STATUSES = ["pending", "invoiced", "void"] as const
+
+type ChargeStatus = (typeof CHARGE_STATUSES)[number]
 
 export type Charge = {
   readonly id: string

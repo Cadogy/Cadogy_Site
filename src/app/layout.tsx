@@ -8,6 +8,7 @@ import { GeistSans } from "geist/font/sans"
 import { env } from "@/env"
 import { siteConfig } from "@/config/site"
 import { themeColors } from "@/config/theme-colors"
+import { openGraphFor } from "@/lib/seo/open-graph"
 import { cn } from "@/lib/utils"
 
 const serif = Instrument_Serif({
@@ -35,14 +36,11 @@ export const metadata: Metadata = {
   authors: siteConfig.founders.map((founder) => ({ name: founder.name })),
   creator: siteConfig.name,
   publisher: siteConfig.name,
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    siteName: siteConfig.name,
-    url: "/",
+  openGraph: openGraphFor({
+    path: "/",
     title: defaultTitle,
     description: siteConfig.description,
-  },
+  }),
   twitter: {
     card: "summary_large_image",
     title: defaultTitle,

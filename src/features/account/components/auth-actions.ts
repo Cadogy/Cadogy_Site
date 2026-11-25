@@ -1,6 +1,6 @@
 import { authClient, humanCheckHeaders } from "@/features/auth/client"
 
-import { authErrorMessage } from "./auth-errors"
+import { authErrorMessage, type ClientResult } from "./auth-errors"
 
 type AccountResult =
   | { readonly ok: true }
@@ -10,10 +10,6 @@ export type AccountAction = (
   previous: AccountResult | null,
   formData: FormData
 ) => Promise<AccountResult>
-
-type ClientResult = {
-  readonly error: { code?: string; message?: string; status: number } | null
-}
 
 const OK: AccountResult = { ok: true }
 

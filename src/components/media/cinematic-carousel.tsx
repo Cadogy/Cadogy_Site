@@ -11,7 +11,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react"
 
+import { useReducedMotion } from "@/lib/hooks/use-reduced-motion"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 export type CinematicSlide = {
   readonly id: string
@@ -30,9 +32,6 @@ const IMAGE_MOTION =
 
 const clamp = (value: number, max: number) => Math.min(Math.max(value, 0), max)
 
-const controlClass =
-  "inline-flex size-11 items-center justify-center rounded-full border border-input text-foreground transition-colors hover:bg-foreground/8 disabled:pointer-events-none disabled:opacity-30"
-
 export function CinematicCarousel({
   label,
   slides,
@@ -42,6 +41,7 @@ export function CinematicCarousel({
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const [active, setActive] = useState(0)
+  const reducedMotion = useReducedMotion()
   const last = slides.length - 1
 
   const goTo = useCallback(
@@ -60,11 +60,11 @@ export function CinematicCarousel({
             slide.offsetLeft -
             track.offsetLeft -
             (track.clientWidth - slide.clientWidth) / 2,
-          behavior: "smooth",
+          behavior: reducedMotion ? "auto" : "smooth",
         })
       }
     },
-    [last]
+    [last, reducedMotion]
   )
 
   useEffect(() => {
@@ -215,24 +215,28 @@ export function CinematicCarousel({
           ))}
         </div>
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             aria-label="Previous slide"
-            className={controlClass}
+            className="disabled:opacity-30"
             disabled={active === 0}
             onClick={() => goTo(active - 1)}
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             aria-label="Next slide"
-            className={controlClass}
+            className="disabled:opacity-30"
             disabled={active === last}
             onClick={() => goTo(active + 1)}
           >
             <ArrowRight className="size-4" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       </div>
     </section>

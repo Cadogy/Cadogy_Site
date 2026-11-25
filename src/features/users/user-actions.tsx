@@ -3,14 +3,12 @@
 import { useState, useTransition, type FormEvent } from "react"
 import type { UserAction } from "@/features/auth/domain/user-admin"
 
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-import {
-  impersonateUserAction,
-  manageUserAction,
-  type RoleActionState,
-} from "./actions"
+import { impersonateUserAction, manageUserAction } from "./actions"
 
 const CONFIRMATIONS: Partial<Record<UserAction, (email: string) => string>> = {
   revoke_sessions: (email) => `Sign ${email} out on every device?`,
@@ -30,7 +28,7 @@ export function UserActions({
   email: string
   actions: readonly UserAction[]
 }) {
-  const [state, setState] = useState<RoleActionState>(null)
+  const [state, setState] = useState<ActionState>(null)
   const [banning, setBanning] = useState(false)
   const [pending, start] = useTransition()
 
@@ -130,16 +128,7 @@ export function UserActions({
           </Button>
         </form>
       ) : null}
-      {state ? (
-        <p
-          role={state.ok ? "status" : "alert"}
-          className={
-            state.ok ? "text-sm text-success" : "text-sm text-destructive"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+      <ActionMessage state={state} />
     </div>
   )
 }

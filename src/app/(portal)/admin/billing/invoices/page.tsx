@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { requirePermission } from "@/features/auth/server/session"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
 import { formatAmountsByCurrency } from "@/features/billing/domain/format"
 import { displayStatus } from "@/features/billing/domain/lifecycle"
@@ -23,6 +24,7 @@ const FILTERS = [
 type Props = { searchParams: Promise<{ status?: string }> }
 
 export default async function AdminInvoicesPage({ searchParams }: Props) {
+  await requirePermission("billing:read")
   const { status = "all" } = await searchParams
   const now = new Date()
   const [invoices, summary] = await Promise.all([

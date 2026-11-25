@@ -18,8 +18,8 @@ export default async function VerifyEmailPage({ searchParams }: Props) {
       >
         <div className="grid gap-4">
           <FormAlert>
-            Sign in with your email and password and we&apos;ll send you a
-            fresh link.
+            Sign in with your email and password and we&apos;ll send you a fresh
+            link.
           </FormAlert>
           <Button asChild size="lg">
             <Link href="/login">Sign in</Link>

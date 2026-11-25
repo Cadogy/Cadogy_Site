@@ -1,13 +1,21 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { requirePermission } from "@/features/auth/server/session"
 import { CreditNoteForm } from "@/features/billing/components/credit-note-form"
 import { draftFromInvoice } from "@/features/billing/components/editor-model"
 import { InvoiceActions } from "@/features/billing/components/invoice-actions"
 import { InvoiceDocument } from "@/features/billing/components/invoice-document"
 import { InvoiceEditor } from "@/features/billing/components/invoice-editor"
 import { refundableAmount } from "@/features/billing/domain/credits"
-import { formatDate, formatMoney } from "@/features/billing/domain/format"
+import {
+  clientDisplayName,
+  formatDate,
+  formatMoney,
+  INVOICE_EVENT_LABELS,
+  toMoneyInput,
+} from "@/features/billing/domain/format"
+import { invoicePublicPath } from "@/features/billing/domain/invoice"
 import { invoiceBadge } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import { billing, credits } from "@/features/billing/server/billing"
@@ -21,27 +29,10 @@ export const metadata: Metadata = { title: "Invoice" }
 
 type Props = { params: Promise<{ id: string }> }
 
-const EVENT_LABELS: Record<string, string> = {
-  created: "Draft created",
-  updated: "Draft updated",
-  issued: "Issued",
-  sent: "Emailed to client",
-  viewed: "Viewed by client",
-  reminder_sent: "Reminder sent",
-  payment_recorded: "Payment recorded",
-  paid: "Paid in full",
-  voided: "Voided",
-  marked_uncollectible: "Marked uncollectible",
-  credited: "Credit note issued",
-  refunded: "Refunded",
-  disputed: "Payment disputed",
-  dispute_closed: "Dispute closed",
-}
-
-const asInput = (amount: number) =>
-  amount > 0 ? (amount / 100).toFixed(2) : null
+const asInput = (amount: number) => (amount > 0 ? toMoneyInput(amount) : null)
 
 export default async function AdminInvoicePage({ params }: Props) {
+  await requirePermission("billing:read")
   const { id } = await params
   const invoice = await billing.getInvoice(id)
   if (!invoice) notFound()
@@ -72,7 +63,7 @@ export default async function AdminInvoicePage({ params }: Props) {
   const snapshot = invoice.clientSnapshot
   if (!snapshot) notFound()
   const owed = calculateInvoiceTotals(invoice).amountDue
-  const amountDue = (owed / 100).toFixed(2)
+  const amountDue = toMoneyInput(owed)
   const refundable = refundableAmount(invoice)
   const issued = invoice.status !== "void"
   const balance =
@@ -84,7 +75,7 @@ export default async function AdminInvoicePage({ params }: Props) {
     <>
       <PortalPageHeader
         title={`Invoice ${invoice.number}`}
-        description={client ? `${client.company || client.name}` : undefined}
+        description={client ? clientDisplayName(client) : undefined}
       />
       <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_320px]">
         <InvoiceDocument
@@ -97,7 +88,7 @@ export default async function AdminInvoicePage({ params }: Props) {
           <InvoiceActions
             invoiceId={invoice.id}
             status={invoice.status}
-            publicUrl={absoluteUrl(`/invoice/${invoice.publicToken}`)}
+            publicUrl={absoluteUrl(invoicePublicPath(invoice.publicToken))}
             amountDue={amountDue}
             creditBalance={
               balance > 0 ? formatMoney(balance, invoice.currency) : null
@@ -119,7 +110,7 @@ export default async function AdminInvoicePage({ params }: Props) {
                   key={`${event.type}-${event.at.toISOString()}-${index}`}
                   className="flex justify-between gap-3"
                 >
-                  <span>{EVENT_LABELS[event.type] ?? event.type}</span>
+                  <span>{INVOICE_EVENT_LABELS[event.type]}</span>
                   <time
                     dateTime={event.at.toISOString()}
                     className="shrink-0 text-muted-foreground"

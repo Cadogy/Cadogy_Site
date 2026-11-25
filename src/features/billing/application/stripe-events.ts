@@ -35,7 +35,7 @@ const idOf = (value: string | { readonly id: string } | null | undefined) =>
 const readSetup = (session: CheckoutSessionLike): CheckoutOutcome => {
   const clientId = session.metadata?.clientId
   const intent = session.setup_intent
-  const setupIntentId = typeof intent === "string" ? intent : intent?.id
+  const setupIntentId = idOf(intent)
   if (session.metadata?.kind !== "setup" || !clientId || !setupIntentId)
     return IGNORED
   return { kind: "setup", clientId, setupIntentId }

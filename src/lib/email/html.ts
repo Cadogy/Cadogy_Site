@@ -1,3 +1,5 @@
+import { siteConfig } from "@/config/site"
+
 const HTML_ESCAPES: Record<string, string> = {
   "&": "&amp;",
   "<": "&lt;",
@@ -34,7 +36,7 @@ export const emailLayout = ({
         <div style="padding:32px;font-size:15px;line-height:24px;">${body}</div>
         <div style="padding:20px 32px;border-top:1px solid #e4e4e7;font-size:12px;line-height:18px;color:#71717a;">
           Cadogy · <a href="${baseUrl}" style="color:#71717a;">cadogy.com</a> ·
-          <a href="mailto:hello@cadogy.com" style="color:#71717a;">hello@cadogy.com</a>
+          <a href="mailto:${siteConfig.email}" style="color:#71717a;">${siteConfig.email}</a>
         </div>
       </div>
     </div>

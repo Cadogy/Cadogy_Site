@@ -1,5 +1,7 @@
+import { fail, ok, type Result } from "@/lib/result"
+
 import { billingRecipients } from "../domain/contacts"
-import { fail, ok, type Result } from "../domain/invoice"
+import { clientDisplayName } from "../domain/format"
 import type { createBillingService } from "./billing-service"
 
 const VALID_FOR_MS = 7 * 24 * 60 * 60 * 1000
@@ -101,12 +103,19 @@ export const createAccessRequests = ({
     const url = `${baseUrl}/invoice/access/${token}`
     await notify.requested(billingRecipients(client), {
       requester: input.name.trim() ? `${input.name.trim()} (${email})` : email,
-      company: client.company || client.name,
+      company: clientDisplayName(client),
       invoiceNumber: invoice.number ?? "",
       approveUrl: url,
       declineUrl: `${url}?decision=decline`,
     })
     return ok("requested")
+  }
+
+  const findLive = async (token: string, now: Date) => {
+    const found = await repository.findByTokenHash(hash(token))
+    return found && found.status === "pending" && found.expiresAt > now
+      ? found
+      : null
   }
 
   const decide = async (
@@ -116,9 +125,8 @@ export const createAccessRequests = ({
     Result<{ decision: "approve" | "decline"; company: string; email: string }>
   > => {
     const now = clock()
-    const pending = await repository.findByTokenHash(hash(token))
-    if (!pending || pending.status !== "pending" || pending.expiresAt <= now)
-      return fail(EXPIRED)
+    const pending = await findLive(token, now)
+    if (!pending) return fail(EXPIRED)
     const client = await billing.getClient(pending.clientId)
     if (!client) return fail(EXPIRED)
 
@@ -127,7 +135,7 @@ export const createAccessRequests = ({
       status: decision === "approve" ? "approved" : "declined",
       decidedAt: now,
     })
-    const company = client.company || client.name
+    const company = clientDisplayName(client)
     if (decision === "approve") {
       const added = await billing.addContact(
         client.id,
@@ -142,13 +150,8 @@ export const createAccessRequests = ({
   }
 
   const preview = async (token: string) => {
-    const pending = await repository.findByTokenHash(hash(token))
-    if (
-      !pending ||
-      pending.status !== "pending" ||
-      pending.expiresAt <= clock()
-    )
-      return null
+    const pending = await findLive(token, clock())
+    if (!pending) return null
     const [client, invoice] = await Promise.all([
       billing.getClient(pending.clientId),
       billing.getInvoice(pending.invoiceId),
@@ -157,7 +160,7 @@ export const createAccessRequests = ({
     return {
       email: pending.email,
       name: pending.name,
-      company: client.company || client.name,
+      company: clientDisplayName(client),
       invoiceNumber: invoice?.number ?? null,
     }
   }

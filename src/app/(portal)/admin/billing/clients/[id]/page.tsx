@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
+import { requirePermission } from "@/features/auth/server/session"
 import { ClientArchiveButton } from "@/features/billing/components/client-archive-button"
 import { ClientBilling } from "@/features/billing/components/client-billing"
 import { ClientForm } from "@/features/billing/components/client-form"
@@ -7,7 +8,10 @@ import { ContactsManager } from "@/features/billing/components/contacts-manager"
 import { BalanceCreditForm } from "@/features/billing/components/credit-balance"
 import { CreditNoteList } from "@/features/billing/components/credit-note-list"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
-import { formatMoney } from "@/features/billing/domain/format"
+import {
+  clientDisplayName,
+  formatMoney,
+} from "@/features/billing/domain/format"
 import { createDraftAction } from "@/features/billing/server/actions"
 import {
   billing,
@@ -30,6 +34,7 @@ export const metadata: Metadata = { title: "Client" }
 type Props = { params: Promise<{ id: string }> }
 
 export default async function ClientPage({ params }: Props) {
+  await requirePermission("billing:read")
   const { id } = await params
   const client = await billing.getClient(id)
   if (!client) notFound()
@@ -46,7 +51,7 @@ export default async function ClientPage({ params }: Props) {
   return (
     <>
       <PortalPageHeader
-        title={client.company || client.name}
+        title={clientDisplayName(client)}
         description={client.email}
         actions={
           <>
@@ -71,7 +76,7 @@ export default async function ClientPage({ params }: Props) {
         />
         <PortalSection
           title="Team"
-          description={`Everyone at ${client.company || client.name} who can sign in to the portal. Billing contacts receive every invoice.`}
+          description={`Everyone at ${clientDisplayName(client)} who can sign in to the portal. Billing contacts receive every invoice.`}
         >
           <ContactsManager
             primary={{ email: client.email, name: client.name }}

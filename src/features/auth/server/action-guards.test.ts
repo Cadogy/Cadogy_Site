@@ -38,6 +38,25 @@ const serverActions = () =>
         )
     )
 
+const adminPages = () =>
+  sourceFiles(path.join(SRC, "app", "(portal)", "admin"))
+    .filter((file) => path.basename(file) === "page.tsx")
+    .map((file) => ({
+      file: path.relative(SRC, file),
+      source: readFileSync(file, "utf8"),
+    }))
+
+describe("admin page guards", () => {
+  it("checks a named permission on every admin page, not only in the layout", () => {
+    const unguarded = adminPages()
+      .filter(({ source }) => !/\brequirePermission\(/.test(source))
+      .map(({ file }) => file)
+
+    expect(adminPages().length).toBeGreaterThan(10)
+    expect(unguarded).toEqual([])
+  })
+})
+
 describe("server action guards", () => {
   it("finds the app's server actions", () => {
     expect(serverActions().length).toBeGreaterThan(30)

@@ -1,12 +1,20 @@
+import { fail, ok, type Result } from "@/lib/result"
+
 import { applyCreditNote } from "../domain/credits"
 import { formatMoney } from "../domain/format"
-import { fail, ok, type Invoice, type Result } from "../domain/invoice"
+import {
+  type CreditNoteKind,
+  type Invoice,
+  type InvoiceAdjustment,
+} from "../domain/invoice"
+import {
+  creditNoteCounterKey,
+  formatCreditNoteNumber,
+} from "../domain/numbering"
 import type { Currency } from "../domain/schema"
-import { calculateInvoiceTotals } from "../domain/totals"
+import { calculateInvoiceTotals, sum } from "../domain/totals"
 import type { createBillingService } from "./billing-service"
 import type { BillingRepository } from "./ports"
-
-export type CreditNoteKind = "refund" | "invoice_credit" | "balance_credit"
 
 export type CreditNote = {
   readonly id: string
@@ -58,11 +66,6 @@ type InvoiceRequest = {
   readonly reason: string
 }
 
-const sum = (values: readonly number[]) =>
-  values.reduce((total, value) => total + value, 0)
-
-const pad = (value: number) => String(value).padStart(4, "0")
-
 export const createCredits = ({
   billing,
   billingRepository,
@@ -72,13 +75,24 @@ export const createCredits = ({
 }: Dependencies) => {
   const nextNumber = async () => {
     const year = clock().getUTCFullYear()
-    const sequence = await billingRepository.nextSequence(`credit-note-${year}`)
-    return `CN-${year}-${pad(sequence)}`
+    const sequence = await billingRepository.nextSequence(
+      creditNoteCounterKey(year)
+    )
+    return formatCreditNoteNumber({ year, sequence })
   }
+
+  const insertNumbered = async (
+    note: Omit<CreditNote, "id" | "number" | "createdAt">
+  ) =>
+    repository.insert({
+      ...note,
+      number: await nextNumber(),
+      createdAt: clock(),
+    })
 
   const precheck = (
     invoice: Invoice,
-    kind: "refund" | "invoice_credit",
+    kind: InvoiceAdjustment["kind"],
     amount: number
   ) =>
     applyCreditNote(
@@ -89,14 +103,11 @@ export const createCredits = ({
 
   const record = async (
     invoice: Invoice,
-    note: Omit<CreditNote, "id" | "number" | "createdAt">
+    note: Omit<CreditNote, "id" | "number" | "createdAt" | "kind"> & {
+      readonly kind: InvoiceAdjustment["kind"]
+    }
   ): Promise<Result<CreditNote>> => {
-    const stored = await repository.insert({
-      ...note,
-      number: await nextNumber(),
-      createdAt: clock(),
-    })
-    if (note.kind === "balance_credit") return ok(stored)
+    const stored = await insertNumbered(note)
     const applied = applyCreditNote(
       invoice,
       {
@@ -202,7 +213,7 @@ export const createCredits = ({
     if (!(await billingRepository.findClient(input.clientId)))
       return fail("Client not found.")
     return ok(
-      await repository.insert({
+      await insertNumbered({
         clientId: input.clientId,
         invoiceId: null,
         kind: "balance_credit",
@@ -211,8 +222,6 @@ export const createCredits = ({
         reason: input.reason,
         stripeRefundId: null,
         stripePaymentIntentId: null,
-        number: await nextNumber(),
-        createdAt: clock(),
         createdBy: actorId,
       })
     )

@@ -2,23 +2,17 @@ import "server-only"
 
 import { headers } from "next/headers"
 import { describeDevice, displayIp } from "@/features/auth/domain/devices"
-import type { Role } from "@/features/auth/domain/permissions"
-import { securityEventLabel } from "@/features/auth/domain/security-events"
-import { canDeleteAccount } from "@/features/auth/domain/user-admin"
+import {
+  isFailureEvent,
+  securityEventLabel,
+} from "@/features/auth/domain/security-events"
 import { auth } from "@/features/auth/server/auth"
 import { securityLog } from "@/features/auth/server/security-log"
-import { billing } from "@/features/billing/server/billing"
+
+import { formatDateTimeUtc, formatDayUtc } from "@/lib/format-date"
 
 import type { SavedPasskey } from "../components/passkey-settings"
 import type { DeviceSession } from "../components/session-list"
-
-const dateTime = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-})
-
-const formatDateTime = (date: Date) => `${dateTime.format(date)} UTC`
 
 export const mySessions = async (): Promise<DeviceSession[]> => {
   const requestHeaders = await headers()
@@ -32,7 +26,7 @@ export const mySessions = async (): Promise<DeviceSession[]> => {
       id: session.id,
       device: describeDevice(session.userAgent),
       ip: displayIp(session.ipAddress),
-      lastActiveLabel: formatDateTime(session.updatedAt),
+      lastActiveLabel: formatDateTimeUtc(session.updatedAt),
       current: session.id === current?.session.id,
     }))
 }
@@ -43,16 +37,9 @@ export const myActivity = async (userId: string) =>
     label: securityEventLabel(event.type),
     device: event.userAgent ? describeDevice(event.userAgent) : "Automatic",
     ip: displayIp(event.ip),
-    when: formatDateTime(event.at),
-    warning: ["sign_in_failed", "two_factor_failed", "account_locked"].includes(
-      event.type
-    ),
+    when: formatDateTimeUtc(event.at),
+    warning: isFailureEvent(event.type),
   }))
-
-const dateOnly = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeZone: "UTC",
-})
 
 export const mySecondFactors = async () => {
   const requestHeaders = await headers()
@@ -65,21 +52,7 @@ export const mySecondFactors = async () => {
     passkeys: passkeys.map((passkey): SavedPasskey => ({
       id: passkey.id,
       name: passkey.name || "Passkey",
-      createdLabel: dateOnly.format(new Date(passkey.createdAt)),
+      createdLabel: formatDayUtc(new Date(passkey.createdAt)),
     })),
   }
 }
-
-export const deletionEligibility = async (user: {
-  readonly email: string
-  readonly role: Role
-}) =>
-  canDeleteAccount({
-    role: user.role,
-    openInvoices:
-      user.role === "client"
-        ? (await billing.listForPortalUser(user.email)).filter(
-            (invoice) => invoice.status === "open"
-          ).length
-        : 0,
-  })

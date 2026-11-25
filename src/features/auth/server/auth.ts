@@ -1,6 +1,5 @@
 import "server-only"
 
-import { billing } from "@/features/billing/server/billing"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
 import { passkey } from "@better-auth/passkey"
 import { betterAuth } from "better-auth"
@@ -20,21 +19,21 @@ import {
   sendPasswordResetEmail,
   sendVerificationEmail,
 } from "@/lib/email"
+import { clientContext } from "@/lib/security/request-context"
 import { verifyTurnstile } from "@/lib/security/turnstile"
 
 import { sessionAssurance, upgradesSession } from "../domain/assurance"
-import { TURNSTILE_HEADER } from "../domain/http"
-import { isStaff, toRole } from "../domain/permissions"
+import { AUTH_COOKIE_PREFIX, TURNSTILE_HEADER } from "../domain/http"
+import { toRole } from "../domain/permissions"
 import { shouldBecomeOwner } from "../domain/roles"
-import {
-  eventForAuthRequest,
-  type SecurityEventType,
-} from "../domain/security-events"
-import { canDeleteAccount } from "../domain/user-admin"
+import { eventForAuthRequest, isSignInEvent } from "../domain/security-events"
 import { accessControl, authRoles } from "./access"
+import { deletionEligibility } from "./account-deletion"
 import {
   authDb,
   authMongoClient,
+  countOwners,
+  findUserById,
   supportsTransactions,
   userObjectId,
   users,
@@ -64,11 +63,6 @@ const HUMAN_CHECK_PATHS = new Set([
 const LOCKED_MESSAGE =
   "Too many failed attempts. Password sign-in is paused for 15 minutes. You can still sign in with a passkey or reset your password."
 
-const requestIp = (headers: Headers | undefined) =>
-  headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-  headers?.get("x-real-ip") ||
-  ""
-
 const signInEmail = (body: unknown) =>
   typeof body === "object" &&
   body !== null &&
@@ -80,7 +74,7 @@ const signInEmail = (body: unknown) =>
 const beforeRequest = createAuthMiddleware(async (ctx) => {
   if (HUMAN_CHECK_PATHS.has(ctx.path)) {
     const token = ctx.headers?.get(TURNSTILE_HEADER) ?? ""
-    if (!(await verifyTurnstile(token, requestIp(ctx.headers))))
+    if (!(await verifyTurnstile(token, clientContext(ctx.headers).ip)))
       throw new APIError("BAD_REQUEST", {
         message: "We couldn't verify you're human. Please try again.",
       })
@@ -131,9 +125,8 @@ const afterRequest = createAuthMiddleware(async (ctx) => {
   if (!type) return
   const userId = newSession?.user.id ?? ctx.context.session?.user.id ?? null
   const email = newSession?.user.email ?? ctx.context.session?.user.email
-  const ip = requestIp(ctx.headers)
-  const userAgent = ctx.headers?.get("user-agent") ?? ""
-  if (newSession && SIGN_IN_EVENTS.has(type))
+  const { ip, userAgent } = clientContext(ctx.headers)
+  if (newSession && isSignInEvent(type))
     await quietly(() =>
       alertIfUnfamiliar({
         userId: newSession.user.id,
@@ -153,18 +146,6 @@ const afterRequest = createAuthMiddleware(async (ctx) => {
   })
 })
 
-const openInvoicesFor = async (email: string) =>
-  (await billing.listForPortalUser(email)).filter(
-    (invoice) => invoice.status === "open"
-  ).length
-
-const SIGN_IN_EVENTS = new Set<SecurityEventType>([
-  "sign_in",
-  "sign_in_backup_code",
-  "sign_in_passkey",
-  "sign_in_magic_link",
-])
-
 const quietly = async (task: () => Promise<void>) => {
   try {
     await task()
@@ -181,7 +162,7 @@ const promoteOwnerIfConfigured = async (user: {
 }) => {
   const id = userObjectId(user.id)
   if (!id || user.role === "owner") return
-  const ownerExists = (await users().countDocuments({ role: "owner" })) > 0
+  const ownerExists = (await countOwners()) > 0
   const promote = shouldBecomeOwner({
     email: user.email,
     emailVerified: user.emailVerified,
@@ -200,11 +181,8 @@ const promoteOwnerIfConfigured = async (user: {
   })
 }
 
-const userHasTwoFactor = async (userId: string) => {
-  const id = userObjectId(userId)
-  const user = id ? await users().findOne({ _id: id }) : null
-  return Boolean(user?.twoFactorEnabled)
-}
+const userHasTwoFactor = async (userId: string) =>
+  Boolean((await findUserById(userId))?.twoFactorEnabled)
 
 export const auth = betterAuth({
   appName: "Cadogy",
@@ -246,10 +224,9 @@ export const auth = betterAuth({
         await sendDeleteAccountConfirmation(user.email, url)
       },
       beforeDelete: async (user) => {
-        const role = toRole("role" in user ? user.role : undefined)
-        const decision = canDeleteAccount({
-          role,
-          openInvoices: isStaff(role) ? 0 : await openInvoicesFor(user.email),
+        const decision = await deletionEligibility({
+          email: user.email,
+          role: toRole("role" in user ? user.role : undefined),
         })
         if (!decision.ok)
           throw new APIError("BAD_REQUEST", { message: decision.error })
@@ -308,7 +285,7 @@ export const auth = betterAuth({
   },
   advanced: {
     useSecureCookies: isProduction,
-    cookiePrefix: "cadogy",
+    cookiePrefix: AUTH_COOKIE_PREFIX,
     ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] },
   },
   hooks: {

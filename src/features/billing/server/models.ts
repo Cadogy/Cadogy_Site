@@ -2,16 +2,21 @@ import "server-only"
 
 import { model, models, Schema, type Model, type Types } from "mongoose"
 
-import type {
-  BillingSettings,
-  CatalogItem,
-  Charge,
-  RunSummary,
-  StoredAddOn,
+import {
+  CHARGE_STATUSES,
+  type BillingSettings,
+  type CatalogItem,
+  type Charge,
+  type RunSummary,
+  type StoredAddOn,
 } from "../application/engine-ports"
 import type { BillingClient } from "../application/ports"
 import { CONTACT_ROLES } from "../domain/contacts"
-import { INVOICE_EVENT_TYPES, type Invoice } from "../domain/invoice"
+import {
+  ADJUSTMENT_KINDS,
+  INVOICE_EVENT_TYPES,
+  type Invoice,
+} from "../domain/invoice"
 import { ADD_ON_STATUSES, BILLING_INTERVALS } from "../domain/recurring"
 import { CURRENCIES, INVOICE_STATUSES, PAYMENT_METHODS } from "../domain/schema"
 
@@ -168,7 +173,7 @@ const invoiceSchema = new Schema(
         {
           creditNoteId: String,
           number: String,
-          kind: { type: String, enum: ["refund", "invoice_credit"] },
+          kind: { type: String, enum: ADJUSTMENT_KINDS },
           amount: Number,
         },
         { _id: false }
@@ -262,7 +267,7 @@ const chargeSchema = new Schema(
     periodEnd: { type: Date, default: null },
     status: {
       type: String,
-      enum: ["pending", "invoiced", "void"],
+      enum: CHARGE_STATUSES,
       required: true,
       index: true,
     },

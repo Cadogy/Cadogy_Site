@@ -1,8 +1,10 @@
-type AuthError = {
+export type AuthError = {
   readonly code?: string
   readonly message?: string
   readonly status: number
 }
+
+export type ClientResult = { readonly error: AuthError | null }
 
 const MESSAGES: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "Incorrect email or password.",

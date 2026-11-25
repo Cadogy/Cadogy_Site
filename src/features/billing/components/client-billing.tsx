@@ -1,3 +1,4 @@
+import { ActionButton, ActionForm } from "@/components/ui/action-controls"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -10,7 +11,13 @@ import type {
   StoredAddOn,
 } from "../application/engine-ports"
 import type { BillingClient } from "../application/ports"
-import { formatDate, formatMoney, intervalLabel } from "../domain/format"
+import { isoDay } from "../domain/dates"
+import {
+  cardSummary,
+  formatDate,
+  formatMoney,
+  intervalLabel,
+} from "../domain/format"
 import {
   addAddOnAction,
   addChargeAction,
@@ -21,9 +28,9 @@ import {
   updateAddOnAction,
   voidChargeAction,
 } from "../server/engine-actions"
-import { ActionButton, ActionForm } from "./action-controls"
 import { PendingCharges } from "./pending-charges"
-import { IntervalField, PriceField } from "./service-fields"
+import { IntervalField, PriceField, QuantityField } from "./service-fields"
+import { ServiceSummary } from "./service-summary"
 
 const STATUS_LABELS: Record<StoredAddOn["status"], string> = {
   active: "Active",
@@ -32,7 +39,8 @@ const STATUS_LABELS: Record<StoredAddOn["status"], string> = {
   completed: "Billed",
 }
 
-const today = () => new Date().toISOString().slice(0, 10)
+const isLive = (addOn: StoredAddOn) =>
+  addOn.status === "active" || addOn.status === "paused"
 
 function AddOnRow({
   clientId,
@@ -41,18 +49,12 @@ function AddOnRow({
   clientId: string
   addOn: StoredAddOn
 }) {
-  const live = addOn.status === "active" || addOn.status === "paused"
   return (
     <li className="grid gap-3 py-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <div>
-          <p className="font-medium">
-            {addOn.name}
-            {addOn.quantity > 1 ? (
-              <span className="text-muted-foreground"> × {addOn.quantity}</span>
-            ) : null}
-          </p>
-          <p className="text-sm text-muted-foreground">
+      <ServiceSummary
+        service={addOn}
+        detail={
+          <>
             {STATUS_LABELS[addOn.status]}
             {addOn.status === "active" && addOn.interval !== "one_time"
               ? ` · renews ${formatDate(addOn.nextBillingDate)}`
@@ -60,16 +62,10 @@ function AddOnRow({
             {addOn.status === "active" && addOn.interval === "one_time"
               ? ` · bills ${formatDate(addOn.nextBillingDate)}`
               : null}
-          </p>
-        </div>
-        <p className="tabular-nums">
-          {formatMoney(addOn.unitAmount * addOn.quantity, addOn.currency)}{" "}
-          <span className="text-muted-foreground">
-            {intervalLabel(addOn.interval, "per")}
-          </span>
-        </p>
-      </div>
-      {live ? (
+          </>
+        }
+      />
+      {isLive(addOn) ? (
         <div className="flex flex-wrap gap-2">
           {addOn.status === "active" ? (
             <ActionButton
@@ -119,17 +115,10 @@ function AddOnRow({
                 resetOnSuccess={false}
               >
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <Field id={`quantity-${addOn.id}`} label="Quantity">
-                    {(control) => (
-                      <Input
-                        {...control}
-                        name="quantity"
-                        type="number"
-                        min={1}
-                        defaultValue={addOn.quantity}
-                      />
-                    )}
-                  </Field>
+                  <QuantityField
+                    id={`quantity-${addOn.id}`}
+                    defaultValue={addOn.quantity}
+                  />
                   <PriceField
                     id={`price-${addOn.id}`}
                     defaultValue={addOn.unitAmount}
@@ -155,12 +144,8 @@ export function ClientBilling({
   pending: readonly Charge[]
   catalog: readonly CatalogItem[]
 }) {
-  const current = addOns.filter(
-    (addOn) => addOn.status === "active" || addOn.status === "paused"
-  )
-  const past = addOns.filter(
-    (addOn) => addOn.status === "canceled" || addOn.status === "completed"
-  )
+  const current = addOns.filter(isLive)
+  const past = addOns.filter((addOn) => !isLive(addOn))
   const card = client.autopay.card
 
   return (
@@ -228,21 +213,10 @@ export function ClientBilling({
               </Field>
               <PriceField id="addon-price" optional />
               <IntervalField id="addon-interval" optional />
-              <Field
+              <QuantityField
                 id="addon-quantity"
-                label="Quantity"
                 hint="Seats, mailboxes, domains…"
-              >
-                {(control) => (
-                  <Input
-                    {...control}
-                    name="quantity"
-                    type="number"
-                    min={1}
-                    defaultValue={1}
-                  />
-                )}
-              </Field>
+              />
               <Field
                 id="addon-start"
                 label="Start date"
@@ -253,7 +227,7 @@ export function ClientBilling({
                     {...control}
                     name="startDate"
                     type="date"
-                    defaultValue={today()}
+                    defaultValue={isoDay(new Date())}
                   />
                 )}
               </Field>
@@ -295,17 +269,7 @@ export function ClientBilling({
                 )}
               </Field>
               <PriceField id="charge-price" />
-              <Field id="charge-quantity" label="Quantity">
-                {(control) => (
-                  <Input
-                    {...control}
-                    name="quantity"
-                    type="number"
-                    min={1}
-                    defaultValue={1}
-                  />
-                )}
-              </Field>
+              <QuantityField id="charge-quantity" />
             </div>
           </ActionForm>
         </div>
@@ -336,7 +300,7 @@ export function ClientBilling({
             <dt className="text-meta">Autopay</dt>
             <dd>
               {card
-                ? `${client.autopay.enabled ? "On" : "Off"} · ${card.brand} ending ${card.last4}, expires ${card.expMonth}/${card.expYear}`
+                ? `${client.autopay.enabled ? "On" : "Off"} · ${cardSummary(card)}`
                 : "No saved card. The client can save one from their billing page."}
             </dd>
             {card ? (

@@ -47,8 +47,7 @@ const ACCOUNT_NOTICES: Record<AccountNotice, Notice> = {
   },
 }
 
-const noticeForEvent = (type: SecurityEventType) =>
-  EVENT_NOTICES[type] ?? null
+const noticeForEvent = (type: SecurityEventType) => EVENT_NOTICES[type] ?? null
 
 export const sendEventNotice = async (to: string, type: SecurityEventType) => {
   const notice = noticeForEvent(type)

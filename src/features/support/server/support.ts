@@ -7,7 +7,7 @@ import { isValidObjectId } from "mongoose"
 import { env } from "@/env"
 import { sendEmail } from "@/lib/email"
 import { emailButton, emailLayout, escapeHtml } from "@/lib/email/html"
-import { connectToDatabase } from "@/lib/mongodb"
+import { withDatabase } from "@/lib/mongodb"
 
 import {
   createSupportService,
@@ -31,13 +31,6 @@ const toTicket = (doc: TicketDoc): SupportTicket => ({
   lastReplyBy: doc.lastReplyBy ?? "user",
   createdAt: doc.createdAt,
 })
-
-const withDb =
-  <Args extends unknown[], R>(fn: (...args: Args) => Promise<R>) =>
-  async (...args: Args) => {
-    await connectToDatabase()
-    return fn(...args)
-  }
 
 const notify = async ({ kind, ticket, from }: TicketNotification) => {
   const latest = ticket.messages.at(-1)?.content ?? ""
@@ -74,20 +67,20 @@ const notify = async ({ kind, ticket, from }: TicketNotification) => {
 export const support = createSupportService({
   clock: () => new Date(),
   store: {
-    insert: withDb(async (ticket) =>
+    insert: withDatabase(async (ticket) =>
       toTicket((await Ticket.create(ticket)).toObject())
     ),
-    save: withDb(async (ticket) => {
+    save: withDatabase(async (ticket) => {
       const { id, ...fields } = ticket
       await Ticket.replaceOne({ _id: id }, fields)
       return ticket
     }),
-    find: withDb(async (id) => {
+    find: withDatabase(async (id) => {
       if (!isValidObjectId(id)) return null
       const doc = await Ticket.findById(id).lean<TicketDoc>()
       return doc ? toTicket(doc) : null
     }),
-    list: withDb(async ({ userId, status }) => {
+    list: withDatabase(async ({ userId, status }) => {
       const docs = await Ticket.find({
         ...(userId ? { userId } : {}),
         ...(status ? { status } : {}),

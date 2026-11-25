@@ -1,19 +1,12 @@
+import { fail, ok, type Result } from "@/lib/result"
+
 import { formatMoney } from "./format"
-import {
-  fail,
-  ok,
-  type Invoice,
-  type InvoiceAdjustment,
-  type Result,
-} from "./invoice"
-import { calculateInvoiceTotals } from "./totals"
+import { type Invoice, type InvoiceAdjustment } from "./invoice"
+import { calculateInvoiceTotals, sum } from "./totals"
 
 type Actor = { readonly actorId: string; readonly at: Date }
 
 const ISSUED = new Set(["open", "paid", "uncollectible"])
-
-const sum = (values: readonly number[]) =>
-  values.reduce((total, value) => total + value, 0)
 
 export const refundableAmount = (invoice: Invoice) =>
   sum(

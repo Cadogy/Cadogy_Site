@@ -3,6 +3,9 @@
 import { useState, useTransition } from "react"
 import { Loader2, Plus, Send, Trash2 } from "lucide-react"
 
+import type { ActionState } from "@/lib/action-state"
+import { isOneOf } from "@/lib/is-one-of"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
@@ -18,7 +21,6 @@ import {
   deleteDraftAction,
   issueInvoiceAction,
   saveDraftAction,
-  type ActionState,
 } from "../server/actions"
 import {
   editorToDraft,
@@ -34,6 +36,8 @@ const newLine = (): EditorLine => ({
   quantity: "1",
   unitPrice: "",
 })
+
+const isDiscountType = isOneOf(["none", "percent", "amount"] as const)
 
 export function InvoiceEditor({
   invoiceId,
@@ -131,12 +135,12 @@ export function InvoiceEditor({
                 <NativeSelect
                   {...control}
                   value={state.currency}
-                  onChange={(event) =>
-                    update(
-                      "currency",
-                      event.target.value as EditorState["currency"]
+                  onChange={(event) => {
+                    const currency = CURRENCIES.find(
+                      (value) => value === event.target.value
                     )
-                  }
+                    if (currency) update("currency", currency)
+                  }}
                 >
                   {CURRENCIES.map((currency) => (
                     <option key={currency}>{currency}</option>
@@ -258,12 +262,11 @@ export function InvoiceEditor({
                 <NativeSelect
                   {...control}
                   value={state.discountType}
-                  onChange={(event) =>
-                    update(
-                      "discountType",
-                      event.target.value as EditorState["discountType"]
-                    )
-                  }
+                  onChange={(event) => {
+                    const discountType = event.target.value
+                    if (isDiscountType(discountType))
+                      update("discountType", discountType)
+                  }}
                 >
                   <option value="none">No discount</option>
                   <option value="percent">Percentage</option>
@@ -365,18 +368,7 @@ export function InvoiceEditor({
             </p>
           )}
 
-          {feedback ? (
-            <p
-              role={feedback.ok ? "status" : "alert"}
-              className={
-                feedback.ok
-                  ? "text-sm text-success"
-                  : "text-sm text-destructive"
-              }
-            >
-              {feedback.message}
-            </p>
-          ) : null}
+          <ActionMessage state={feedback} />
 
           <div className="grid gap-2">
             <Button onClick={confirmIssue} disabled={pending}>

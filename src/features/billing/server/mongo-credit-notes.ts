@@ -2,9 +2,10 @@ import "server-only"
 
 import { model, models, Schema, type Model, type Types } from "mongoose"
 
-import { connectToDatabase } from "@/lib/mongodb"
+import { withDatabase } from "@/lib/mongodb"
 
 import type { CreditNote, CreditNoteRepository } from "../application/credits"
+import { CREDIT_NOTE_KINDS } from "../domain/invoice"
 import { CURRENCIES } from "../domain/schema"
 
 type CreditNoteDoc = Omit<CreditNote, "id"> & { _id: Types.ObjectId }
@@ -16,7 +17,7 @@ const creditNoteSchema = new Schema<CreditNoteDoc>(
     invoiceId: { type: String, default: null, index: true },
     kind: {
       type: String,
-      enum: ["refund", "invoice_credit", "balance_credit"],
+      enum: CREDIT_NOTE_KINDS,
       required: true,
     },
     amount: { type: Number, required: true },
@@ -47,18 +48,11 @@ const toNote = ({ _id, ...rest }: CreditNoteDoc): CreditNote => ({
   id: _id.toString(),
 })
 
-const withDb =
-  <Args extends unknown[], R>(fn: (...args: Args) => Promise<R>) =>
-  async (...args: Args) => {
-    await connectToDatabase()
-    return fn(...args)
-  }
-
 export const mongoCreditNoteRepository: CreditNoteRepository = {
-  insert: withDb(async (note) =>
+  insert: withDatabase(async (note) =>
     toNote((await CreditNoteModel.create(note)).toObject())
   ),
-  list: withDb(async ({ clientId, invoiceId }) =>
+  list: withDatabase(async ({ clientId, invoiceId }) =>
     (
       await CreditNoteModel.find({
         ...(clientId ? { clientId } : {}),
@@ -68,7 +62,7 @@ export const mongoCreditNoteRepository: CreditNoteRepository = {
         .lean<CreditNoteDoc[]>()
     ).map(toNote)
   ),
-  findByStripeRefundId: withDb(async (refundId) => {
+  findByStripeRefundId: withDatabase(async (refundId) => {
     const doc = await CreditNoteModel.findOne({
       stripeRefundId: refundId,
     }).lean<CreditNoteDoc>()

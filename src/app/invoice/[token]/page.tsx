@@ -8,6 +8,7 @@ import {
 import { InvoiceDocument } from "@/features/billing/components/invoice-document"
 import { PayInvoicePanel } from "@/features/billing/components/pay-invoice-panel"
 import { formatDate, formatMoney } from "@/features/billing/domain/format"
+import { invoicePublicPath } from "@/features/billing/domain/invoice"
 import {
   displayStatus,
   invoiceBadge,
@@ -86,7 +87,7 @@ export default async function HostedInvoicePage({
           />
           <InvoiceAccountPrompt
             state={accountState}
-            invoicePath={`/invoice/${token}`}
+            invoicePath={invoicePublicPath(token)}
             onRequest={requestInvoiceAccessAction.bind(null, token)}
           />
         </div>

@@ -2,17 +2,10 @@ import Link from "next/link"
 import { FaGithub, FaInstagram, FaLinkedin } from "react-icons/fa6"
 
 import { siteConfig } from "@/config/site"
+import { Button } from "@/components/ui/button"
 
 const columns = [
-  {
-    title: "Studio",
-    links: [
-      { label: "Work", href: "/work" },
-      { label: "Services", href: "/services" },
-      { label: "About", href: "/who-we-are" },
-      { label: "Articles", href: "/articles" },
-    ],
-  },
+  { title: "Studio", links: siteConfig.nav },
   {
     title: "Clients",
     links: [
@@ -89,15 +82,16 @@ export function SiteFooter() {
         <ul className="-ml-3 flex items-center gap-1 sm:-mr-3 sm:ml-0">
           {socials.map(({ label, href, Icon }) => (
             <li key={href}>
-              <a
-                href={href}
-                aria-label={label}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/8 hover:text-foreground"
-              >
-                <Icon className="size-[18px]" aria-hidden="true" />
-              </a>
+              <Button asChild variant="quiet" size="icon">
+                <a
+                  href={href}
+                  aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Icon className="size-[18px]" aria-hidden="true" />
+                </a>
+              </Button>
             </li>
           ))}
         </ul>

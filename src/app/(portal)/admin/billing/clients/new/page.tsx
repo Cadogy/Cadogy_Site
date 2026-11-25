@@ -1,11 +1,13 @@
 import type { Metadata } from "next"
+import { requirePermission } from "@/features/auth/server/session"
 import { ClientForm } from "@/features/billing/components/client-form"
 
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Add client" }
 
-export default function NewClientPage() {
+export default async function NewClientPage() {
+  await requirePermission("billing:read")
   return (
     <>
       <PortalPageHeader

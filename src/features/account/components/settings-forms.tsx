@@ -1,11 +1,9 @@
 "use client"
 
-import { startTransition, useActionState, type FormEvent } from "react"
-import { Loader2 } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
+import { useFormAction } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { PendingButton } from "@/components/ui/pending-button"
 
 import {
   changePasswordAction,
@@ -29,34 +27,30 @@ function SettingsForm({
   ) => React.ReactNode
   resetOnSuccess?: boolean
 }) {
-  const [result, dispatch, pending] = useActionState(action, null)
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const form = event.currentTarget
-    const data = new FormData(form)
-    startTransition(async () => {
-      dispatch(data)
-      if (resetOnSuccess) form.reset()
-    })
-  }
+  const {
+    state: result,
+    pending,
+    formRef,
+    onSubmit,
+  } = useFormAction(action, { resetOnSuccess })
 
   const fieldError = (field: string) =>
     result && !result.ok && result.field === field ? result.error : undefined
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-5" noValidate>
+    <form ref={formRef} onSubmit={onSubmit} className="grid gap-5" noValidate>
       {result?.ok ? <FormAlert tone="success">{success}</FormAlert> : null}
       {result && !result.ok && !result.field ? (
         <FormAlert>{result.error}</FormAlert>
       ) : null}
       {children(fieldError)}
-      <Button type="submit" disabled={pending} className="justify-self-start">
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton
+        type="submit"
+        pending={pending}
+        className="justify-self-start"
+      >
         {submitLabel}
-      </Button>
+      </PendingButton>
     </form>
   )
 }

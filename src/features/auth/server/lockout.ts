@@ -1,6 +1,7 @@
 import "server-only"
 
 import { sendAccountLockedNotice } from "@/lib/email"
+import { onceUntilFailure } from "@/lib/once"
 
 import { createLockout, LOCKOUT } from "../application/lockout"
 import { authDb, users } from "./database"
@@ -10,20 +11,15 @@ type FailureDoc = { readonly email: string; readonly at: Date }
 
 const failures = () => authDb.collection<FailureDoc>("sign_in_failures")
 
-const ensureIndexes = (() => {
-  let ready: Promise<unknown> | null = null
-  return () =>
-    (ready ??= Promise.all([
-      failures().createIndex(
-        { at: 1 },
-        { expireAfterSeconds: LOCKOUT.windowMinutes * 60 }
-      ),
-      failures().createIndex({ email: 1, at: -1 }),
-    ]).catch((error: unknown) => {
-      ready = null
-      throw error
-    }))
-})()
+const ensureIndexes = onceUntilFailure(() =>
+  Promise.all([
+    failures().createIndex(
+      { at: 1 },
+      { expireAfterSeconds: LOCKOUT.windowMinutes * 60 }
+    ),
+    failures().createIndex({ email: 1, at: -1 }),
+  ])
+)
 
 export const lockout = createLockout({
   repository: {

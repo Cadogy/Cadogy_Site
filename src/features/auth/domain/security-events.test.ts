@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import {
   eventForAuthRequest,
   eventsInGroup,
+  isFailureEvent,
+  isSignInEvent,
   securityEventLabel,
 } from "./security-events"
 
@@ -100,5 +102,19 @@ describe("eventsInGroup", () => {
 
   it("returns nothing for unknown groups", () => {
     expect(eventsInGroup("everything")).toBeNull()
+  })
+})
+
+describe("event kinds", () => {
+  it("counts every way of signing in, but not signing out", () => {
+    expect(isSignInEvent("sign_in_passkey")).toBe(true)
+    expect(isSignInEvent("sign_in_magic_link")).toBe(true)
+    expect(isSignInEvent("sign_out")).toBe(false)
+  })
+
+  it("flags failed attempts and lockouts as warnings", () => {
+    expect(isFailureEvent("two_factor_failed")).toBe(true)
+    expect(isFailureEvent("account_locked")).toBe(true)
+    expect(isFailureEvent("sign_in")).toBe(false)
   })
 })

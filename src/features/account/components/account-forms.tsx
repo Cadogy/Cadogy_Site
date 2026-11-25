@@ -7,11 +7,11 @@ import {
   type FormEvent,
 } from "react"
 import Link from "next/link"
-import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { PendingButton } from "@/components/ui/pending-button"
 import { HumanCheck } from "@/components/security/human-check"
 
 import {
@@ -40,23 +40,6 @@ const useAccountAction = (action: AccountAction) => {
   const formError =
     result && !result.ok && !result.field ? result.error : undefined
   return { result, pending, submit, fieldError, formError }
-}
-
-function SubmitButton({
-  pending,
-  children,
-}: {
-  pending: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <Button type="submit" size="lg" disabled={pending}>
-      {pending ? (
-        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-      ) : null}
-      {children}
-    </Button>
-  )
 }
 
 export function RegisterForm({
@@ -117,7 +100,9 @@ export function RegisterForm({
         )}
       </Field>
       <HumanCheck siteKey={turnstileSiteKey} onToken={setTurnstileToken} />
-      <SubmitButton pending={pending}>Create account</SubmitButton>
+      <PendingButton type="submit" size="lg" pending={pending}>
+        Create account
+      </PendingButton>
     </form>
   )
 }
@@ -160,7 +145,9 @@ export function ForgotPasswordForm({
         )}
       </Field>
       <HumanCheck siteKey={turnstileSiteKey} onToken={setTurnstileToken} />
-      <SubmitButton pending={pending}>Send reset link</SubmitButton>
+      <PendingButton type="submit" size="lg" pending={pending}>
+        Send reset link
+      </PendingButton>
     </form>
   )
 }
@@ -214,7 +201,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
           />
         )}
       </Field>
-      <SubmitButton pending={pending}>Update password</SubmitButton>
+      <PendingButton type="submit" size="lg" pending={pending}>
+        Update password
+      </PendingButton>
     </form>
   )
 }

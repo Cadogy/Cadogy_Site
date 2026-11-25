@@ -1,5 +1,12 @@
-import { parseMoneyInput } from "../domain/format"
-import { fail, ok, type Invoice, type Result } from "../domain/invoice"
+import { fail, ok, type Result } from "@/lib/result"
+
+import {
+  bpsToPercentText,
+  parseMoneyInput,
+  parsePercentToBps,
+  toMoneyInput,
+} from "../domain/format"
+import { type Invoice } from "../domain/invoice"
 import type {
   Currency,
   Discount,
@@ -25,16 +32,6 @@ export type EditorState = {
   readonly memo: string
   readonly footer: string
   readonly internalNotes: string
-}
-
-const PERCENT_PATTERN = /^\d+(\.\d{1,2})?$/
-
-const parsePercentToBps = (value: string): number | null => {
-  const trimmed = value.trim()
-  if (trimmed === "") return 0
-  if (!PERCENT_PATTERN.test(trimmed)) return null
-  const bps = Math.round(Number(trimmed) * 100)
-  return bps <= 10_000 ? bps : null
 }
 
 const isBlankLine = (line: EditorLine) =>
@@ -98,8 +95,7 @@ export const editorToDraft = (
   })
 }
 
-const centsToText = (minorUnits: number) => (minorUnits / 100).toFixed(2)
-const bpsToText = (bps: number) => (bps === 0 ? "" : String(bps / 100))
+const bpsToText = (bps: number) => (bps === 0 ? "" : bpsToPercentText(bps))
 
 export const draftFromInvoice = (invoice: Invoice): EditorState => ({
   clientId: invoice.clientId,
@@ -109,13 +105,13 @@ export const draftFromInvoice = (invoice: Invoice): EditorState => ({
     key: `line-${index}`,
     description: item.description,
     quantity: String(item.quantity),
-    unitPrice: centsToText(item.unitAmount),
+    unitPrice: toMoneyInput(item.unitAmount),
   })),
   discountType: invoice.discount?.type ?? "none",
   discountValue: invoice.discount
     ? invoice.discount.type === "percent"
       ? bpsToText(invoice.discount.value)
-      : centsToText(invoice.discount.value)
+      : toMoneyInput(invoice.discount.value)
     : "",
   taxRate: bpsToText(invoice.taxRateBps),
   memo: invoice.memo,

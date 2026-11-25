@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { optionValues } from "@/lib/option-values"
+
 export const PROJECT_TYPES = [
   { value: "new-product", label: "A new product" },
   { value: "existing-product", label: "Improving an existing product" },
@@ -25,14 +27,8 @@ export const TIMELINES = [
   { value: "exploring", label: "Just exploring" },
 ] as const
 
-const values = <T extends readonly { value: string }[]>(options: T) =>
-  options.map((option) => option.value) as [
-    T[number]["value"],
-    ...T[number]["value"][],
-  ]
-
 const optionalChoice = <T extends readonly { value: string }[]>(options: T) =>
-  z.union([z.enum(values(options)), z.literal("")]).default("")
+  z.union([z.enum(optionValues(options)), z.literal("")]).default("")
 
 export const inquiryInputSchema = z.object({
   name: z.string().trim().min(1, "Please enter your name.").max(120),
@@ -43,7 +39,7 @@ export const inquiryInputSchema = z.object({
     .pipe(z.email("Please enter a valid email address.")),
   company: z.string().trim().max(160).default(""),
   projectType: z.enum(
-    values(PROJECT_TYPES),
+    optionValues(PROJECT_TYPES),
     "Please choose what you need help with."
   ),
   budget: optionalChoice(BUDGETS),

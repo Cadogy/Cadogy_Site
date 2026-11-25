@@ -1,15 +1,13 @@
 import type { Metadata } from "next"
-import {
-  ActionButton,
-  ActionForm,
-} from "@/features/billing/components/action-controls"
-import { formatDate } from "@/features/billing/domain/format"
+import { requirePermission } from "@/features/auth/server/session"
+import { bpsToPercentText, formatDate } from "@/features/billing/domain/format"
 import { billingEngine } from "@/features/billing/server/billing"
 import {
   runBillingNowAction,
   saveBillingSettingsAction,
 } from "@/features/billing/server/engine-actions"
 
+import { ActionButton, ActionForm } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -25,6 +23,7 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
 })
 
 export default async function BillingSettingsPage() {
+  await requirePermission("billing:read")
   const [settings, lastRun] = await Promise.all([
     billingEngine.getSettings(),
     billingEngine.lastRun(),
@@ -119,7 +118,7 @@ export default async function BillingSettingsPage() {
                     {...control}
                     name="taxPercent"
                     inputMode="decimal"
-                    defaultValue={(settings.defaultTaxRateBps / 100).toString()}
+                    defaultValue={bpsToPercentText(settings.defaultTaxRateBps)}
                   />
                 )}
               </Field>

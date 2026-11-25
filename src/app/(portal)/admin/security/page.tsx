@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import {
   activeLockouts,
   staffSecurity,
@@ -8,7 +7,8 @@ import {
 import { requirePermission } from "@/features/auth/server/session"
 
 import { cn } from "@/lib/utils"
-import { PortalSection } from "@/components/portal/portal-section"
+import { EmptyState } from "@/components/ui/empty-state"
+import { FilterTabs, PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Security" }
@@ -83,9 +83,7 @@ export default async function SecurityPage({ searchParams }: Props) {
           description="Emails with password sign-in paused after 10 failed attempts in 15 minutes."
         >
           {lockouts.length === 0 ? (
-            <p className="border-t pt-4 text-muted-foreground">
-              No lockouts right now.
-            </p>
+            <EmptyState>No lockouts right now.</EmptyState>
           ) : (
             <ul className="rule-list">
               {lockouts.map((lock) => (
@@ -107,34 +105,18 @@ export default async function SecurityPage({ searchParams }: Props) {
           title="Security log"
           description="The last 200 events. Kept for a year."
         >
-          <nav
-            aria-label="Filter the security log"
-            className="flex flex-wrap gap-2"
-          >
-            {FILTERS.map((filter) => (
-              <Link
-                key={filter.value}
-                href={
-                  filter.value
-                    ? `/admin/security?group=${filter.value}`
-                    : "/admin/security"
-                }
-                aria-current={group === filter.value ? "page" : undefined}
-                className={cn(
-                  "inline-flex min-h-11 items-center rounded-full border px-4 text-sm transition-colors",
-                  group === filter.value
-                    ? "border-foreground text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {filter.label}
-              </Link>
-            ))}
-          </nav>
+          <FilterTabs
+            label="Filter the security log"
+            items={FILTERS.map((filter) => ({
+              label: filter.label,
+              href: filter.value
+                ? `/admin/security?group=${filter.value}`
+                : "/admin/security",
+              active: group === filter.value,
+            }))}
+          />
           {log.length === 0 ? (
-            <p className="border-t pt-4 text-muted-foreground">
-              Nothing logged yet.
-            </p>
+            <EmptyState>Nothing logged yet.</EmptyState>
           ) : (
             <ul className="rule-list">
               {log.map((event) => (

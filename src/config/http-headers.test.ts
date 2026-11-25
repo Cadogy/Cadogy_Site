@@ -52,11 +52,13 @@ describe("cache tiers", () => {
     expect(valueOf("/api/:path*", "Cache-Control")).toBe("no-store")
   })
 
-  it.each(["/dashboard/:path*", "/admin/:path*", "/invoice/:path*"])(
-    "keeps private surface %s out of every cache",
-    (source) => {
-      expect(valueOf(source, "Cache-Control")).toBe("private, no-store")
-      expect(valueOf(source, "X-Robots-Tag")).toBe("noindex, nofollow")
-    }
-  )
+  it.each([
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/account/:path*",
+    "/invoice/:path*",
+  ])("keeps private surface %s out of every cache", (source) => {
+    expect(valueOf(source, "Cache-Control")).toBe("private, no-store")
+    expect(valueOf(source, "X-Robots-Tag")).toBe("noindex, nofollow")
+  })
 })

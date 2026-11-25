@@ -6,6 +6,7 @@ import { sanitizeArticleHtml } from "@/features/articles/sanitize"
 import { CtaBand } from "@/features/marketing/components/cta-band"
 import { ArrowLeft } from "lucide-react"
 
+import { openGraphFor } from "@/lib/seo/open-graph"
 import {
   decodeHtml,
   extractExcerpt,
@@ -50,12 +51,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     alternates: { canonical: `/articles/${post.slug}` },
     openGraph: {
+      ...openGraphFor({
+        path: `/articles/${post.slug}`,
+        title,
+        description,
+        image,
+      }),
       type: "article",
-      title,
-      description,
       publishedTime: `${post.date_gmt}Z`,
       modifiedTime: `${post.modified_gmt}Z`,
-      images: [{ url: image }],
     },
     twitter: {
       card: "summary_large_image",

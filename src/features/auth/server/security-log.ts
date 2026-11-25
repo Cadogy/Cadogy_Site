@@ -1,5 +1,7 @@
 import "server-only"
 
+import { onceUntilFailure } from "@/lib/once"
+
 import {
   createSecurityLog,
   type SecurityEvent,
@@ -11,17 +13,12 @@ const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
 
 const events = () => authDb.collection<SecurityEvent>("security_events")
 
-const ensureIndexes = (() => {
-  let ready: Promise<unknown> | null = null
-  return () =>
-    (ready ??= Promise.all([
-      events().createIndex({ at: 1 }, { expireAfterSeconds: ONE_YEAR_SECONDS }),
-      events().createIndex({ targetId: 1, at: -1 }),
-    ]).catch((error: unknown) => {
-      ready = null
-      throw error
-    }))
-})()
+const ensureIndexes = onceUntilFailure(() =>
+  Promise.all([
+    events().createIndex({ at: 1 }, { expireAfterSeconds: ONE_YEAR_SECONDS }),
+    events().createIndex({ targetId: 1, at: -1 }),
+  ])
+)
 
 const repository: SecurityEventRepository = {
   insert: async (event) => {

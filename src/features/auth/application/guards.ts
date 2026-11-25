@@ -1,4 +1,5 @@
 import { staffAccess, type Assurance } from "../domain/assurance"
+import { loginPath } from "../domain/http"
 import { can, isStaff, type Permission, type Role } from "../domain/permissions"
 
 export type SessionUser = {
@@ -15,9 +16,6 @@ type Dependencies = {
   readonly currentUser: () => Promise<SessionUser | null>
   readonly redirect: (location: string) => never
 }
-
-const loginPath = (returnTo: string) =>
-  `/login?callbackUrl=${encodeURIComponent(returnTo)}`
 
 const ENROLL_PATH = "/account/security?required=two-factor"
 

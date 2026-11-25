@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { requirePermission } from "@/features/auth/server/session"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
 import {
   formatAmountsByCurrency,
@@ -13,16 +14,14 @@ import { listInquiries } from "@/features/contact/server/admin"
 
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
-import {
-  PortalSection,
-  SectionLink,
-  StatList,
-} from "@/components/portal/portal-section"
+import { TextLink } from "@/components/ui/text-link"
+import { PortalSection, StatList } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Admin" }
 
 export default async function AdminOverviewPage() {
+  await requirePermission("billing:read", "/admin")
   const now = new Date()
   const [summary, invoices, inquiries, mrr, renewals, lastRun, clients] =
     await Promise.all([
@@ -95,9 +94,9 @@ export default async function AdminOverviewPage() {
         <PortalSection
           title="Needs attention"
           actions={
-            <SectionLink href="/admin/billing/invoices?status=overdue">
+            <TextLink href="/admin/billing/invoices?status=overdue">
               All overdue
-            </SectionLink>
+            </TextLink>
           }
         >
           <InvoiceList
@@ -110,9 +109,7 @@ export default async function AdminOverviewPage() {
         <PortalSection
           title="Renewing in the next 14 days"
           className="xl:order-last"
-          actions={
-            <SectionLink href="/admin/billing/catalog">Services</SectionLink>
-          }
+          actions={<TextLink href="/admin/billing/catalog">Services</TextLink>}
         >
           {renewals.length === 0 ? (
             <EmptyState>No renewals coming up.</EmptyState>
@@ -146,9 +143,7 @@ export default async function AdminOverviewPage() {
         </PortalSection>
         <PortalSection
           title="New inquiries"
-          actions={
-            <SectionLink href="/admin/inquiries">All inquiries</SectionLink>
-          }
+          actions={<TextLink href="/admin/inquiries">All inquiries</TextLink>}
         >
           {inquiries.length === 0 ? (
             <EmptyState>No new inquiries.</EmptyState>

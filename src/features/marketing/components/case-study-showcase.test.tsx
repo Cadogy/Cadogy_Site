@@ -94,8 +94,7 @@ const wait = (ms: number) =>
 const selected = () =>
   screen
     .getAllByRole("tab")
-    .find((tab) => tab.getAttribute("aria-selected") === "true")
-    ?.textContent
+    .find((tab) => tab.getAttribute("aria-selected") === "true")?.textContent
 
 const preferReducedMotion = () =>
   vi.stubGlobal("matchMedia", (query: string) => ({

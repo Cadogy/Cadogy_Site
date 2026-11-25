@@ -7,35 +7,17 @@ import {
   requireSession,
 } from "@/features/auth/server/session"
 
-import { parseMoneyInput } from "../domain/format"
-import type { Result } from "../domain/invoice"
+import { toState, type ActionState } from "@/lib/action-state"
+
+import { parsePercentToBps } from "../domain/format"
 import type { AddOnStatus } from "../domain/recurring"
-import type { ActionState } from "./actions"
 import { billing, billingEngine } from "./billing"
+import { money, optionalText, text, whole } from "./form-fields"
 import {
   createBatchCheckout,
   createCardSetupCheckout,
   isStripeConfigured,
 } from "./stripe"
-
-const toState = <T>(result: Result<T>, success: string): ActionState =>
-  result.ok
-    ? { ok: true, message: success }
-    : { ok: false, message: result.error }
-
-const text = (formData: FormData, key: string) =>
-  String(formData.get(key) ?? "").trim()
-
-const optionalText = (formData: FormData, key: string) =>
-  text(formData, key) || undefined
-
-const money = (formData: FormData, key: string) =>
-  parseMoneyInput(text(formData, key)) ?? undefined
-
-const whole = (formData: FormData, key: string) => {
-  const value = text(formData, key)
-  return value ? Number(value) : undefined
-}
 
 const refresh = (clientId?: string) => {
   revalidatePath("/admin")
@@ -209,10 +191,12 @@ export async function saveBillingSettingsAction(
   formData: FormData
 ): Promise<ActionState> {
   await requirePermission("billing:write")
-  const taxPercent = Number(text(formData, "taxPercent") || 0)
+  const defaultTaxRateBps = parsePercentToBps(text(formData, "taxPercent"))
+  if (defaultTaxRateBps === null)
+    return { ok: false, message: "Enter a tax rate between 0 and 100." }
   const result = await billingEngine.saveSettings({
     paymentInstructions: text(formData, "paymentInstructions"),
-    defaultTaxRateBps: Math.round(taxPercent * 100),
+    defaultTaxRateBps,
     reminderOffsets: offsetsFrom(text(formData, "reminderOffsets")),
     autoBillEnabled: formData.get("autoBillEnabled") === "on",
   })

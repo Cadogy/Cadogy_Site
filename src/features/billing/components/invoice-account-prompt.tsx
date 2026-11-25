@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
-
-type Result = { readonly ok: boolean; readonly message: string }
 
 export type InvoiceAccountState = "guest" | "member" | "outsider"
 
@@ -16,9 +16,9 @@ export function InvoiceAccountPrompt({
 }: {
   state: InvoiceAccountState
   invoicePath: string
-  onRequest: () => Promise<Result>
+  onRequest: () => Promise<NonNullable<ActionState>>
 }) {
-  const [result, setResult] = useState<Result | null>(null)
+  const [result, setResult] = useState<ActionState>(null)
   const [pending, start] = useTransition()
 
   return (
@@ -66,12 +66,7 @@ export function InvoiceAccountPrompt({
             We&apos;ll ask the account&apos;s billing contacts to approve you.
           </p>
           {result ? (
-            <p
-              role={result.ok ? "status" : "alert"}
-              className={result.ok ? "text-success" : "text-destructive"}
-            >
-              {result.message}
-            </p>
+            <ActionMessage state={result} className="text-base" />
           ) : (
             <div>
               <Button

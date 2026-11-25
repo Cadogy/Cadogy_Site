@@ -1,17 +1,13 @@
 "use client"
 
-import {
-  startTransition,
-  useActionState,
-  useTransition,
-  type FormEvent,
-} from "react"
-import { Loader2 } from "lucide-react"
+import { useTransition } from "react"
 
-import { Button } from "@/components/ui/button"
+import { isOneOf } from "@/lib/is-one-of"
+import { ActionMessage, useFormAction } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
+import { PendingButton } from "@/components/ui/pending-button"
 import { Textarea } from "@/components/ui/textarea"
 
 import {
@@ -25,28 +21,13 @@ import {
   setTicketStatusAction,
 } from "../server/actions"
 
-const submitWith =
-  (dispatch: (data: FormData) => void, reset = false) =>
-  (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const form = event.currentTarget
-    const data = new FormData(form)
-    startTransition(() => dispatch(data))
-    if (reset) form.reset()
-  }
+const isTicketStatus = isOneOf(TICKET_STATUSES)
 
 export function NewTicketForm() {
-  const [state, dispatch, pending] = useActionState(openTicketAction, null)
+  const { state, pending, onSubmit } = useFormAction(openTicketAction)
   return (
-    <form
-      onSubmit={submitWith(dispatch)}
-      className="grid max-w-2xl gap-5 border-t pt-8"
-    >
-      {state && !state.ok ? (
-        <p role="alert" className="text-sm text-destructive">
-          {state.message}
-        </p>
-      ) : null}
+    <form onSubmit={onSubmit} className="grid max-w-2xl gap-5 border-t pt-8">
+      {state && !state.ok ? <ActionMessage state={state} /> : null}
       <Field id="subject" label="Subject">
         {(control) => (
           <Input {...control} name="subject" required maxLength={160} />
@@ -68,12 +49,13 @@ export function NewTicketForm() {
           <Textarea {...control} name="message" rows={6} required />
         )}
       </Field>
-      <Button type="submit" disabled={pending} className="justify-self-start">
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton
+        type="submit"
+        pending={pending}
+        className="justify-self-start"
+      >
         Send request
-      </Button>
+      </PendingButton>
     </form>
   )
 }
@@ -85,33 +67,25 @@ export function ReplyForm({
   ticketId: string
   as: "user" | "admin"
 }) {
-  const [state, dispatch, pending] = useActionState(
+  const { state, pending, formRef, onSubmit } = useFormAction(
     replyToTicketAction.bind(null, ticketId, as),
-    null
+    { resetOnSuccess: true }
   )
   return (
-    <form onSubmit={submitWith(dispatch, true)} className="grid gap-3">
-      {state ? (
-        <p
-          role={state.ok ? "status" : "alert"}
-          className={
-            state.ok ? "text-sm text-success" : "text-sm text-destructive"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+    <form ref={formRef} onSubmit={onSubmit} className="grid gap-3">
+      <ActionMessage state={state} />
       <Field id="message" label="Reply">
         {(control) => (
           <Textarea {...control} name="message" rows={4} required />
         )}
       </Field>
-      <Button type="submit" disabled={pending} className="justify-self-start">
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton
+        type="submit"
+        pending={pending}
+        className="justify-self-start"
+      >
         Send reply
-      </Button>
+      </PendingButton>
     </form>
   )
 }
@@ -131,7 +105,8 @@ export function TicketStatusSelect({
       disabled={pending}
       className="w-40 capitalize"
       onChange={(event) => {
-        const next = event.target.value as TicketStatus
+        const next = event.target.value
+        if (!isTicketStatus(next)) return
         startStatus(() => setTicketStatusAction(ticketId, next))
       }}
     >

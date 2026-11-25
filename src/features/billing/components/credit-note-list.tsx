@@ -2,9 +2,9 @@ import Link from "next/link"
 
 import { EmptyState } from "@/components/ui/empty-state"
 
-import type { CreditNoteKind } from "../application/credits"
+import type { CreditNote } from "../application/credits"
 import { formatDate, formatMoney } from "../domain/format"
-import type { Currency } from "../domain/schema"
+import type { CreditNoteKind } from "../domain/invoice"
 
 const KIND_LABELS: Record<CreditNoteKind, string> = {
   refund: "Refund",
@@ -12,16 +12,17 @@ const KIND_LABELS: Record<CreditNoteKind, string> = {
   balance_credit: "Account credit",
 }
 
-type ListedNote = {
-  readonly id: string
-  readonly number: string
-  readonly invoiceId: string | null
-  readonly kind: CreditNoteKind
-  readonly amount: number
-  readonly currency: Currency
-  readonly reason: string
-  readonly createdAt: Date
-}
+type ListedNote = Pick<
+  CreditNote,
+  | "id"
+  | "number"
+  | "invoiceId"
+  | "kind"
+  | "amount"
+  | "currency"
+  | "reason"
+  | "createdAt"
+>
 
 export function CreditNoteList({
   notes,

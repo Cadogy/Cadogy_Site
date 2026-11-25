@@ -2,13 +2,13 @@
 
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
-import { X } from "lucide-react"
+import { Menu, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const Sheet = SheetPrimitive.Root
+import { Button } from "./button"
 
-const SheetTrigger = SheetPrimitive.Trigger
+const Sheet = SheetPrimitive.Root
 
 const SheetPortal = SheetPrimitive.Portal
 
@@ -55,34 +55,6 @@ const SheetContent = React.forwardRef<
 ))
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
-const SheetHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col space-y-2 text-center sm:text-left",
-      className
-    )}
-    {...props}
-  />
-)
-SheetHeader.displayName = "SheetHeader"
-
-const SheetFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
-    )}
-    {...props}
-  />
-)
-SheetFooter.displayName = "SheetFooter"
-
 const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
@@ -107,4 +79,28 @@ const SheetDescription = React.forwardRef<
 ))
 SheetDescription.displayName = SheetPrimitive.Description.displayName
 
-export { Sheet, SheetTrigger, SheetContent, SheetTitle, SheetDescription }
+function MenuSheetTrigger({ className }: { className?: string }) {
+  return (
+    <SheetPrimitive.Trigger asChild>
+      <Button
+        variant="ghost"
+        size="icon"
+        className={className}
+        aria-label="Open menu"
+      >
+        <Menu className="size-5" aria-hidden="true" />
+      </Button>
+    </SheetPrimitive.Trigger>
+  )
+}
+
+function MenuSheetHeader({ description }: { description: string }) {
+  return (
+    <div className="flex h-16 shrink-0 items-center px-5">
+      <SheetTitle className="text-meta font-normal">Menu</SheetTitle>
+      <SheetDescription className="sr-only">{description}</SheetDescription>
+    </div>
+  )
+}
+
+export { Sheet, SheetContent, MenuSheetTrigger, MenuSheetHeader }

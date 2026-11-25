@@ -2,7 +2,7 @@ import "server-only"
 
 import { isValidObjectId, Types } from "mongoose"
 
-import { connectToDatabase } from "@/lib/mongodb"
+import { withDatabase } from "@/lib/mongodb"
 
 import type { BillingClient, BillingRepository } from "../application/ports"
 import type { Invoice } from "../domain/invoice"
@@ -108,13 +108,6 @@ const toClientFields = (client: BillingClient | Omit<BillingClient, "id">) => {
   const { id: _id, ...rest } = { id: undefined, ...client }
   return rest
 }
-
-const withDatabase =
-  <Args extends unknown[], R>(fn: (...args: Args) => Promise<R>) =>
-  async (...args: Args): Promise<R> => {
-    await connectToDatabase()
-    return fn(...args)
-  }
 
 export const mongoBillingRepository: BillingRepository = {
   insertClient: withDatabase(async (client) => {

@@ -2,18 +2,18 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { requireSession } from "@/features/auth/server/session"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
-import { formatAmountsByCurrency } from "@/features/billing/domain/format"
+import {
+  formatAmountsByCurrency,
+  sumByCurrency,
+} from "@/features/billing/domain/format"
+import { invoicePublicPath } from "@/features/billing/domain/invoice"
 import { displayStatus } from "@/features/billing/domain/lifecycle"
-import type { Currency } from "@/features/billing/domain/schema"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import { billing } from "@/features/billing/server/billing"
 
 import { Button } from "@/components/ui/button"
-import {
-  PortalSection,
-  SectionLink,
-  StatList,
-} from "@/components/portal/portal-section"
+import { TextLink } from "@/components/ui/text-link"
+import { PortalSection, StatList } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Overview" }
@@ -23,17 +23,14 @@ export default async function DashboardPage() {
   const invoices = await billing.listForPortalUser(user.email)
   const now = new Date()
 
-  const outstanding = invoices
-    .filter((invoice) => invoice.status === "open")
-    .reduce<Partial<Record<Currency, number>>>(
-      (totals, invoice) => ({
-        ...totals,
-        [invoice.currency]:
-          (totals[invoice.currency] ?? 0) +
-          calculateInvoiceTotals(invoice).amountDue,
-      }),
-      {}
-    )
+  const outstanding = sumByCurrency(
+    invoices
+      .filter((invoice) => invoice.status === "open")
+      .map((invoice) => ({
+        currency: invoice.currency,
+        amount: calculateInvoiceTotals(invoice).amountDue,
+      }))
+  )
   const overdueCount = invoices.filter(
     (invoice) => displayStatus(invoice, now) === "overdue"
   ).length
@@ -65,14 +62,12 @@ export default async function DashboardPage() {
       <div className="mt-12 stack-sections">
         <PortalSection
           title="Recent invoices"
-          actions={
-            <SectionLink href="/dashboard/billing">View all</SectionLink>
-          }
+          actions={<TextLink href="/dashboard/billing">View all</TextLink>}
         >
           <InvoiceList
             invoices={invoices.slice(0, 5)}
             now={now}
-            hrefFor={(invoice) => `/invoice/${invoice.publicToken}`}
+            hrefFor={(invoice) => invoicePublicPath(invoice.publicToken)}
             emptyMessage={`No invoices yet. Invoices sent to ${user.email} will appear here.`}
           />
         </PortalSection>

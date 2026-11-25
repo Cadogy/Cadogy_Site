@@ -2,27 +2,21 @@
 
 import { useState, useTransition } from "react"
 
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
-
-type Result = { readonly ok: boolean; readonly message: string }
 
 export function AccessDecision({
   onDecide,
 }: {
-  onDecide: (decision: "approve" | "decline") => Promise<Result>
+  onDecide: (
+    decision: "approve" | "decline"
+  ) => Promise<NonNullable<ActionState>>
 }) {
-  const [result, setResult] = useState<Result | null>(null)
+  const [result, setResult] = useState<ActionState>(null)
   const [pending, start] = useTransition()
 
-  if (result)
-    return (
-      <p
-        role={result.ok ? "status" : "alert"}
-        className={result.ok ? "text-success" : "text-destructive"}
-      >
-        {result.message}
-      </p>
-    )
+  if (result) return <ActionMessage state={result} className="text-base" />
 
   const decide = (decision: "approve" | "decline") =>
     start(async () => setResult(await onDecide(decision)))

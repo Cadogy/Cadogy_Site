@@ -1,9 +1,10 @@
+import { SIGNED_IN_AREAS } from "./signed-in-areas"
+
 type Header = { readonly key: string; readonly value: string }
 type HeaderRule = { readonly source: string; readonly headers: Header[] }
 
 const PRIVATE_SURFACES = [
-  "/dashboard/:path*",
-  "/admin/:path*",
+  ...SIGNED_IN_AREAS.map((area) => `${area}/:path*`),
   "/invoice/:path*",
 ]
 

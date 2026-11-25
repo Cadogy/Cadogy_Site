@@ -1,8 +1,7 @@
+import { DAY_MS } from "./dates"
 import type { Invoice } from "./invoice"
 import type { Currency, LineItem } from "./schema"
 import { calculateInvoiceTotals } from "./totals"
-
-const DAY_MS = 86_400_000
 
 export type PendingChargeLine = {
   readonly id: string

@@ -2,7 +2,9 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { ArrowUpRight, Play } from "lucide-react"
+import { Play } from "lucide-react"
+
+import { TextLink } from "@/components/ui/text-link"
 
 export type Video = {
   readonly youtubeId: string
@@ -52,15 +54,13 @@ export function VideoEmbed({ video }: { video: Video }) {
           </button>
         )}
       </div>
-      <a
+      <TextLink
         href={watchUrl(video.youtubeId)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex min-h-11 items-center gap-1.5 justify-self-start text-sm text-muted-foreground transition-colors hover:text-foreground"
+        external
+        className="justify-self-start"
       >
         Watch on YouTube
-        <ArrowUpRight className="size-3.5" aria-hidden="true" />
-      </a>
+      </TextLink>
     </div>
   )
 }

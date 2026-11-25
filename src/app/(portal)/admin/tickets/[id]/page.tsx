@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { findUserContact } from "@/features/auth/server/database"
+import { requirePermission } from "@/features/auth/server/session"
 import {
   ReplyForm,
   TicketStatusSelect,
@@ -16,6 +17,7 @@ type Props = { params: Promise<{ id: string }> }
 
 export default async function AdminTicketPage({ params }: Props) {
   const { id } = await params
+  await requirePermission("support:read", `/admin/tickets/${id}`)
   const ticket = await support.get(id)
   if (!ticket) notFound()
   const client = await findUserContact(ticket.userId)

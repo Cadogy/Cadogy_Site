@@ -4,15 +4,16 @@ import { useState, type FormEvent } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { authClient } from "@/features/auth/client"
-import { Copy, Download, Loader2 } from "lucide-react"
+import { Copy, Download } from "lucide-react"
 import QRCode from "qrcode"
 
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { PendingButton } from "@/components/ui/pending-button"
 
 import { FormAlert } from "./auth-card"
-import { authErrorMessage } from "./auth-errors"
+import { authErrorMessage, type AuthError } from "./auth-errors"
 
 type Purpose = "enable" | "disable" | "codes"
 
@@ -27,8 +28,6 @@ type Step =
     }
   | { readonly kind: "codes"; readonly codes: readonly string[] }
 
-type ClientError = { code?: string; message?: string; status: number }
-
 const groupedSecret = (uri: string) =>
   (new URL(uri).searchParams.get("secret") ?? "").replace(/(.{4})(?=.)/g, "$1 ")
 
@@ -36,23 +35,6 @@ const qrDataUrl = async (uri: string) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(
     await QRCode.toString(uri, { type: "svg", margin: 1 })
   )}`
-
-function SubmitButton({
-  pending,
-  children,
-}: {
-  pending: boolean
-  children: React.ReactNode
-}) {
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? (
-        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-      ) : null}
-      {children}
-    </Button>
-  )
-}
 
 function BackupCodes({
   codes,
@@ -121,7 +103,7 @@ export function TwoFactorSettings({ enabled }: { enabled: boolean }) {
     router.refresh()
   }
 
-  const fail = (clientError: ClientError) => {
+  const fail = (clientError: AuthError) => {
     setPending(false)
     setError(authErrorMessage(clientError))
   }
@@ -235,7 +217,9 @@ export function TwoFactorSettings({ enabled }: { enabled: boolean }) {
             )}
           </Field>
           <div className="flex flex-wrap gap-2">
-            <SubmitButton pending={pending}>Continue</SubmitButton>
+            <PendingButton type="submit" pending={pending}>
+              Continue
+            </PendingButton>
             <Button type="button" variant="ghost" onClick={finish}>
               Cancel
             </Button>
@@ -281,7 +265,9 @@ export function TwoFactorSettings({ enabled }: { enabled: boolean }) {
             )}
           </Field>
           <div className="flex flex-wrap gap-2">
-            <SubmitButton pending={pending}>Verify and turn on</SubmitButton>
+            <PendingButton type="submit" pending={pending}>
+              Verify and turn on
+            </PendingButton>
             <Button type="button" variant="ghost" onClick={finish}>
               Cancel
             </Button>

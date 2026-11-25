@@ -1,5 +1,7 @@
-import { fail, ok, type Result } from "@/features/billing/domain/invoice"
 import { z } from "zod"
+
+import { optionValues } from "@/lib/option-values"
+import { fail, firstIssue, ok, type Result } from "@/lib/result"
 
 export const TICKET_CATEGORIES = [
   { value: "general", label: "General question" },
@@ -74,18 +76,9 @@ const message = z
 
 const openSchema = z.object({
   subject: z.string().trim().min(3, "Add a short subject.").max(160),
-  category: z.enum(
-    TICKET_CATEGORIES.map((category) => category.value) as [
-      TicketCategory,
-      ...TicketCategory[],
-    ],
-    "Choose a category."
-  ),
+  category: z.enum(optionValues(TICKET_CATEGORIES), "Choose a category."),
   message,
 })
-
-const firstIssue = (error: z.ZodError) =>
-  error.issues[0]?.message ?? "Please check the form."
 
 const newestFirst = (a: SupportTicket, b: SupportTicket) =>
   b.lastReplyAt.getTime() - a.lastReplyAt.getTime()

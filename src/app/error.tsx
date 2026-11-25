@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 
+import { siteConfig } from "@/config/site"
 import { reloadOnceForChunkError } from "@/lib/chunk-reload"
 import { Button } from "@/components/ui/button"
 
@@ -27,7 +28,7 @@ export default function ErrorBoundary({
       <p className="text-meta">Something went wrong</p>
       <h1 className="mt-3 text-h2">We couldn&apos;t load this page.</h1>
       <p className="mt-4 max-w-xl text-lead">
-        Please try again. If the problem continues, email hello@cadogy.com.
+        Please try again. If the problem continues, email {siteConfig.email}.
       </p>
       <Button className="mt-8" size="lg" onClick={reset}>
         Try again

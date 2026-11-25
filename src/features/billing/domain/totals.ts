@@ -9,7 +9,7 @@ const BPS = 10_000
 
 const roundHalfUp = (value: number) => Math.round(value)
 
-const sum = (values: readonly number[]) =>
+export const sum = (values: readonly number[]) =>
   values.reduce((acc, value) => acc + value, 0)
 
 export const calculateLineTotal = ({

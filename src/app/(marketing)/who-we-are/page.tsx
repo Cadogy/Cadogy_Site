@@ -4,11 +4,13 @@ import { CtaBand } from "@/features/marketing/components/cta-band"
 import { PageHeader } from "@/features/marketing/components/page-header"
 import { PrinciplesGrid } from "@/features/marketing/components/principles-grid"
 import { SectionHeading } from "@/features/marketing/components/section-heading"
+import { TagList } from "@/features/marketing/components/tag-list"
 import { Mail } from "lucide-react"
 import { FaLinkedin } from "react-icons/fa6"
 
 import { siteConfig } from "@/config/site"
 import { breadcrumbSchema, personSchema } from "@/lib/seo/structured-data"
+import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/seo/json-ld"
 
 export const metadata: Metadata = {
@@ -37,9 +39,6 @@ const stack = [
   "WordPress",
   "Shopify",
 ] as const
-
-const iconLinkClass =
-  "inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/8 hover:text-foreground"
 
 export default function AboutPage() {
   return (
@@ -122,22 +121,24 @@ export default function AboutPage() {
                   {founder.bio}
                 </p>
                 <div className="mt-4 -ml-3 flex">
-                  <a
-                    href={founder.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${founder.name} on LinkedIn`}
-                    className={iconLinkClass}
-                  >
-                    <FaLinkedin className="size-[18px]" aria-hidden="true" />
-                  </a>
-                  <a
-                    href={`mailto:${founder.email}`}
-                    aria-label={`Email ${founder.name}`}
-                    className={iconLinkClass}
-                  >
-                    <Mail className="size-[18px]" aria-hidden="true" />
-                  </a>
+                  <Button asChild variant="quiet" size="icon">
+                    <a
+                      href={founder.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${founder.name} on LinkedIn`}
+                    >
+                      <FaLinkedin className="size-[18px]" aria-hidden="true" />
+                    </a>
+                  </Button>
+                  <Button asChild variant="quiet" size="icon">
+                    <a
+                      href={`mailto:${founder.email}`}
+                      aria-label={`Email ${founder.name}`}
+                    >
+                      <Mail className="size-[18px]" aria-hidden="true" />
+                    </a>
+                  </Button>
                 </div>
               </li>
             ))}
@@ -165,16 +166,7 @@ export default function AboutPage() {
             accent="deeply."
             lead="Proven technology for the foundation, modern tooling where it pays off."
           />
-          <ul className="mt-10 flex flex-wrap gap-2">
-            {stack.map((tech) => (
-              <li
-                key={tech}
-                className="rounded-full bg-foreground/8 px-4 py-2 text-sm"
-              >
-                {tech}
-              </li>
-            ))}
-          </ul>
+          <TagList items={stack} className="mt-10" />
         </div>
       </section>
 

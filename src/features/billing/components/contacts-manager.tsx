@@ -2,14 +2,14 @@
 
 import { useState, useTransition, type FormEvent } from "react"
 
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
 
 import type { ContactRole } from "../domain/contacts"
-
-type Result = { readonly ok: boolean; readonly message: string }
 
 type TeamContact = {
   readonly email: string
@@ -39,14 +39,17 @@ export function ContactsManager({
   primary: { readonly email: string; readonly name: string }
   contacts: readonly TeamContact[]
   canManage: boolean
-  onInvite: (input: TeamContact) => Promise<Result>
-  onRoleChange: (email: string, role: ContactRole) => Promise<Result>
-  onRemove: (email: string) => Promise<Result>
+  onInvite: (input: TeamContact) => Promise<NonNullable<ActionState>>
+  onRoleChange: (
+    email: string,
+    role: ContactRole
+  ) => Promise<NonNullable<ActionState>>
+  onRemove: (email: string) => Promise<NonNullable<ActionState>>
 }) {
-  const [result, setResult] = useState<Result | null>(null)
+  const [result, setResult] = useState<ActionState>(null)
   const [pending, start] = useTransition()
 
-  const run = (action: () => Promise<Result>) =>
+  const run = (action: () => Promise<NonNullable<ActionState>>) =>
     start(async () => setResult(await action()))
 
   const invite = (event: FormEvent<HTMLFormElement>) => {
@@ -137,16 +140,7 @@ export function ContactsManager({
         ))}
       </ul>
 
-      {result ? (
-        <p
-          role={result.ok ? "status" : "alert"}
-          className={
-            result.ok ? "text-sm text-success" : "text-sm text-destructive"
-          }
-        >
-          {result.message}
-        </p>
-      ) : null}
+      <ActionMessage state={result} />
 
       {canManage ? (
         <form onSubmit={invite} className="grid gap-5">

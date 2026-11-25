@@ -2,22 +2,23 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Menu } from "lucide-react"
 
 import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
+  MenuSheetHeader,
+  MenuSheetTrigger,
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 
 import { AccountControl, AccountLink } from "./account-link"
 import { Logo } from "./logo"
 import { NavLink } from "./nav-link"
+
+const headerLinkClass =
+  "inline-flex min-h-11 items-center rounded-full px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
 
 function MobileMenu() {
   const [open, setOpen] = useState(false)
@@ -25,23 +26,9 @@ function MobileMenu() {
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          aria-label="Open menu"
-        >
-          <Menu className="size-5" aria-hidden="true" />
-        </Button>
-      </SheetTrigger>
+      <MenuSheetTrigger className="lg:hidden" />
       <SheetContent>
-        <div className="flex h-16 shrink-0 items-center px-5">
-          <SheetTitle className="text-meta font-normal">Menu</SheetTitle>
-          <SheetDescription className="sr-only">
-            Site navigation
-          </SheetDescription>
-        </div>
+        <MenuSheetHeader description="Site navigation" />
         <nav
           aria-label="Mobile"
           className="flex flex-1 flex-col justify-center px-5"
@@ -52,7 +39,6 @@ function MobileMenu() {
               href={item.href}
               onNavigate={close}
               className="py-2 text-menu text-muted-foreground transition-colors hover:text-foreground"
-              activeClassName="text-foreground"
             >
               {item.label}
             </NavLink>
@@ -96,16 +82,15 @@ export function SiteHeader() {
             <NavLink
               key={item.href}
               href={item.href}
-              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              activeClassName="text-foreground"
+              className={headerLinkClass}
             >
               {item.label}
             </NavLink>
           ))}
         </nav>
         <div className="hidden items-center justify-end gap-1 lg:flex">
-          <AccountControl className="inline-flex min-h-11 items-center rounded-full px-4 text-sm text-muted-foreground transition-colors hover:text-foreground" />
-          <Button asChild size="sm">
+          <AccountControl className={headerLinkClass} />
+          <Button asChild>
             <Link href="/contact">Start a project</Link>
           </Button>
         </div>

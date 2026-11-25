@@ -4,11 +4,11 @@ import { useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { authClient } from "@/features/auth/client"
-import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { PendingButton } from "@/components/ui/pending-button"
 
 import { FormAlert } from "./auth-card"
 import { authErrorMessage } from "./auth-errors"
@@ -111,12 +111,9 @@ export function TwoFactorForm({ callbackPath }: { callbackPath: string }) {
         Trust this device for 30 days
       </label>
 
-      <Button type="submit" size="lg" disabled={pending}>
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton type="submit" size="lg" pending={pending}>
         Verify
-      </Button>
+      </PendingButton>
 
       <Button
         type="button"

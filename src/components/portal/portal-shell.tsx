@@ -13,7 +13,6 @@ import {
   LayoutDashboard,
   LayoutGrid,
   LifeBuoy,
-  Menu,
   MessagesSquare,
   Package,
   PanelLeftClose,
@@ -26,24 +25,20 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { isActivePath } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { pillTabTone } from "@/components/ui/pill-tab"
 import {
+  MenuSheetHeader,
+  MenuSheetTrigger,
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 import { Logo } from "@/components/site/logo"
 
 import { ImpersonationBanner } from "./impersonation-banner"
-import {
-  SIDEBAR_COOKIE,
-  type NavIcon,
-  type PortalNavGroup,
-  type PortalNavItem,
-} from "./navigation"
+import { SIDEBAR_COOKIE, type NavIcon, type PortalNavGroup } from "./navigation"
 import { UserMenu } from "./user-menu"
 
 type ShellUser = {
@@ -70,11 +65,6 @@ const ICONS: Record<NavIcon, LucideIcon> = {
   account: CircleUser,
 }
 
-const isActive = (pathname: string, item: PortalNavItem) =>
-  item.exact
-    ? pathname === item.href
-    : pathname === item.href || pathname.startsWith(`${item.href}/`)
-
 function NavGroups({
   groups,
   label,
@@ -97,7 +87,9 @@ function NavGroups({
             {group.label}
           </h2>
           {group.items.map((item) => {
-            const active = isActive(pathname, item)
+            const active = isActivePath(pathname, item.href, {
+              exact: item.exact,
+            })
             const Icon = ICONS[item.icon]
             return (
               <Link
@@ -110,9 +102,8 @@ function NavGroups({
                   "flex min-h-11 items-center gap-3 rounded-full px-3 transition-colors",
                   large ? "text-lg" : "text-sm",
                   collapsed && "justify-center px-0",
-                  active
-                    ? "bg-foreground/8 text-foreground"
-                    : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                  pillTabTone(active),
+                  !active && "hover:bg-foreground/5"
                 )}
               >
                 <Icon className="size-[18px] shrink-0" aria-hidden="true" />
@@ -130,18 +121,9 @@ function MobileMenu({ groups }: { groups: readonly PortalNavGroup[] }) {
   const [open, setOpen] = useState(false)
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Open menu">
-          <Menu className="size-5" aria-hidden="true" />
-        </Button>
-      </SheetTrigger>
+      <MenuSheetTrigger />
       <SheetContent className="overflow-y-auto">
-        <div className="flex h-16 shrink-0 items-center px-5">
-          <SheetTitle className="text-meta font-normal">Menu</SheetTitle>
-          <SheetDescription className="sr-only">
-            Portal navigation
-          </SheetDescription>
-        </div>
+        <MenuSheetHeader description="Portal navigation" />
         <div className="px-3 pb-10">
           <NavGroups
             groups={groups}
@@ -217,16 +199,15 @@ export function PortalShell({
               collapsed ? "justify-center" : "justify-between pr-2 pl-5"
             )}
           >
-            {collapsed ? null : <Logo href="/" />}
+            {collapsed ? null : <Logo />}
             <Button
-              variant="ghost"
+              variant="quiet"
               size="icon"
               onClick={toggle}
               aria-controls="portal-sidebar"
               aria-expanded={!collapsed}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               title={`${collapsed ? "Expand" : "Collapse"} sidebar (Ctrl+B)`}
-              className="text-muted-foreground hover:text-foreground"
             >
               <ToggleIcon className="size-[18px]" aria-hidden="true" />
             </Button>
@@ -244,7 +225,7 @@ export function PortalShell({
         <div className="min-w-0">
           <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur-sm lg:hidden">
             <div className="flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
-              <Logo href="/" />
+              <Logo />
               <div className="flex items-center gap-1">
                 <UserMenu user={user} />
                 <MobileMenu groups={groups} />

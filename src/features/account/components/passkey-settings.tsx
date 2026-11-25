@@ -9,16 +9,12 @@ import { KeyRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import { FormAlert } from "./auth-card"
-import { authErrorMessage } from "./auth-errors"
+import { authErrorMessage, type ClientResult } from "./auth-errors"
 
 export type SavedPasskey = {
   readonly id: string
   readonly name: string
   readonly createdLabel: string
-}
-
-type ClientResult = {
-  readonly error: { code?: string; message?: string; status: number } | null
 }
 
 export function PasskeySettings({

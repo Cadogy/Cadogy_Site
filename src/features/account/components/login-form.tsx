@@ -4,11 +4,12 @@ import { useEffect, useEffectEvent, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { authClient, humanCheckHeaders } from "@/features/auth/client"
-import { KeyRound, Loader2, Mail } from "lucide-react"
+import { KeyRound, Mail } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { PendingButton } from "@/components/ui/pending-button"
 import { HumanCheck } from "@/components/security/human-check"
 
 import { FormAlert } from "./auth-card"
@@ -153,12 +154,9 @@ export function LoginForm({
         onToken={setTurnstileToken}
       />
 
-      <Button type="submit" size="lg" disabled={pending}>
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton type="submit" size="lg" pending={pending}>
         Sign in
-      </Button>
+      </PendingButton>
 
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span className="h-px flex-1 bg-border" aria-hidden="true" />

@@ -7,6 +7,7 @@ import { RoleSelect } from "@/features/users/role-select"
 import { UserActions } from "@/features/users/user-actions"
 
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
@@ -77,9 +78,7 @@ export default async function UsersPage({ searchParams }: Props) {
       </form>
 
       {users.length === 0 ? (
-        <p className="border-t pt-6 text-muted-foreground">
-          No one matches those filters.
-        </p>
+        <EmptyState>No one matches those filters.</EmptyState>
       ) : (
         <ul className="rule-list">
           {users.map((user) => (

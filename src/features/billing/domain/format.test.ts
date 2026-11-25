@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  bpsToPercentText,
+  cardSummary,
+  clientDisplayName,
   formatAmountsByCurrency,
   formatDate,
   formatMoney,
   intervalLabel,
+  INVOICE_EVENT_LABELS,
   parseMoneyInput,
+  parsePercentToBps,
+  PAYMENT_METHOD_LABELS,
+  sumByCurrency,
+  toMoneyInput,
 } from "./format"
 
 describe("formatMoney", () => {
@@ -64,5 +72,69 @@ describe("intervalLabel", () => {
   it("prices recurring services per period", () => {
     expect(intervalLabel("month", "per")).toBe("/ month")
     expect(intervalLabel("one_time", "per")).toBe("one-time")
+  })
+})
+
+describe("money and percent inputs", () => {
+  it("shows minor units as an editable amount", () => {
+    expect(toMoneyInput(150_000)).toBe("1500.00")
+    expect(toMoneyInput(5)).toBe("0.05")
+  })
+
+  it("shows basis points as a percentage", () => {
+    expect(bpsToPercentText(825)).toBe("8.25")
+    expect(bpsToPercentText(0)).toBe("0")
+  })
+
+  it("reads a percentage of up to two decimals as basis points", () => {
+    expect(parsePercentToBps("8.25")).toBe(825)
+    expect(parsePercentToBps(" ")).toBe(0)
+    expect(parsePercentToBps("100")).toBe(10_000)
+  })
+
+  it("rejects percentages that aren't between 0 and 100", () => {
+    expect(parsePercentToBps("100.01")).toBeNull()
+    expect(parsePercentToBps("-1")).toBeNull()
+    expect(parsePercentToBps("8.255")).toBeNull()
+    expect(parsePercentToBps("ten")).toBeNull()
+  })
+})
+
+describe("sumByCurrency", () => {
+  it("totals amounts separately for each currency", () => {
+    expect(
+      sumByCurrency([
+        { currency: "USD", amount: 100 },
+        { currency: "EUR", amount: 50 },
+        { currency: "USD", amount: 25 },
+      ])
+    ).toEqual({ USD: 125, EUR: 50 })
+  })
+
+  it("is empty when there is nothing to total", () => {
+    expect(sumByCurrency([])).toEqual({})
+  })
+})
+
+describe("display labels", () => {
+  it("names every payment method", () => {
+    expect(PAYMENT_METHOD_LABELS.bank_transfer).toBe("Bank transfer")
+    expect(PAYMENT_METHOD_LABELS.stripe).toBe("Card")
+  })
+
+  it("names every invoice event for the audit timeline", () => {
+    expect(INVOICE_EVENT_LABELS.sent).toBe("Emailed to client")
+    expect(INVOICE_EVENT_LABELS.dispute_closed).toBe("Dispute closed")
+  })
+
+  it("prefers a client's company over the contact name", () => {
+    expect(clientDisplayName({ company: "Acme", name: "Ada" })).toBe("Acme")
+    expect(clientDisplayName({ company: "", name: "Ada" })).toBe("Ada")
+  })
+
+  it("summarizes a saved card", () => {
+    expect(
+      cardSummary({ brand: "visa", last4: "4242", expMonth: 4, expYear: 2030 })
+    ).toBe("visa ending 4242, expires 4/2030")
   })
 })

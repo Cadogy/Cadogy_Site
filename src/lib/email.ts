@@ -28,15 +28,16 @@ export const sendEmail = async (email: OutgoingEmail) => {
     subject: email.subject,
     html: email.html,
     text: email.text,
-    replyTo: email.replyTo ?? "hello@cadogy.com",
+    replyTo: email.replyTo ?? siteConfig.email,
   })
   if (error)
     throw new Error(`Resend rejected "${email.subject}": ${error.message}`)
 }
 
 type ActionEmail = {
-  readonly to: string
+  readonly to: string | readonly string[]
   readonly subject: string
+  readonly preheader?: string
   readonly intro: string
   readonly url: string
   readonly cta: string
@@ -46,6 +47,7 @@ type ActionEmail = {
 const sendActionEmail = ({
   to,
   subject,
+  preheader,
   intro,
   url,
   cta,
@@ -56,7 +58,7 @@ const sendActionEmail = ({
     subject,
     html: emailLayout({
       baseUrl: env.NEXT_PUBLIC_APP_URL,
-      preheader: intro,
+      preheader: preheader ?? intro,
       body: `<p style="margin:0 0 16px;">${escapeHtml(intro)}</p>${emailButton(url, cta)}<p style="margin:0;color:#71717a;font-size:13px;">${escapeHtml(outro)}</p>`,
     }),
     text: `${intro}\n\n${cta}: ${url}\n\n${outro}`,
@@ -194,15 +196,15 @@ export const sendAccessRequest = (
     readonly approveUrl: string
   }
 ) =>
-  sendEmail({
+  sendActionEmail({
     to,
     subject: `${details.requester} asked to see ${details.company}'s invoices`,
-    html: emailLayout({
-      baseUrl: env.NEXT_PUBLIC_APP_URL,
-      preheader: `${details.requester} wants access to your Cadogy account.`,
-      body: `<p style="margin:0 0 16px;">${escapeHtml(`${details.requester} opened invoice ${details.invoiceNumber} and asked to add it to their Cadogy account. Approving lets them see ${details.company}'s invoices, statements and support requests as a viewer.`)}</p>${emailButton(details.approveUrl, "Review the request")}<p style="margin:0;color:#71717a;font-size:13px;">${escapeHtml("If you don't recognize this person, decline the request. The link expires in 7 days.")}</p>`,
-    }),
-    text: `${details.requester} asked to see ${details.company}'s invoices on Cadogy.\n\nReview the request: ${details.approveUrl}\n\nIf you don't recognize this person, decline it. The link expires in 7 days.`,
+    preheader: `${details.requester} wants access to your Cadogy account.`,
+    intro: `${details.requester} opened invoice ${details.invoiceNumber} and asked to add it to their Cadogy account. Approving lets them see ${details.company}'s invoices, statements and support requests as a viewer.`,
+    url: details.approveUrl,
+    cta: "Review the request",
+    outro:
+      "If you don't recognize this person, decline the request. The link expires in 7 days.",
   })
 
 export const sendAccessApproved = (email: string, company: string) =>

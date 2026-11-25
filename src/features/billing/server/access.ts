@@ -5,7 +5,7 @@ import { model, models, Schema, type Model, type Types } from "mongoose"
 
 import { env } from "@/env"
 import { sendAccessApproved, sendAccessRequest } from "@/lib/email"
-import { connectToDatabase } from "@/lib/mongodb"
+import { withDatabase, withoutId } from "@/lib/mongodb"
 
 import {
   createAccessRequests,
@@ -48,23 +48,15 @@ const toRequest = ({ _id, ...rest }: AccessRequestDoc): AccessRequest => ({
   id: _id.toString(),
 })
 
-const withDb =
-  <Args extends unknown[], R>(fn: (...args: Args) => Promise<R>) =>
-  async (...args: Args) => {
-    await connectToDatabase()
-    return fn(...args)
-  }
-
 const repository: AccessRequestRepository = {
-  insert: withDb(async (request) =>
+  insert: withDatabase(async (request) =>
     toRequest((await AccessRequestModel.create(request)).toObject())
   ),
-  save: withDb(async (request) => {
-    const { id, ...fields } = request
-    await AccessRequestModel.replaceOne({ _id: id }, fields)
+  save: withDatabase(async (request) => {
+    await AccessRequestModel.replaceOne({ _id: request.id }, withoutId(request))
     return request
   }),
-  findPending: withDb(async (clientId, email, now) => {
+  findPending: withDatabase(async (clientId, email, now) => {
     const doc = await AccessRequestModel.findOne({
       clientId,
       email,
@@ -73,7 +65,7 @@ const repository: AccessRequestRepository = {
     }).lean<AccessRequestDoc>()
     return doc ? toRequest(doc) : null
   }),
-  findByTokenHash: withDb(async (tokenHash) => {
+  findByTokenHash: withDatabase(async (tokenHash) => {
     const doc = await AccessRequestModel.findOne({
       tokenHash,
     }).lean<AccessRequestDoc>()

@@ -36,8 +36,14 @@ export const users = () => authDb.collection<UserRecord>("user")
 export const userObjectId = (id: string) =>
   ObjectId.isValid(id) ? new ObjectId(id) : null
 
-export const findUserContact = async (id: string) => {
+export const findUserById = (id: string) => {
   const _id = userObjectId(id)
-  const doc = _id ? await users().findOne({ _id }) : null
+  return _id ? users().findOne({ _id }) : Promise.resolve(null)
+}
+
+export const countOwners = () => users().countDocuments({ role: "owner" })
+
+export const findUserContact = async (id: string) => {
+  const doc = await findUserById(id)
   return doc ? { email: doc.email, name: doc.name } : null
 }

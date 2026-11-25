@@ -1,17 +1,17 @@
 import "server-only"
 
+import { formatDateTimeUtc } from "@/lib/format-date"
+
 import { LOCKOUT } from "../application/lockout"
 import { describeDevice, displayIp } from "../domain/devices"
 import { ROLE_LABELS, toRole } from "../domain/permissions"
-import { eventsInGroup, securityEventLabel } from "../domain/security-events"
+import {
+  eventsInGroup,
+  isFailureEvent,
+  securityEventLabel,
+} from "../domain/security-events"
 import { authDb, userObjectId, users } from "./database"
 import { securityLog } from "./security-log"
-
-const dateTime = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-})
 
 export const staffSecurity = async () => {
   const staff = await users()
@@ -71,12 +71,12 @@ export const studioLog = async (group: string | undefined) => {
   return events.map((event) => ({
     key: `${event.type}-${event.at.getTime()}-${event.targetId ?? ""}`,
     label: securityEventLabel(event.type),
-    warning: eventsInGroup("failures")?.includes(event.type) ?? false,
+    warning: isFailureEvent(event.type),
     actor: emailOf(event.actorId),
     target: emailOf(event.targetId),
     detail: event.detail ?? "",
     device: event.userAgent ? describeDevice(event.userAgent) : "Automatic",
     ip: displayIp(event.ip),
-    when: `${dateTime.format(event.at)} UTC`,
+    when: formatDateTimeUtc(event.at),
   }))
 }

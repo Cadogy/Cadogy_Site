@@ -5,48 +5,21 @@ import {
   useId,
   useRef,
   useState,
-  useSyncExternalStore,
   type FocusEvent,
   type KeyboardEvent,
 } from "react"
 import { Pause, Play } from "lucide-react"
 
+import { useInView } from "@/lib/hooks/use-in-view"
+import { useReducedMotion } from "@/lib/hooks/use-reduced-motion"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { pillTabClass } from "@/components/ui/pill-tab"
 
 import type { CaseStudy } from "../content"
 import { CaseStudyFeature } from "./case-study-feature"
 
 const ROTATION_MS = 8000
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)"
-
-const subscribeToMotion = (onChange: () => void) => {
-  if (typeof window.matchMedia !== "function") return () => undefined
-  const query = window.matchMedia(REDUCED_MOTION)
-  query.addEventListener("change", onChange)
-  return () => query.removeEventListener("change", onChange)
-}
-
-const prefersReducedMotion = () =>
-  typeof window.matchMedia === "function" &&
-  window.matchMedia(REDUCED_MOTION).matches
-
-const useReducedMotion = () =>
-  useSyncExternalStore(subscribeToMotion, prefersReducedMotion, () => true)
-
-const useInView = (ref: React.RefObject<HTMLElement | null>) => {
-  const [inView, setInView] = useState(true)
-  useEffect(() => {
-    const element = ref.current
-    if (!element || typeof IntersectionObserver === "undefined") return
-    const observer = new IntersectionObserver(([entry]) =>
-      setInView(entry?.isIntersecting ?? true)
-    )
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [ref])
-  return inView
-}
-
 const targetFor = (key: string, active: number, last: number) => {
   const targets: Partial<Record<string, number>> = {
     ArrowRight: active + 1,
@@ -125,30 +98,26 @@ export function CaseStudyShowcase({
               aria-controls={`${id}-panel-${index}`}
               tabIndex={index === active ? 0 : -1}
               onClick={() => select(index)}
-              className={cn(
-                "inline-flex h-11 shrink-0 items-center rounded-full px-5 text-sm transition-colors",
-                index === active
-                  ? "bg-foreground/8 text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
+              className={pillTabClass(index === active)}
             >
               {study.name}
             </button>
           ))}
         </div>
         {canRotate ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             aria-label={stopped ? "Play case studies" : "Pause case studies"}
             onClick={() => setStopped((current) => !current)}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-input text-foreground transition-colors hover:bg-foreground/8"
           >
             {stopped ? (
               <Play className="size-4" aria-hidden="true" />
             ) : (
               <Pause className="size-4" aria-hidden="true" />
             )}
-          </button>
+          </Button>
         ) : null}
       </div>
       <div

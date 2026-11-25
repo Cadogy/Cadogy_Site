@@ -23,7 +23,7 @@ export type NavIcon =
   | "support"
   | "account"
 
-export type PortalNavItem = {
+type PortalNavItem = {
   readonly label: string
   readonly href: string
   readonly icon: NavIcon

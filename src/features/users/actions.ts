@@ -12,7 +12,13 @@ import {
   type UserAction,
 } from "@/features/auth/domain/user-admin"
 import { auth } from "@/features/auth/server/auth"
-import { authDb, userObjectId, users } from "@/features/auth/server/database"
+import {
+  authDb,
+  countOwners,
+  findUserById,
+  userObjectId,
+  users,
+} from "@/features/auth/server/database"
 import {
   sendAccountNotice,
   sendEventNotice,
@@ -22,6 +28,9 @@ import {
   requirePermission,
   requireSession,
 } from "@/features/auth/server/session"
+
+import { toState, type ActionState } from "@/lib/action-state"
+import { clientContext } from "@/lib/security/request-context"
 
 const USER_ACTIONS: readonly UserAction[] = [
   "revoke_sessions",
@@ -49,11 +58,6 @@ export type UserFilter = {
   readonly role?: string
   readonly status?: string
 }
-
-export type RoleActionState = {
-  readonly ok: boolean
-  readonly message: string
-} | null
 
 const escapeRegex = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -112,11 +116,10 @@ const revokeSessions = async (id: string) => {
 const roles = createRoleService({
   directory: {
     roleOf: async (id) => {
-      const _id = userObjectId(id)
-      const doc = _id ? await users().findOne({ _id }) : null
+      const doc = await findUserById(id)
       return doc ? toRole(doc.role) : null
     },
-    countOwners: () => users().countDocuments({ role: "owner" }),
+    countOwners,
     setRole: async (id, role) => {
       const _id = userObjectId(id)
       if (_id) await users().updateOne({ _id }, { $set: { role } })
@@ -129,8 +132,7 @@ const roles = createRoleService({
 const userAdmin = createUserAdmin({
   directory: {
     find: async (id) => {
-      const _id = userObjectId(id)
-      const doc = _id ? await users().findOne({ _id }) : null
+      const doc = await findUserById(id)
       return doc
         ? {
             id: doc._id.toHexString(),
@@ -166,13 +168,7 @@ const userAdmin = createUserAdmin({
   notify: sendAccountNotice,
 })
 
-const requestContext = async () => {
-  const requestHeaders = await headers()
-  return {
-    ip: requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "",
-    userAgent: requestHeaders.get("user-agent") ?? "",
-  }
-}
+const requestContext = async () => clientContext(await headers())
 
 const MANAGE_MESSAGES = {
   ban: "Account banned and signed out everywhere.",
@@ -186,7 +182,7 @@ export async function manageUserAction(
   userId: string,
   action: keyof typeof MANAGE_MESSAGES,
   reason = ""
-): Promise<RoleActionState> {
+): Promise<ActionState> {
   const actor = await requirePermission("users:manage", "/admin/users")
   const result = await userAdmin.perform({
     actor,
@@ -196,14 +192,12 @@ export async function manageUserAction(
     ...(await requestContext()),
   })
   revalidatePath("/admin/users")
-  return result.ok
-    ? { ok: true, message: MANAGE_MESSAGES[action] }
-    : { ok: false, message: result.error }
+  return toState(result, MANAGE_MESSAGES[action])
 }
 
 export async function impersonateUserAction(
   userId: string
-): Promise<RoleActionState> {
+): Promise<ActionState> {
   const actor = await requirePermission("security:impersonate", "/admin/users")
   const result = await userAdmin.authorizeImpersonation({
     actor,
@@ -235,7 +229,7 @@ export async function stopImpersonatingAction(): Promise<void> {
 export async function changeRoleAction(
   userId: string,
   nextRole: string
-): Promise<RoleActionState> {
+): Promise<ActionState> {
   const actor = await requirePermission("users:assign-roles", "/admin/users")
   const session = await auth.api.getSession({ headers: await headers() })
   if (
@@ -257,8 +251,7 @@ export async function changeRoleAction(
   })
   revalidatePath("/admin/users")
   if (!result.ok) return { ok: false, message: result.error }
-  const _id = userObjectId(userId)
-  const target = _id ? await users().findOne({ _id }) : null
+  const target = await findUserById(userId)
   if (target) await sendEventNotice(target.email, "role_changed")
   return {
     ok: true,

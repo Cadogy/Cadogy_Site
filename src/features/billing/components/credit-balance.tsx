@@ -1,15 +1,14 @@
 "use client"
 
 import { useState, useTransition, type FormEvent } from "react"
-import { Loader2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { PendingButton } from "@/components/ui/pending-button"
 
 import type { Currency } from "../domain/schema"
-
-type Result = { readonly ok: boolean; readonly message: string }
 
 export function BalanceCreditForm({
   currency,
@@ -20,9 +19,9 @@ export function BalanceCreditForm({
     readonly amount: string
     readonly reason: string
     readonly currency: Currency
-  }) => Promise<Result>
+  }) => Promise<NonNullable<ActionState>>
 }) {
-  const [result, setResult] = useState<Result | null>(null)
+  const [result, setResult] = useState<ActionState>(null)
   const [pending, startTransition] = useTransition()
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -45,14 +44,7 @@ export function BalanceCreditForm({
       className="grid gap-4 sm:grid-cols-[10rem_1fr_auto] sm:items-end"
       onSubmit={submit}
     >
-      {result ? (
-        <p
-          role={result.ok ? "status" : "alert"}
-          className={`sm:col-span-3 ${result.ok ? "text-sm text-success" : "text-sm text-destructive"}`}
-        >
-          {result.message}
-        </p>
-      ) : null}
+      <ActionMessage state={result} className="sm:col-span-3" />
       <Field id="balance-amount" label="Amount">
         {(control) => (
           <Input {...control} name="amount" inputMode="decimal" required />
@@ -61,12 +53,9 @@ export function BalanceCreditForm({
       <Field id="balance-reason" label="Reason">
         {(control) => <Input {...control} name="reason" required />}
       </Field>
-      <Button type="submit" disabled={pending}>
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton type="submit" pending={pending}>
         Add credit
-      </Button>
+      </PendingButton>
     </form>
   )
 }

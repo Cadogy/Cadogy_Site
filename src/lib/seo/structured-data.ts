@@ -1,12 +1,21 @@
 import { faqs, services } from "@/features/marketing/content"
 
-import { absoluteUrl, siteConfig } from "@/config/site"
+import { absoluteUrl, siteConfig, type Founder } from "@/config/site"
+
+const LOGO_PATH = "/images/assets/logos/cadogy-shield.png"
 
 const organizationRef = {
   "@type": "Organization",
   name: siteConfig.name,
   url: siteConfig.url,
 } as const
+
+const founderRef = (founder: Founder) => ({
+  "@type": "Person",
+  name: founder.name,
+  jobTitle: founder.role,
+  sameAs: [founder.linkedin],
+})
 
 export const professionalServiceSchema = () => ({
   "@context": "https://schema.org",
@@ -18,7 +27,7 @@ export const professionalServiceSchema = () => ({
   email: siteConfig.email,
   foundingDate: String(siteConfig.foundingYear),
   image: absoluteUrl(siteConfig.ogImage),
-  logo: absoluteUrl("/images/assets/logos/cadogy-shield.png"),
+  logo: absoluteUrl(LOGO_PATH),
   address: {
     "@type": "PostalAddress",
     addressRegion: siteConfig.location.region,
@@ -28,12 +37,7 @@ export const professionalServiceSchema = () => ({
     { "@type": "Place", name: "South Florida" },
     { "@type": "Country", name: "United States" },
   ],
-  founder: siteConfig.founders.map((founder) => ({
-    "@type": "Person",
-    name: founder.name,
-    jobTitle: founder.role,
-    sameAs: [founder.linkedin],
-  })),
+  founder: siteConfig.founders.map(founderRef),
   sameAs: Object.values(siteConfig.social),
   knowsAbout: services.map((service) => service.title),
   hasOfferCatalog: {
@@ -108,11 +112,55 @@ export const faqSchema = () => ({
 export const personSchema = () =>
   siteConfig.founders.map((founder) => ({
     "@context": "https://schema.org",
-    "@type": "Person",
-    name: founder.name,
-    jobTitle: founder.role,
+    ...founderRef(founder),
     description: founder.bio,
     image: absoluteUrl(founder.image),
     worksFor: organizationRef,
-    sameAs: [founder.linkedin],
   }))
+
+export type ArticleFacts = {
+  readonly title: string
+  readonly slug: string
+  readonly description: string
+  readonly publishedAt: string
+  readonly modifiedAt: string
+  readonly image: string
+  readonly authorName: string
+  readonly section?: string
+  readonly keywords: readonly string[]
+  readonly wordCount: number
+}
+
+const authorFor = (name: string) => {
+  const founder = siteConfig.founders.find((person) => person.name === name)
+  return founder
+    ? { ...founderRef(founder), url: absoluteUrl("/who-we-are") }
+    : organizationRef
+}
+
+export const articleSchema = (article: ArticleFacts) => {
+  const url = absoluteUrl(`/articles/${article.slug}`)
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: article.title,
+    description: article.description,
+    image: article.image.startsWith("http")
+      ? article.image
+      : absoluteUrl(article.image),
+    datePublished: article.publishedAt,
+    dateModified: article.modifiedAt,
+    author: authorFor(article.authorName),
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      logo: { "@type": "ImageObject", url: absoluteUrl(LOGO_PATH) },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    articleSection: article.section,
+    keywords: article.keywords.join(", "),
+    wordCount: article.wordCount,
+    inLanguage: "en-US",
+  }
+}

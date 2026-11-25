@@ -118,7 +118,7 @@ export function ArticleListing({
       {posts.length > 0 ? (
         <div className="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
-            <ArticleCard key={post.id} post={post} headingLevel={2} />
+            <ArticleCard key={post.id} post={post} />
           ))}
         </div>
       ) : (

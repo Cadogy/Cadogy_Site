@@ -3,6 +3,7 @@ import { faqs, services } from "@/features/marketing/content"
 import { describe, expect, it } from "vitest"
 
 import {
+  articleSchema,
   breadcrumbSchema,
   faqSchema,
   professionalServiceSchema,
@@ -86,5 +87,47 @@ describe("structured data", () => {
       name: faqs[0]?.question,
       acceptedAnswer: { "@type": "Answer", text: faqs[0]?.answer },
     })
+  })
+
+  it("credits an article to the founder who wrote it, with an absolute image", () => {
+    const article = articleSchema({
+      title: "Modular monoliths",
+      slug: "modular-monoliths",
+      description: "Fewer moving parts.",
+      publishedAt: "2026-01-29T00:00:00Z",
+      modifiedAt: "2026-01-30T00:00:00Z",
+      image: "/images/studio/payments.webp",
+      authorName: "Charles Knapp",
+      keywords: ["architecture"],
+      wordCount: 900,
+    })
+
+    expect(article.author).toMatchObject({
+      "@type": "Person",
+      name: "Charles Knapp",
+      jobTitle: "Co-Founder & CTO",
+    })
+    expect(article.image).toBe("https://cadogy.com/images/studio/payments.webp")
+    expect(article.url).toBe("https://cadogy.com/articles/modular-monoliths")
+  })
+
+  it("credits Cadogy when the author isn't a founder", () => {
+    const article = articleSchema({
+      title: "Guest post",
+      slug: "guest",
+      description: "",
+      publishedAt: "2026-01-29T00:00:00Z",
+      modifiedAt: "2026-01-29T00:00:00Z",
+      image: "https://wp.cadogy.com/a.jpg",
+      authorName: "Someone Else",
+      keywords: [],
+      wordCount: 10,
+    })
+
+    expect(article.author).toMatchObject({
+      "@type": "Organization",
+      name: "Cadogy",
+    })
+    expect(article.image).toBe("https://wp.cadogy.com/a.jpg")
   })
 })

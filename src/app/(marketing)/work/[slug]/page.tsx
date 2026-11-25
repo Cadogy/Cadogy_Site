@@ -1,12 +1,14 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import { notFound } from "next/navigation"
 import { CtaBand } from "@/features/marketing/components/cta-band"
+import { TagList } from "@/features/marketing/components/tag-list"
 import { caseStudies, displayHost } from "@/features/marketing/content"
 import { ArrowUpRight } from "lucide-react"
 
+import { openGraphFor } from "@/lib/seo/open-graph"
 import { breadcrumbSchema } from "@/lib/seo/structured-data"
 import { Button } from "@/components/ui/button"
+import { ProductCapture } from "@/components/media/product-capture"
 import { VideoEmbed } from "@/components/media/video-embed"
 import { JsonLd } from "@/components/seo/json-ld"
 
@@ -24,11 +26,17 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const study = findStudy((await params).slug)
   if (!study) return {}
+  const title = `${study.name} case study`
   return {
-    title: `${study.name} case study`,
+    title,
     description: study.summary,
     alternates: { canonical: `/work/${study.slug}` },
-    openGraph: { images: [{ url: study.image }] },
+    openGraph: openGraphFor({
+      path: `/work/${study.slug}`,
+      title,
+      description: study.summary,
+      image: study.image,
+    }),
   }
 }
 
@@ -79,28 +87,13 @@ export default async function CaseStudyPage({ params }: Props) {
         </header>
 
         <div className="container-page px-3 md:px-4">
-          <div className="relative aspect-3/4 overflow-hidden rounded-media bg-card sm:hidden">
-            <Image
-              src={study.mobileImage}
-              alt={study.imageAlt}
-              fill
-              priority
-              sizes="100vw"
-              quality={85}
-              className="object-cover object-left-top"
-            />
-          </div>
-          <div className="relative hidden aspect-video overflow-hidden rounded-media bg-card sm:block">
-            <Image
-              src={study.image}
-              alt={study.imageAlt}
-              fill
-              priority
-              sizes="100vw"
-              quality={85}
-              className="object-cover object-top"
-            />
-          </div>
+          <ProductCapture
+            image={study.image}
+            mobileImage={study.mobileImage}
+            alt={study.imageAlt}
+            sizes="100vw"
+            priority
+          />
         </div>
 
         <section
@@ -236,16 +229,7 @@ export default async function CaseStudyPage({ params }: Props) {
             <h2 id="stack-title" className="text-h2">
               Technology
             </h2>
-            <ul className="mt-8 flex flex-wrap gap-2">
-              {study.stack.map((tech) => (
-                <li
-                  key={tech}
-                  className="rounded-full bg-foreground/8 px-4 py-2 text-sm"
-                >
-                  {tech}
-                </li>
-              ))}
-            </ul>
+            <TagList items={study.stack} className="mt-8" />
           </div>
         </section>
       </article>

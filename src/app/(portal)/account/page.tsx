@@ -4,8 +4,8 @@ import {
   DeleteAccount,
 } from "@/features/account/components/account-lifecycle"
 import { ProfileForm } from "@/features/account/components/settings-forms"
-import { deletionEligibility } from "@/features/account/server/security"
 import { requestAccountDeletionAction } from "@/features/account/server/security-actions"
+import { deletionEligibility } from "@/features/auth/server/account-deletion"
 import { requireSession } from "@/features/auth/server/session"
 
 import { PortalSection } from "@/components/portal/portal-section"

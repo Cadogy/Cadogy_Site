@@ -6,12 +6,13 @@ import {
   useState,
   type FormEvent,
 } from "react"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { CheckCircle2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { siteConfig } from "@/config/site"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
+import { PendingButton } from "@/components/ui/pending-button"
 import { Textarea } from "@/components/ui/textarea"
 import { HumanCheck } from "@/components/security/human-check"
 
@@ -20,8 +21,7 @@ import { BUDGETS, PROJECT_TYPES, TIMELINES } from "../domain/schema"
 import { submitInquiry } from "../server/actions"
 
 const FORM_MESSAGES: Partial<Record<SubmissionResult["status"], string>> = {
-  rate_limited:
-    "We've received too many messages from you in a short time. Please try again later or email hello@cadogy.com.",
+  rate_limited: `We've received too many messages from you in a short time. Please try again later or email ${siteConfig.email}.`,
   verification_failed:
     "We couldn't verify you're human. Please complete the check and try again.",
   expired:
@@ -194,12 +194,9 @@ export function ContactForm({
       <HumanCheck siteKey={turnstileSiteKey} onToken={setTurnstileToken} />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Button type="submit" size="lg" disabled={pending}>
-          {pending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : null}
+        <PendingButton type="submit" size="lg" pending={pending}>
           {pending ? "Sending…" : "Send message"}
-        </Button>
+        </PendingButton>
         <p className="text-sm text-muted-foreground">
           By sending this form you agree to our{" "}
           <a

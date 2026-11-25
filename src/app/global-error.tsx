@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 
+import { siteConfig } from "@/config/site"
 import { themeColors } from "@/config/theme-colors"
 import { reloadOnceForChunkError } from "@/lib/chunk-reload"
 
@@ -34,8 +35,8 @@ export default function GlobalError({
           Something went wrong.
         </h1>
         <p style={{ color: themeColors.muted }}>
-          Please refresh the page. If the problem continues, email
-          hello@cadogy.com.
+          Please refresh the page. If the problem continues, email{" "}
+          {siteConfig.email}.
         </p>
       </body>
     </html>

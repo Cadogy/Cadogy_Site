@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { requirePermission } from "@/features/auth/server/session"
+import { clientDisplayName } from "@/features/billing/domain/format"
 import { createDraftAction } from "@/features/billing/server/actions"
 import { billing } from "@/features/billing/server/billing"
 
@@ -10,6 +12,7 @@ import { PortalPageHeader } from "@/components/portal/portal-shell"
 export const metadata: Metadata = { title: "New invoice" }
 
 export default async function NewInvoicePage() {
+  await requirePermission("billing:read")
   const clients = await billing.listClients({ includeArchived: false })
 
   return (
@@ -38,7 +41,7 @@ export default async function NewInvoicePage() {
                   className="-mx-3 flex min-h-11 w-[calc(100%+1.5rem)] flex-col rounded-field px-3 py-4 text-left transition-colors hover:bg-foreground/5"
                 >
                   <span className="block font-medium">
-                    {client.company || client.name}
+                    {clientDisplayName(client)}
                   </span>
                   <span className="block text-sm text-muted-foreground">
                     {client.email}

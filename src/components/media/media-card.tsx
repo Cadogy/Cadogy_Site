@@ -10,6 +10,7 @@ export function MediaCard({
   description,
   href,
   meta,
+  sizes = "(min-width: 768px) 70vw, 230vw",
   aspect = "portrait",
   headingLevel = 3,
 }: {
@@ -18,7 +19,8 @@ export function MediaCard({
   title: string
   description: string
   href: string
-  meta?: string
+  meta?: React.ReactNode
+  sizes?: string
   aspect?: "portrait" | "landscape"
   headingLevel?: 2 | 3
 }) {
@@ -35,7 +37,7 @@ export function MediaCard({
           src={image}
           alt={alt}
           fill
-          sizes="(min-width: 768px) 70vw, 230vw"
+          sizes={sizes}
           quality={85}
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
         />
@@ -63,7 +65,7 @@ export function MediaCard({
       <p
         className={cn(
           "text-pretty text-muted-foreground",
-          aspect === "portrait" ? "mt-4" : "mt-2"
+          aspect === "portrait" ? "mt-4" : "mt-2 line-clamp-2"
         )}
       >
         {description}

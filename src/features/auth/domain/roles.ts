@@ -1,13 +1,11 @@
+import { fail, ok, type Result } from "@/lib/result"
+
 import { can, type Role } from "./permissions"
 
 type Member = { readonly id: string; readonly role: Role }
 
-type Outcome =
-  | { readonly ok: true; readonly value: null }
-  | { readonly ok: false; readonly error: string }
-
-const allowed: Outcome = { ok: true, value: null }
-const denied = (error: string): Outcome => ({ ok: false, error })
+const allowed = ok(null)
+const denied = (error: string) => fail<null>(error)
 
 export const checkRoleChange = ({
   actor,
@@ -19,7 +17,7 @@ export const checkRoleChange = ({
   readonly target: Member
   readonly nextRole: Role
   readonly ownerCount: number
-}): Outcome => {
+}): Result<null> => {
   if (!can(actor.role, "users:assign-roles"))
     return denied("Only an owner can change roles.")
   if (actor.id === target.id) return denied("You can't change your own role.")

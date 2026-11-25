@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { requirePermission } from "@/features/auth/server/session"
 import { isValidObjectId } from "mongoose"
 
+import { isOneOf } from "@/lib/is-one-of"
 import { connectToDatabase } from "@/lib/mongodb"
 
 import {
@@ -39,7 +40,7 @@ export async function updateInquiryStatusAction(
   status: InquiryStatus
 ) {
   await requirePermission("inquiries:write")
-  if (!isValidObjectId(id) || !INQUIRY_STATUSES.includes(status)) return
+  if (!isValidObjectId(id) || !isOneOf(INQUIRY_STATUSES)(status)) return
   await connectToDatabase()
   await InquiryModel.updateOne({ _id: id }, { $set: { status } })
   revalidatePath("/admin/inquiries")

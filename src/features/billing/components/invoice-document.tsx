@@ -3,19 +3,14 @@ import { Fragment } from "react"
 import { siteConfig } from "@/config/site"
 import { LogoMark } from "@/components/site/logo"
 
-import { formatDate, formatMoney } from "../domain/format"
+import {
+  formatDate,
+  formatMoney,
+  PAYMENT_METHOD_LABELS,
+} from "../domain/format"
 import type { ClientSnapshot, Invoice, InvoiceBadge } from "../domain/invoice"
 import { calculateInvoiceTotals, calculateLineTotal } from "../domain/totals"
 import { StatusBadge } from "./status-badge"
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  stripe: "Card",
-  bank_transfer: "Bank transfer",
-  check: "Check",
-  cash: "Cash",
-  credit: "Credit balance",
-  other: "Other",
-}
 
 const addressLines = (client: ClientSnapshot) =>
   [
@@ -199,7 +194,7 @@ export function InvoiceDocument({
               >
                 <span className="text-muted-foreground">
                   {formatDate(payment.paidAt)} ·{" "}
-                  {PAYMENT_METHOD_LABELS[payment.method] ?? payment.method}
+                  {PAYMENT_METHOD_LABELS[payment.method]}
                 </span>
                 <span>{money(payment.amount)}</span>
               </li>

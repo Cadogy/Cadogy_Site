@@ -1,16 +1,17 @@
 "use client"
 
 import { useState, useTransition, type FormEvent } from "react"
-import { Loader2 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
+import { PendingButton } from "@/components/ui/pending-button"
 
-type Result = { readonly ok: boolean; readonly message: string }
+import type { InvoiceAdjustment } from "../domain/invoice"
 
-type Kind = "refund" | "invoice_credit"
+type Kind = InvoiceAdjustment["kind"]
 
 export type CreditNoteRequest = {
   readonly kind: Kind
@@ -38,7 +39,7 @@ export function CreditNoteForm({
 }: {
   refundable: string | null
   owed: string | null
-  onSubmit: (request: CreditNoteRequest) => Promise<Result>
+  onSubmit: (request: CreditNoteRequest) => Promise<NonNullable<ActionState>>
 }) {
   const initial: Kind = refundable ? "refund" : "invoice_credit"
   const [kind, setKind] = useState<Kind>(initial)
@@ -46,7 +47,7 @@ export function CreditNoteForm({
     (initial === "refund" ? refundable : owed) ?? ""
   )
   const [reason, setReason] = useState("")
-  const [result, setResult] = useState<Result | null>(null)
+  const [result, setResult] = useState<ActionState>(null)
   const [pending, startTransition] = useTransition()
   const both = Boolean(refundable && owed)
 
@@ -64,16 +65,7 @@ export function CreditNoteForm({
 
   return (
     <form className="grid gap-4" onSubmit={submit}>
-      {result ? (
-        <p
-          role={result.ok ? "status" : "alert"}
-          className={
-            result.ok ? "text-sm text-success" : "text-sm text-destructive"
-          }
-        >
-          {result.message}
-        </p>
-      ) : null}
+      <ActionMessage state={result} />
       {both ? (
         <Field id="credit-kind" label="Type">
           {(control) => (
@@ -119,12 +111,9 @@ export function CreditNoteForm({
           />
         )}
       </Field>
-      <Button type="submit" disabled={pending}>
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton type="submit" pending={pending}>
         {COPY[kind].submit}
-      </Button>
+      </PendingButton>
     </form>
   )
 }

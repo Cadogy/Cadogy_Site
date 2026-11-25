@@ -1,42 +1,23 @@
 "use client"
 
-import { startTransition, useActionState, type FormEvent } from "react"
-import { Loader2 } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
+import { ActionMessage, useFormAction } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
+import { PendingButton } from "@/components/ui/pending-button"
 import { Textarea } from "@/components/ui/textarea"
 
 import type { BillingClient } from "../application/ports"
-import { CURRENCIES } from "../domain/schema"
 import { saveClientAction } from "../server/actions"
+import { CurrencyField } from "./service-fields"
 
 export function ClientForm({ client }: { client: BillingClient | null }) {
-  const [state, dispatch, pending] = useActionState(
-    saveClientAction.bind(null, client?.id ?? null),
-    null
+  const { state, pending, onSubmit } = useFormAction(
+    saveClientAction.bind(null, client?.id ?? null)
   )
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const data = new FormData(event.currentTarget)
-    startTransition(() => dispatch(data))
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="grid gap-10">
-      {state ? (
-        <p
-          role={state.ok ? "status" : "alert"}
-          className={
-            state.ok ? "text-sm text-success" : "text-sm text-destructive"
-          }
-        >
-          {state.message}
-        </p>
-      ) : null}
+    <form onSubmit={onSubmit} className="grid gap-10">
+      <ActionMessage state={state} />
       <div className="grid gap-5 sm:grid-cols-2">
         <Field id="name" label="Contact name">
           {(control) => (
@@ -136,19 +117,7 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
 
       <fieldset className="grid gap-5 sm:grid-cols-3">
         <legend className="mb-4 font-medium">Billing defaults</legend>
-        <Field id="currency" label="Currency">
-          {(control) => (
-            <NativeSelect
-              {...control}
-              name="currency"
-              defaultValue={client?.currency ?? "USD"}
-            >
-              {CURRENCIES.map((currency) => (
-                <option key={currency}>{currency}</option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
+        <CurrencyField id="currency" defaultValue={client?.currency} />
         <Field id="defaultTermsDays" label="Payment terms (days)">
           {(control) => (
             <Input
@@ -177,12 +146,13 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
         )}
       </Field>
 
-      <Button type="submit" disabled={pending} className="justify-self-start">
-        {pending ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : null}
+      <PendingButton
+        type="submit"
+        pending={pending}
+        className="justify-self-start"
+      >
         {client ? "Save changes" : "Create client"}
-      </Button>
+      </PendingButton>
     </form>
   )
 }

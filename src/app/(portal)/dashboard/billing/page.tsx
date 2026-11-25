@@ -1,14 +1,16 @@
 import type { Metadata } from "next"
 import { requireSession } from "@/features/auth/server/session"
-import { ActionButton } from "@/features/billing/components/action-controls"
 import { CreditNoteList } from "@/features/billing/components/credit-note-list"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
 import { PayBalance } from "@/features/billing/components/pay-balance"
+import { ServiceSummary } from "@/features/billing/components/service-summary"
 import {
+  cardSummary,
+  clientDisplayName,
   formatDate,
   formatMoney,
-  intervalLabel,
 } from "@/features/billing/domain/format"
+import { invoicePublicPath } from "@/features/billing/domain/invoice"
 import { displayStatus } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import {
@@ -24,6 +26,7 @@ import {
 } from "@/features/billing/server/engine-actions"
 import { isStripeConfigured } from "@/features/billing/server/stripe"
 
+import { ActionButton } from "@/components/ui/action-controls"
 import { EmptyState } from "@/components/ui/empty-state"
 import { PortalSection } from "@/components/portal/portal-section"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
@@ -102,7 +105,7 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                 currency: invoice.currency,
                 dueLabel: invoice.dueDate ? formatDate(invoice.dueDate) : null,
                 overdue: displayStatus(invoice, now) === "overdue",
-                href: `/invoice/${invoice.publicToken}`,
+                href: invoicePublicPath(invoice.publicToken),
               }))}
               onPay={payInvoicesAction}
               onlinePaymentAvailable={onlinePayment}
@@ -114,30 +117,11 @@ export default async function ClientBillingPage({ searchParams }: Props) {
           <PortalSection title="Your services">
             <ul className="rule-list">
               {services.map((service) => (
-                <li
-                  key={service.id}
-                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-4"
-                >
-                  <span>
-                    <span className="font-medium">
-                      {service.name}
-                      {service.quantity > 1 ? ` × ${service.quantity}` : ""}
-                    </span>
-                    <span className="block text-sm text-muted-foreground">
-                      {service.interval === "one_time"
-                        ? `Bills ${formatDate(service.nextBillingDate)}`
-                        : `Renews ${formatDate(service.nextBillingDate)}`}
-                    </span>
-                  </span>
-                  <span className="tabular-nums">
-                    {formatMoney(
-                      service.unitAmount * service.quantity,
-                      service.currency
-                    )}{" "}
-                    <span className="text-muted-foreground">
-                      {intervalLabel(service.interval, "per")}
-                    </span>
-                  </span>
+                <li key={service.id} className="py-4">
+                  <ServiceSummary
+                    service={service}
+                    detail={`${service.interval === "one_time" ? "Bills" : "Renews"} ${formatDate(service.nextBillingDate)}`}
+                  />
                 </li>
               ))}
             </ul>
@@ -164,7 +148,7 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                     <div>
                       {accounts.length > 1 ? (
                         <p className="font-medium">
-                          {account.company || account.name}
+                          {clientDisplayName(account)}
                         </p>
                       ) : null}
                       <p
@@ -175,7 +159,7 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                         }
                       >
                         {saved
-                          ? `${account.autopay.enabled ? "On" : "Off"} · ${saved.brand} ending ${saved.last4}, expires ${saved.expMonth}/${saved.expYear}`
+                          ? `${account.autopay.enabled ? "On" : "Off"} · ${cardSummary(saved)}`
                           : "No card saved."}
                       </p>
                     </div>
@@ -223,9 +207,7 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                 key={account.id}
                 className="mb-1 text-sm text-muted-foreground"
               >
-                {accounts.length > 1
-                  ? `${account.company || account.name}: `
-                  : ""}
+                {accounts.length > 1 ? `${clientDisplayName(account)}: ` : ""}
                 {formatMoney(amount, account.currency)} of credit, used on your
                 next invoice before any card is charged.
               </p>
@@ -234,7 +216,7 @@ export default async function ClientBillingPage({ searchParams }: Props) {
               <CreditNoteList
                 notes={notes}
                 hrefFor={(invoiceId) =>
-                  `/invoice/${tokens.get(invoiceId) ?? ""}`
+                  invoicePublicPath(tokens.get(invoiceId) ?? "")
                 }
               />
             </div>
@@ -245,7 +227,7 @@ export default async function ClientBillingPage({ searchParams }: Props) {
           <InvoiceList
             invoices={invoices}
             now={now}
-            hrefFor={(invoice) => `/invoice/${invoice.publicToken}`}
+            hrefFor={(invoice) => invoicePublicPath(invoice.publicToken)}
             emptyMessage={`No invoices yet. Invoices sent to ${user.email} will appear here.`}
           />
         </PortalSection>

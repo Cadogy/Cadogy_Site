@@ -2,7 +2,7 @@ import { emailButton, emailLayout, escapeHtml } from "@/lib/email/html"
 
 import type { BillingNotification } from "../application/ports"
 import { formatDate, formatMoney } from "../domain/format"
-import type { Invoice } from "../domain/invoice"
+import { invoicePublicPath, type Invoice } from "../domain/invoice"
 import { calculateInvoiceTotals } from "../domain/totals"
 
 type RenderInput = {
@@ -18,7 +18,7 @@ type RenderedEmail = {
 }
 
 const invoiceUrl = (baseUrl: string, invoice: Invoice) =>
-  `${baseUrl}/invoice/${invoice.publicToken}`
+  `${baseUrl}${invoicePublicPath(invoice.publicToken)}`
 
 const paragraph = (text: string) =>
   `<p style="margin:0 0 16px;">${escapeHtml(text)}</p>`

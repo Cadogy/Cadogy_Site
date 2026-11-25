@@ -11,7 +11,10 @@ import {
   billingEngine,
   credits,
 } from "@/features/billing/server/billing"
-import { ProcessedStripeEventModel } from "@/features/billing/server/models"
+import {
+  claimEvent,
+  releaseEvent,
+} from "@/features/billing/server/processed-events"
 import {
   readSavedCard,
   verifyStripeEvent,
@@ -20,29 +23,6 @@ import type Stripe from "stripe"
 
 import { env } from "@/env"
 import { sendDisputeAlert } from "@/lib/email"
-import { connectToDatabase } from "@/lib/mongodb"
-
-const DUPLICATE_KEY = 11000
-
-const isDuplicateKeyError = (error: unknown) =>
-  typeof error === "object" &&
-  error !== null &&
-  "code" in error &&
-  error.code === DUPLICATE_KEY
-
-const claimEvent = async (eventId: string) => {
-  await connectToDatabase()
-  try {
-    await ProcessedStripeEventModel.create({ _id: eventId })
-    return true
-  } catch (error) {
-    if (isDuplicateKeyError(error)) return false
-    throw error
-  }
-}
-
-const releaseEvent = (eventId: string) =>
-  ProcessedStripeEventModel.deleteOne({ _id: eventId })
 
 const logFailure = (subject: string, error: string) =>
   console.error(`Stripe ${subject} not recorded: ${error}`)

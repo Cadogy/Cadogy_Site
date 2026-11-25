@@ -1,8 +1,10 @@
 "use client"
 
-import { startTransition, useActionState, useState, useTransition } from "react"
-import { Copy, Loader2, Printer, Send } from "lucide-react"
+import { useState, useTransition } from "react"
+import { Copy, Printer, Send } from "lucide-react"
 
+import type { ActionState } from "@/lib/action-state"
+import { ActionMessage, useFormAction } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,26 +17,19 @@ import {
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
+import { PendingButton } from "@/components/ui/pending-button"
 import { PortalSection } from "@/components/portal/portal-section"
 
+import { isoDay } from "../domain/dates"
+import { PAYMENT_METHOD_LABELS } from "../domain/format"
 import { PAYMENT_METHODS, type InvoiceStatus } from "../domain/schema"
 import {
   duplicateInvoiceAction,
   invoiceCommandAction,
   recordPaymentAction,
-  type ActionState,
 } from "../server/actions"
 import { applyBalanceAction } from "../server/credit-actions"
 import { resendInvoiceAction } from "../server/team-actions"
-
-const METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], string> = {
-  stripe: "Card (Stripe)",
-  bank_transfer: "Bank transfer",
-  check: "Check",
-  cash: "Cash",
-  credit: "Credit balance",
-  other: "Other",
-}
 
 function RecordPaymentDialog({
   invoiceId,
@@ -44,11 +39,10 @@ function RecordPaymentDialog({
   amountDue: string
 }) {
   const [open, setOpen] = useState(false)
-  const [state, dispatch, pending] = useActionState(
-    recordPaymentAction.bind(null, invoiceId),
-    null
+  const { state, pending, onSubmit } = useFormAction(
+    recordPaymentAction.bind(null, invoiceId)
   )
-  const today = new Date().toISOString().slice(0, 10)
+  const today = isoDay(new Date())
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -62,24 +56,8 @@ function RecordPaymentDialog({
             For payments received outside of online checkout.
           </DialogDescription>
         </DialogHeader>
-        <form
-          className="grid gap-4"
-          onSubmit={(event) => {
-            event.preventDefault()
-            const data = new FormData(event.currentTarget)
-            startTransition(() => dispatch(data))
-          }}
-        >
-          {state ? (
-            <p
-              role={state.ok ? "status" : "alert"}
-              className={
-                state.ok ? "text-sm text-success" : "text-sm text-destructive"
-              }
-            >
-              {state.message}
-            </p>
-          ) : null}
+        <form className="grid gap-4" onSubmit={onSubmit}>
+          <ActionMessage state={state} />
           <Field id="amount" label="Amount">
             {(control) => (
               <Input
@@ -101,7 +79,7 @@ function RecordPaymentDialog({
                 {PAYMENT_METHODS.filter((method) => method !== "credit").map(
                   (method) => (
                     <option key={method} value={method}>
-                      {METHOD_LABELS[method]}
+                      {PAYMENT_METHOD_LABELS[method]}
                     </option>
                   )
                 )}
@@ -128,12 +106,9 @@ function RecordPaymentDialog({
               />
             )}
           </Field>
-          <Button type="submit" disabled={pending}>
-            {pending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : null}
+          <PendingButton type="submit" pending={pending}>
             Record payment
-          </Button>
+          </PendingButton>
         </form>
       </DialogContent>
     </Dialog>
@@ -174,16 +149,7 @@ export function InvoiceActions({
   return (
     <PortalSection title="Actions" className="print-hidden">
       <div className="grid gap-3">
-        {feedback ? (
-          <p
-            role={feedback.ok ? "status" : "alert"}
-            className={
-              feedback.ok ? "text-sm text-success" : "text-sm text-destructive"
-            }
-          >
-            {feedback.message}
-          </p>
-        ) : null}
+        <ActionMessage state={feedback} />
         <Button variant="outline" onClick={copyLink}>
           <Copy className="size-4" aria-hidden="true" />
           Copy payment link
@@ -222,10 +188,9 @@ export function InvoiceActions({
                 Apply credit balance ({creditBalance})
               </Button>
             ) : null}
-            <RecordPaymentDialog invoiceId={invoiceId} amountDue={amountDue} />
           </>
         ) : null}
-        {status === "uncollectible" ? (
+        {open || status === "uncollectible" ? (
           <RecordPaymentDialog invoiceId={invoiceId} amountDue={amountDue} />
         ) : null}
         <Button
