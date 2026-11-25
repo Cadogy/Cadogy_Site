@@ -3,6 +3,7 @@ import { join } from "node:path"
 import sharp from "sharp"
 
 import { compileArticle } from "../src/features/articles/authoring/compile"
+import { coverArt } from "../src/features/articles/authoring/cover-art"
 import { publishArticle } from "../src/features/articles/authoring/publish"
 import { planTidy } from "../src/features/articles/authoring/tidy"
 import { createWordPressClient } from "../src/features/articles/server/wordpress-client"
@@ -47,13 +48,68 @@ const toWebp = (file: Buffer) =>
     .webp({ quality: 84, effort: 6 })
     .toBuffer()
 
-const mediaFiles = async ({ media }: Awaited<ReturnType<typeof load>>) =>
+const COVER = { width: 2400, height: 1350, cell: 40 }
+const BACKGROUND = { r: 9, g: 10, b: 12 }
+
+const MID_TONE = 84
+
+const brandedCover = async (photo: Buffer, marks: readonly string[]) => {
+  const { width, height, cell } = COVER
+  const columns = Math.ceil(width / cell)
+  const gray = await sharp(photo)
+    .rotate()
+    .resize(width, height, { fit: "cover", position: "attention" })
+    .grayscale()
+    .toBuffer()
+  const { channels } = await sharp(gray).stats()
+  const gain = Math.min(
+    2,
+    MID_TONE / Math.max(channels[0]?.mean ?? MID_TONE, 1)
+  )
+  const mono = await sharp(gray)
+    .linear(gain * 1.1, -12)
+    .tint({ r: 118, g: 130, b: 158 })
+    .toBuffer()
+  const grid = await sharp(mono)
+    .resize(columns, Math.ceil(height / cell), { fit: "fill" })
+    .removeAlpha()
+    .raw()
+    .toBuffer()
+  const art = coverArt({
+    ...COVER,
+    marks: await Promise.all(
+      marks.map((mark) =>
+        readFile(join(CONTENT, "marks", `${mark}.svg`), "utf8")
+      )
+    ),
+    shade: (column, row) => {
+      const index = (row * columns + column) * 3
+      return [grid[index] ?? 0, grid[index + 1] ?? 0, grid[index + 2] ?? 0]
+    },
+  })
+  const faded = await sharp(mono)
+    .composite([{ input: Buffer.from(art.fade), blend: "dest-in" }])
+    .png()
+    .toBuffer()
+  return sharp({
+    create: { width, height, channels: 3, background: BACKGROUND },
+  })
+    .composite([{ input: faded }, { input: Buffer.from(art.overlay) }])
+    .png()
+    .toBuffer()
+}
+
+const mediaFiles = async ({ media, meta }: Awaited<ReturnType<typeof load>>) =>
   Object.fromEntries(
     await Promise.all(
-      media.map(async ({ path }) => [
-        path,
-        new Uint8Array(await toWebp(await readFile(join(CONTENT, path)))),
-      ])
+      media.map(async ({ path }) => {
+        const source = await readFile(join(CONTENT, path))
+        const branded =
+          path === meta.cover.image && meta.cover.marks.length > 0
+            ? await brandedCover(source, meta.cover.marks)
+            : source
+        return [path, new Uint8Array(await toWebp(branded))]
+      })
     )
   )
 
@@ -67,7 +123,9 @@ const preview = async (only?: string) => {
   await mkdir(PREVIEW, { recursive: true })
   for (const slug of await slugs(only)) {
     const article = await load(slug)
-    await mediaFiles(article)
+    const files = await mediaFiles(article)
+    const cover = files[article.meta.cover.image]
+    if (cover) await writeFile(join(PREVIEW, `${slug}-cover.webp`), cover)
     await writeFile(join(PREVIEW, `${slug}.html`), article.html)
     say(`✓ ${slug} (${article.meta.topic}) → ${PREVIEW}/`)
   }

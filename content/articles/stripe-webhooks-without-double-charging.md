@@ -5,9 +5,10 @@ topic: Payments
 tags: [Stripe, Webhooks, Payments, Idempotency]
 cover:
   image: media/stripe-webhooks-without-double-charging/cover.jpg
-  alt: "Long-exposure light trails curving through the dark"
-  credit: Photo by Victoria Paar on Unsplash
-  creditUrl: https://unsplash.com/photos/F69YCEUy07A
+  alt: "Stripe logo over a blue-toned photo of a card reader"
+  credit: Photo by SumUp on Unsplash
+  creditUrl: https://unsplash.com/photos/wVqTWs-1nmI
+  marks: [stripe]
 ---
 
 Most payment bugs don't come from Stripe. They come from the code that reacts to Stripe.

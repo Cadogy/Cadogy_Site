@@ -31,8 +31,21 @@ describe("compileArticle", () => {
         alt: "Shipping containers stacked in rows",
         credit: "Photo by Jane Doe on Unsplash",
         creditUrl: "https://unsplash.com/photos/abc",
+        marks: [],
       },
     })
+  })
+
+  it("reads the logos to brand the cover with", () => {
+    const article = compileArticle(
+      source("Intro.").replace(
+        "  creditUrl: https://unsplash.com/photos/abc\n",
+        "  creditUrl: https://unsplash.com/photos/abc\n  marks: [nextdotjs, lighthouse]\n"
+      ),
+      "x"
+    )
+
+    expect(article.meta.cover.marks).toEqual(["nextdotjs", "lighthouse"])
   })
 
   it("turns markdown into html with linkable section headings", () => {

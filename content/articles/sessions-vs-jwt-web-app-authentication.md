@@ -5,9 +5,10 @@ topic: Security
 tags: [Authentication, Sessions, JWT, Web security]
 cover:
   image: media/sessions-vs-jwt-web-app-authentication/cover.jpg
-  alt: "A keyhole in a rusted red steel door"
+  alt: "A cookie icon and the JWT logo over a blue-toned photo of a rusted keyhole"
   credit: Photo by Deleece Cook on Unsplash
   creditUrl: https://unsplash.com/photos/_b8-ZOdA-0c
+  marks: [cookie, jsonwebtokens]
 ---
 
 "Should we use sessions or JWTs?" is one of the most argued-about questions in web development, and most of the argument misses what actually matters.

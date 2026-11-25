@@ -63,7 +63,11 @@ const article: CompiledArticle = {
     description: "Idempotency, retries and ordering, done properly.",
     topic: "Payments",
     tags: ["Stripe", "Webhooks"],
-    cover: { image: "media/stripe/cover.jpg", alt: "A payment terminal" },
+    cover: {
+      image: "media/stripe/cover.jpg",
+      alt: "A payment terminal",
+      marks: [],
+    },
   },
   html: '<p>Body</p><figure><img src="media:media/stripe/flow.png" alt="Flow"></figure>',
   media: [

@@ -15,10 +15,13 @@ cover:
   alt: "What the photo shows"
   credit: Photo by Name on Unsplash
   creditUrl: https://unsplash.com/photos/<id>
+  marks: [cloudflare]  # one or two files from marks/, without .svg
 ---
 ```
 
 `topic` sets the WordPress category. Every article needs a real cover photo in `media/<slug>/`.
+
+With `marks`, preview and publish turn the photo into a branded cover: blue-toned, fading top to bottom into our block grid, with each logo on a centered tile. Pick a photo with texture and structure; it reads as background. Logos live in `marks/` as 24×24 SVGs with their color in the root `color` attribute (brands from Simple Icons, generic icons from Lucide). Preview writes each cover to `.blog-preview/<slug>-cover.webp`.
 
 ## Blocks
 

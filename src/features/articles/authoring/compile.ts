@@ -9,6 +9,7 @@ const coverSchema = z.object({
   alt: z.string().min(1),
   credit: z.string().min(1).optional(),
   creditUrl: z.url().optional(),
+  marks: z.array(z.string().regex(/^[a-z0-9-]+$/)).default([]),
 })
 
 const frontmatterSchema = z.object({

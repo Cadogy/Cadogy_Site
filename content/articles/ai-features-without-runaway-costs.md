@@ -5,9 +5,10 @@ topic: AI
 tags: [AI integration, LLM, Cost control, Prompt caching]
 cover:
   image: media/ai-features-without-runaway-costs/cover.jpg
-  alt: "A processor chip glowing on a dark circuit board"
+  alt: "Claude logo and a coins icon over a blue-toned photo of a processor"
   credit: Photo by BoliviaInteligente on Unsplash
   creditUrl: https://unsplash.com/photos/utzc2cBWUag
+  marks: [claude, coins]
 ---
 
 Adding an AI feature is cheap in a prototype and surprisingly easy to make expensive in production. A summary button that costs a fraction of a cent per click is fine, until a long document, a retry loop or one heavy user multiplies it by a thousand.

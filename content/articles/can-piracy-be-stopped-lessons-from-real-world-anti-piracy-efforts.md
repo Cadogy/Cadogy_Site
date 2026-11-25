@@ -5,9 +5,10 @@ topic: Security
 tags: [Piracy, Content protection, DRM, Licensing]
 cover:
   image: media/can-piracy-be-stopped-lessons-from-real-world-anti-piracy-efforts/cover.jpg
-  alt: "An engraving of a sailing ship battling a stormy sea"
+  alt: "A skull icon over a blue-toned engraving of a ship in a storm"
   credit: Photo by The New York Public Library on Unsplash
   creditUrl: https://unsplash.com/photos/qGLE_4n0S4M
+  marks: [skull]
 ---
 
 If you sell something digital, such as software, a course, an ebook, a game or a stock asset, someone will eventually share it for free. That isn't a sign you did something wrong. It's a sign people want what you made.

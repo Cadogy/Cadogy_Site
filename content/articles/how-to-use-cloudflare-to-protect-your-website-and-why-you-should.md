@@ -5,9 +5,10 @@ topic: Security
 tags: [Cloudflare, Web security, DDoS, WAF]
 cover:
   image: media/how-to-use-cloudflare-to-protect-your-website-and-why-you-should/cover.jpg
-  alt: "Blue fiber optic strands radiating outward in the dark"
+  alt: "Cloudflare logo over a blue-toned photo of fiber-optic strands"
   credit: Photo by S A on Unsplash
   creditUrl: https://unsplash.com/photos/WN0alo23Yhg
+  marks: [cloudflare]
 ---
 
 Putting a site behind Cloudflare takes ten minutes. Putting it behind Cloudflare *properly* takes about an hour, and most sites stop after the first ten minutes.
