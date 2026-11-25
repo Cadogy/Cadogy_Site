@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest"
 
-import { coverCells, topicStyle } from "./cover"
+import { COVER_VARIANTS, coverCells, coverVariant, topicStyle } from "./cover"
 
 const grid = { columns: 40, rows: 22 }
 
@@ -18,15 +18,39 @@ describe("coverCells", () => {
     )
   })
 
-  it("leaves the middle clear for the badge", () => {
-    const middle = coverCells({ seed: "any", ...grid }).filter(
-      (cell) =>
-        Math.abs(cell.column - (grid.columns - 1) / 2) < 3 &&
-        Math.abs(cell.row - (grid.rows - 1) / 2) < 3
+  it("picks the same pattern family every time for the same article", () => {
+    expect(coverVariant("modular-monoliths")).toBe(
+      coverVariant("modular-monoliths")
     )
-
-    expect(middle).toEqual([])
   })
+
+  it("varies the pattern family across articles so covers don't repeat", () => {
+    const slugs = [
+      "modular-monoliths",
+      "cloudflare-guide",
+      "piracy",
+      "stripe-webhooks",
+      "nextjs-performance",
+      "auth-sessions",
+      "ai-evals",
+      "postgres-indexes",
+    ]
+
+    expect(new Set(slugs.map(coverVariant)).size).toBeGreaterThanOrEqual(3)
+  })
+
+  it.each(COVER_VARIANTS)(
+    "leaves the middle clear for the badge in the %s pattern",
+    (variant) => {
+      const middle = coverCells({ seed: "any", variant, ...grid }).filter(
+        (cell) =>
+          Math.abs(cell.column - (grid.columns - 1) / 2) < 3 &&
+          Math.abs(cell.row - (grid.rows - 1) / 2) < 3
+      )
+
+      expect(middle).toEqual([])
+    }
+  )
 
   it("keeps every cell inside the grid with a visible strength", () => {
     for (const cell of coverCells({ seed: "bounds", ...grid })) {

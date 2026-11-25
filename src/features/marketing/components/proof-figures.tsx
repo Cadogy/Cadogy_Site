@@ -5,7 +5,7 @@ import { proofFigures } from "../content"
 
 export function ProofFigures() {
   return (
-    <dl className="grid gap-y-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-10">
+    <dl className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3 lg:gap-x-10">
       {proofFigures.map((figure) => (
         <div
           key={`${figure.study.slug}-${figure.label}`}

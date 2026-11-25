@@ -27,6 +27,7 @@ export function FeaturedArticle({ post }: { post: WP_Post }) {
           fill
           loading="eager"
           fetchPriority="high"
+          quality={85}
           sizes="(min-width: 1360px) 870px, (min-width: 1024px) 64vw, 100vw"
           className="object-cover transition-transform duration-700 ease-soft group-hover:scale-[1.02]"
         />

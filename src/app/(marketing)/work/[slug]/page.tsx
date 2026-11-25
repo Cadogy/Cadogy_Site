@@ -62,9 +62,9 @@ export default async function CaseStudyPage({ params }: Props) {
         ])}
       />
       <article>
-        <header className="container-page pt-10 md:pt-14">
-          <div className="isolate grid transform-gpu overflow-hidden rounded-media border bg-card lg:grid-cols-12">
-            <div className="flex flex-col p-6 sm:p-10 lg:col-span-5">
+        <header className="container-page pt-6 max-md:px-0 md:pt-14">
+          <div className="isolate grid transform-gpu overflow-hidden border-t bg-card md:rounded-media md:border lg:grid-cols-12">
+            <div className="flex flex-col px-5 py-6 sm:p-10 lg:col-span-5">
               <Link
                 href="/work"
                 className="inline-flex min-h-11 items-center gap-1.5 self-start text-sm text-muted-foreground transition-colors hover:text-foreground"

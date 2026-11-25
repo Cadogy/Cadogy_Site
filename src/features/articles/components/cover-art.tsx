@@ -1,6 +1,6 @@
 import { themeColors } from "@/config/theme-colors"
 
-import { coverCells, topicStyle } from "../domain/cover"
+import { coverCells, topicStyle, type CoverVariant } from "../domain/cover"
 import { TOPIC_ICON_PATHS } from "../domain/topic-icons"
 
 const COLUMNS = 56
@@ -14,12 +14,14 @@ export function CoverArt({
   slug,
   topic,
   title,
+  variant,
   width,
   height,
 }: {
   slug: string
   topic: string
   title?: string
+  variant?: CoverVariant
   width: number
   height: number
 }) {
@@ -39,21 +41,23 @@ export function CoverArt({
         fontFamily: "Geist",
       }}
     >
-      {coverCells({ seed: slug, columns: COLUMNS, rows }).map((box) => (
-        <div
-          key={`${box.column}-${box.row}`}
-          data-cell=""
-          style={{
-            position: "absolute",
-            left: box.column * cell + 1.5,
-            top: box.row * cell + 2 - (title ? (height - artHeight) / 2 : 0),
-            width: cell - 3,
-            height: cell - 3,
-            borderRadius: 3,
-            background: rgba(tone, 0.05 + box.strength * 0.33),
-          }}
-        />
-      ))}
+      {coverCells({ seed: slug, columns: COLUMNS, rows, variant }).map(
+        (box) => (
+          <div
+            key={`${box.column}-${box.row}`}
+            data-cell=""
+            style={{
+              position: "absolute",
+              left: box.column * cell + 1.5,
+              top: box.row * cell + 2 - (title ? (height - artHeight) / 2 : 0),
+              width: cell - 3,
+              height: cell - 3,
+              borderRadius: 3,
+              background: rgba(tone, 0.05 + box.strength * 0.33),
+            }}
+          />
+        )
+      )}
       <div
         style={{
           position: "absolute",

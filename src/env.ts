@@ -14,6 +14,7 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1).optional(),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
     CRON_SECRET: z.string().min(32).optional(),
+    CONTENT_REVALIDATE_SECRET: z.string().min(32).optional(),
     FORM_SIGNING_SECRET: z.string().min(32).optional(),
     GOOGLE_SITE_VERIFICATION: z.string().min(1).optional(),
   },

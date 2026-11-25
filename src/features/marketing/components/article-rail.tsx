@@ -21,6 +21,7 @@ function ArticleSlide({ post }: { post: WP_Post }) {
           src={featuredImageOf(post)}
           alt=""
           fill
+          quality={85}
           sizes="(min-width: 1024px) 352px, (min-width: 640px) 320px, 272px"
           className="object-cover transition-transform duration-700 ease-soft group-hover:scale-[1.03] motion-reduce:transition-none"
         />

@@ -22,7 +22,7 @@ export function FoundersStage() {
           origin={FROM_BEHIND}
           peak={0.28}
           base={0.012}
-          className="-z-10 [mask-image:radial-gradient(ellipse_60%_75%_at_50%_70%,black_25%,transparent_75%),linear-gradient(to_right,black_22%,transparent_40%,transparent_60%,black_78%)] [mask-composite:intersect]"
+          className="-z-10 [mask-image:radial-gradient(ellipse_90%_55%_at_50%_30%,black_30%,transparent_80%),linear-gradient(to_bottom,black_35%,transparent_65%)] [mask-composite:intersect] md:[mask-image:radial-gradient(ellipse_60%_75%_at_50%_70%,black_25%,transparent_75%),linear-gradient(to_right,black_22%,transparent_40%,transparent_60%,black_78%)]"
         />
         <div className="absolute top-8 left-1/2 aspect-[1121/2316] h-[145%] -translate-x-1/2">
           <Image

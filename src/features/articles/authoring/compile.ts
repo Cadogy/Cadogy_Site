@@ -2,11 +2,14 @@ import matter from "gray-matter"
 import { Marked } from "marked"
 import { z } from "zod"
 
+import { COVER_VARIANTS, type CoverVariant } from "../domain/cover"
+
 const frontmatterSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   topic: z.string().min(1).default("General"),
   tags: z.array(z.string().min(1)).default([]),
+  cover: z.enum(COVER_VARIANTS).optional(),
 })
 
 type ArticleMeta = {
@@ -15,6 +18,7 @@ type ArticleMeta = {
   readonly description: string
   readonly topic: string
   readonly tags: readonly string[]
+  readonly cover?: CoverVariant
 }
 
 export type CompiledArticle = {
@@ -135,6 +139,7 @@ export const compileArticle = (
       description: front.description,
       topic: front.topic,
       tags: front.tags,
+      cover: front.cover,
     },
     html: segment(content).map(renderSegment(markdown)).join(""),
   }

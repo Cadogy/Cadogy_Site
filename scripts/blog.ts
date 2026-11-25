@@ -15,6 +15,9 @@ const say = (message: string) =>
 `)
 
 const CONTENT = "content/articles"
+const REVALIDATE_URL =
+  process.env.CONTENT_REVALIDATE_URL ??
+  "https://www.cadogy.com/api/webhooks/content"
 const PREVIEW = ".blog-preview"
 
 const usage = `Usage:
@@ -36,10 +39,15 @@ const slugs = async (only?: string) => {
 const load = async (slug: string) =>
   compileArticle(await readFile(join(CONTENT, `${slug}.md`), "utf8"), slug)
 
-const coverWebp = async (slug: string, topic: string) => {
-  const png = await renderCover({ slug, topic, size: COVER_SIZE })
+const coverWebp = async ({ meta }: Awaited<ReturnType<typeof load>>) => {
+  const png = await renderCover({
+    slug: meta.slug,
+    topic: meta.topic,
+    variant: meta.cover,
+    size: COVER_SIZE,
+  })
   return sharp(Buffer.from(await png.arrayBuffer()))
-    .webp({ quality: 88 })
+    .webp({ lossless: true, effort: 6 })
     .toBuffer()
 }
 
@@ -53,10 +61,7 @@ const preview = async (only?: string) => {
   await mkdir(PREVIEW, { recursive: true })
   for (const slug of await slugs(only)) {
     const article = await load(slug)
-    await writeFile(
-      join(PREVIEW, `${slug}.webp`),
-      await coverWebp(slug, article.meta.topic)
-    )
+    await writeFile(join(PREVIEW, `${slug}.webp`), await coverWebp(article))
     await writeFile(join(PREVIEW, `${slug}.html`), article.html)
     say(`✓ ${slug} (${article.meta.topic}) → ${PREVIEW}/`)
   }
@@ -66,6 +71,25 @@ const STATUS_FLAGS = { "--live": "publish", "--draft": "draft" } as const
 
 const statusFrom = (flag?: string) =>
   flag === "--live" || flag === "--draft" ? STATUS_FLAGS[flag] : undefined
+
+const refreshSite = async () => {
+  const secret = process.env.CONTENT_REVALIDATE_SECRET?.trim()
+  if (!secret) {
+    say(
+      "! CONTENT_REVALIDATE_SECRET is not set: the site refreshes within an hour"
+    )
+    return
+  }
+  const response = await fetch(REVALIDATE_URL, {
+    method: "POST",
+    headers: { authorization: `Bearer ${secret}` },
+  })
+  say(
+    response.ok
+      ? "✓ cadogy.com refreshed"
+      : `! cadogy.com refresh failed (${response.status}): the site refreshes within an hour`
+  )
+}
 
 const publish = async (only: string | undefined, flag?: string) => {
   if (!only) throw new Error(usage)
@@ -78,7 +102,7 @@ const publish = async (only: string | undefined, flag?: string) => {
     const article = await load(slug)
     const result = await publishArticle({
       article,
-      cover: await coverWebp(slug, article.meta.topic),
+      cover: await coverWebp(article),
       client,
       status: statusFrom(flag),
     })
@@ -86,6 +110,7 @@ const publish = async (only: string | undefined, flag?: string) => {
       `✓ ${slug}: ${result.created ? "created" : "updated"} post ${result.id}`
     )
   }
+  await refreshSite()
 }
 
 const main = async () => {

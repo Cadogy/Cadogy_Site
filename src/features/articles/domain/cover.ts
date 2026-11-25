@@ -34,37 +34,83 @@ const noise = (seed: number, column: number, row: number) => {
   return n - Math.floor(n)
 }
 
-const BADGE_CLEARANCE = 0.16
+export const COVER_VARIANTS = ["ring", "band", "skyline", "clusters"] as const
+
+export type CoverVariant = (typeof COVER_VARIANTS)[number]
+
+export const coverVariant = (seed: string): CoverVariant =>
+  COVER_VARIANTS[hash(seed) % COVER_VARIANTS.length] ?? "ring"
+
+type Point = {
+  readonly dx: number
+  readonly dy: number
+  readonly distance: number
+  readonly y: number
+  readonly value: number
+  readonly coarse: number
+}
+
+const gauss = (offset: number, width: number) =>
+  Math.exp(-(offset ** 2) / width)
+
+const SHAPES: Record<CoverVariant, (point: Point, angle: number) => number> = {
+  ring: ({ dx, dy, distance, value }, angle) =>
+    gauss(distance - 0.42, 0.06) *
+    (0.35 + 0.65 * (0.5 + 0.5 * Math.cos(Math.atan2(dy, dx) - angle))) *
+    value,
+  band: ({ dx, dy, value }, angle) => {
+    const across = dx * Math.sin(angle) - dy * Math.cos(angle)
+    return (gauss(across, 0.035) + 0.5 * gauss(across - 0.38, 0.02)) * value
+  },
+  skyline: ({ y, coarse, value }) => {
+    const height = 0.25 + 0.45 * coarse
+    const rise = (y - (1 - height)) / height
+    return rise > 0 ? (0.4 + 0.6 * rise) * value : 0
+  },
+  clusters: ({ coarse, value, distance }) =>
+    coarse > 0.62 ? (coarse - 0.45) * 1.8 * value * (0.6 + distance) : 0,
+}
+
+const BADGE_CLEARANCE = 0.26
 
 export const coverCells = ({
   seed,
   columns,
   rows,
+  variant = coverVariant(seed),
 }: {
   seed: string
   columns: number
   rows: number
+  variant?: CoverVariant
 }): readonly CoverCell[] => {
   const salt = hash(seed)
   const angle = (salt % 360) * (Math.PI / 180)
   const centerX = (columns - 1) / 2
   const centerY = (rows - 1) / 2
   const reach = Math.hypot(centerX, centerY)
+  const shape = SHAPES[variant]
   return Array.from({ length: columns * rows }, (_, index) => {
     const column = index % columns
     const row = Math.floor(index / columns)
     const dx = (column - centerX) / reach
     const dy = (row - centerY) / reach
-    const distance = Math.hypot(dx, dy)
-    const sweep = 0.5 + 0.5 * Math.cos(Math.atan2(dy, dx) - angle)
-    const ring = Math.exp(-((distance - 0.42) ** 2) / 0.06)
-    const value = noise(salt, column, row)
-    const strength = ring * (0.35 + 0.65 * sweep) * value
-    return { column, row, strength, distance }
+    const point: Point = {
+      dx,
+      dy,
+      distance: Math.hypot(dx, dy),
+      y: row / Math.max(rows - 1, 1),
+      value: noise(salt, column, row),
+      coarse: noise(salt + 7, Math.floor(column / 4), Math.floor(row / 4)),
+    }
+    return {
+      column,
+      row,
+      distance: point.distance,
+      strength: shape(point, angle),
+    }
   })
-    .filter(
-      (cell) => cell.distance > BADGE_CLEARANCE * 1.6 && cell.strength > 0.16
-    )
+    .filter((cell) => cell.distance > BADGE_CLEARANCE && cell.strength > 0.16)
     .map(({ column, row, strength }) => ({
       column,
       row,

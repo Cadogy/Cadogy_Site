@@ -94,4 +94,16 @@ describe("compileArticle", () => {
       /sumary/
     )
   })
+
+  it("lets an article choose its cover pattern", () => {
+    expect(
+      compileArticle(source("Body", "cover: skyline\n"), "x").meta.cover
+    ).toBe("skyline")
+  })
+
+  it("rejects a cover pattern that doesn't exist", () => {
+    expect(() =>
+      compileArticle(source("Body", "cover: zigzag\n"), "x")
+    ).toThrow(/cover/)
+  })
 })
