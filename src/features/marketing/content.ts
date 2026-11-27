@@ -561,7 +561,7 @@ export const caseStudies: readonly CaseStudy[] = [
     story: {
       headline: "A warm, careful home for a midlife wellness brand.",
       tone: "graceful-era",
-      image: "/images/studio/graceful-era-home-story.webp",
+      image: "/images/studio/graceful-era-bottle-story.webp",
     },
     challenge: [
       "A new wellness brand for women in midlife needed a website that felt like the brand itself: warm, personal and botanical, somewhere women come back to rather than a one-page bottle shop.",
@@ -821,7 +821,8 @@ export const caseStudies: readonly CaseStudy[] = [
     story: {
       headline: "The technology partner behind a Jackson Hole boutique.",
       tone: "oden",
-      image: "/images/studio/oden-home-story.webp",
+      image: "/images/studio/oden-earrings-story.webp",
+      focus: "object-center",
     },
     challenge: [
       "Oden is a fine jewelry and Swiss watch boutique on Glenwood Street in Jackson, Wyoming. Its founding idea is that luxury should feel warm, welcoming and personal, and its team has spent decades with some of the most respected names in jewelry and watches.",
