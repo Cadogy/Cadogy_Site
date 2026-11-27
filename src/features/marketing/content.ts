@@ -41,6 +41,8 @@ export type CaseStudy = {
     readonly tone:
       "playerbay" | "sidecar" | "graceful-era" | "disciples" | "oden"
     readonly image?: string
+    /** How the story card crops its image, e.g. "object-right-top". */
+    readonly focus?: string
   }
   /** The situation, as prose. The first paragraph is set large. */
   readonly challenge: readonly string[]
@@ -689,6 +691,7 @@ export const caseStudies: readonly CaseStudy[] = [
       headline: "An education-first home for a local Arizona broker.",
       tone: "disciples",
       image: "/images/studio/disciples-home-story.webp",
+      focus: "object-right-top",
     },
     challenge: [
       "Jack Adams founded Disciples Insurance because he was tired of seeing insurance treated like a transaction instead of a relationship. He's an independent broker in Phoenix, and his approach is simple: explain the coverage plainly, then help people choose.",

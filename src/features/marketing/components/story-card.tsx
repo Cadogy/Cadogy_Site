@@ -80,7 +80,10 @@ export function StoryCard({
           draggable={false}
           className={cn(
             "object-cover",
-            study.story.tone === "playerbay" ? "object-left-top" : "object-top"
+            study.story.focus ??
+              (study.story.tone === "playerbay"
+                ? "object-left-top"
+                : "object-top")
           )}
         />
       </div>
