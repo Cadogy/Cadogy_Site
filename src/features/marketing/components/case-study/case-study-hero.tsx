@@ -12,6 +12,7 @@ const TONES = {
   playerbay: "--brand",
   sidecar: "--violet",
   "graceful-era": "--success",
+  disciples: "--warning",
 } as const
 const FROM_BELOW = [0.5, 1] as const
 

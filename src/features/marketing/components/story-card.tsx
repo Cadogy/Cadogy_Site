@@ -11,6 +11,7 @@ const TONES = {
   playerbay: "bg-story-playerbay",
   sidecar: "bg-story-sidecar",
   "graceful-era": "bg-story-graceful-era",
+  disciples: "bg-story-disciples",
 } as const
 
 export function StoryCard({

@@ -201,6 +201,52 @@ describe("Graceful Era Vitality case study", () => {
   })
 })
 
+const renderDisciples = async () =>
+  render(
+    await CaseStudyPage({
+      params: Promise.resolve({ slug: "disciples-insurance" }),
+    })
+  )
+
+describe("Disciples Insurance case study", () => {
+  it("has a single h1 and links to the live site", async () => {
+    await renderDisciples()
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Disciples Insurance"
+    )
+    expect(
+      screen.getByRole("link", { name: /Visit disciplesinsurance\.com/ })
+    ).toHaveAttribute("href", "https://www.disciplesinsurance.com")
+  })
+
+  it("explains that quoting uses the broker's existing rater instead of a rebuilt one", async () => {
+    await renderDisciples()
+    const quoting = screen.getByRole("region", {
+      name: "Using the quoting tool he already trusts",
+    })
+
+    expect(quoting).toHaveTextContent(/comparative rater/)
+  })
+
+  it("walks through how an edit goes live", async () => {
+    await renderDisciples()
+    const flow = screen.getByRole("region", { name: "How a change goes live" })
+
+    expect(within(flow).getAllByRole("listitem").length).toBeGreaterThanOrEqual(
+      5
+    )
+  })
+
+  it("doesn't claim work the project doesn't have", async () => {
+    const { container } = await renderDisciples()
+
+    expect(container.textContent).not.toMatch(
+      /automated tests|CRM|carrier integration|\$800|500\+ families|cutting-edge|world-class/i
+    )
+  })
+})
+
 describe("case study videos", () => {
   it("offers the Sidecar demo without loading YouTube until it's played", async () => {
     await renderSidecar()
