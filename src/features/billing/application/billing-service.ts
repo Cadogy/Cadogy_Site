@@ -273,7 +273,7 @@ export const createBillingService = ({
     changeTeam(clientId, actor, (client) => removeContactFrom(client, email))
 
   const createDraft = async (
-    input: Partial<InvoiceDraftInput> & { clientId: string },
+    input: Partial<Omit<InvoiceDraftInput, "dueDate">> & { clientId: string },
     actorId: string
   ): Promise<Result<Invoice>> => {
     const client = await repository.findClient(input.clientId)
@@ -332,9 +332,15 @@ export const createBillingService = ({
     return ok(null)
   }
 
+  /**
+   * `beforeNotify` runs after the invoice is numbered and saved but before the
+   * client is emailed, so a credit balance applied there is reflected in the
+   * amount the email asks for.
+   */
   const issue = async (
     id: string,
-    actorId: string
+    actorId: string,
+    options: { beforeNotify?: (invoice: Invoice) => Promise<Invoice> } = {}
   ): Promise<Result<Invoice>> => {
     const loaded = await loadInvoiceWithClient(id)
     if (!loaded) return fail("Invoice not found")
@@ -354,15 +360,19 @@ export const createBillingService = ({
       })
     )
     if (!issued.ok) return issued
+    const prepared = options.beforeNotify
+      ? await options.beforeNotify(issued.value)
+      : issued.value
     return ok(
-      await notifyAndRecord(issued.value, client, "issued", "sent", actorId)
+      await notifyAndRecord(prepared, client, "issued", "sent", actorId)
     )
   }
 
   const applyPayment = async (
     id: string,
     payment: Parameters<typeof recordPayment>[1],
-    actorId: string
+    actorId: string,
+    { sendReceipt = true }: { sendReceipt?: boolean } = {}
   ): Promise<Result<Invoice>> => {
     const loaded = await loadInvoiceWithClient(id)
     if (!loaded) return fail("Invoice not found")
@@ -373,6 +383,7 @@ export const createBillingService = ({
     if (result.value === invoice) return ok(invoice)
 
     const saved = await repository.saveInvoice(result.value)
+    if (!sendReceipt) return ok(saved)
     await notify({
       kind: "receipt",
       invoice: saved,
@@ -419,10 +430,13 @@ export const createBillingService = ({
     reference: string,
     actorId: string
   ) =>
+    // Using up credit isn't money received, so it never sends a receipt; the
+    // invoice and its emails show the credit applied instead.
     applyPayment(
       id,
       { amount, method: "credit", reference, paidAt: clock() },
-      actorId
+      actorId,
+      { sendReceipt: false }
     )
 
   const transition =
@@ -433,21 +447,31 @@ export const createBillingService = ({
       return saveResult(apply(invoice, { actorId, at: clock() }))
     }
 
+  /**
+   * Copies what was billed (lines, discount, footer) but takes terms from the
+   * client and tax and payment instructions from today's defaults, as a new
+   * draft would. The currency stays, because the copied prices are in it.
+   */
   const duplicate = async (
     id: string,
-    actorId: string
+    actorId: string,
+    defaults: { readonly taxRateBps: number; readonly memo: string } = {
+      taxRateBps: 0,
+      memo: "",
+    }
   ): Promise<Result<Invoice>> => {
     const invoice = await repository.findInvoice(id)
     if (!invoice) return fail("Invoice not found")
+    const client = await repository.findClient(invoice.clientId)
     return createDraft(
       {
         clientId: invoice.clientId,
         currency: invoice.currency,
-        termsDays: invoice.termsDays,
+        termsDays: client?.defaultTermsDays ?? invoice.termsDays,
         lineItems: [...invoice.lineItems],
         discount: invoice.discount,
-        taxRateBps: invoice.taxRateBps,
-        memo: invoice.memo,
+        taxRateBps: defaults.taxRateBps,
+        memo: defaults.memo,
         footer: invoice.footer,
         internalNotes: "",
       },
@@ -495,12 +519,21 @@ export const createBillingService = ({
     )
   }
 
-  const notifyAutopayFailed = async (id: string) => {
+  /** Records the failed attempt (retries count these) and tells the client. */
+  const notifyAutopayFailed = async (id: string, error?: string) => {
     const loaded = await loadInvoiceWithClient(id)
     if (!loaded) return false
+    const invoice = await repository.saveInvoice(
+      withEvent(loaded.invoice, {
+        type: "autopay_failed",
+        at: clock(),
+        actorId: "system",
+        ...(error ? { detail: error } : {}),
+      })
+    )
     return notify({
       kind: "autopay_failed",
-      invoice: loaded.invoice,
+      invoice,
       recipients: recipientsOf(loaded.client),
     })
   }

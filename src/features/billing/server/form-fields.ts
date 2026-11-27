@@ -13,3 +13,17 @@ export const whole = (formData: FormData, key: string) => {
   const value = text(formData, key)
   return value ? Number(value) : undefined
 }
+
+/**
+ * Blank means "not set" (null); anything typed must be a valid amount, so a
+ * typo never silently falls back to an inherited price.
+ */
+export const optionalMoney = (
+  formData: FormData,
+  key: string
+): { ok: true; value: number | null } | { ok: false } => {
+  const value = text(formData, key)
+  if (!value) return { ok: true, value: null }
+  const parsed = parseMoneyInput(value)
+  return parsed === null ? { ok: false } : { ok: true, value: parsed }
+}

@@ -46,5 +46,5 @@ export const billingEngine = createBillingEngine({
   repository: mongoEngineRepository,
   gateway: stripeGateway,
   clock: () => new Date(),
-  applyCredit: (invoiceId) => credits.applyBalance(invoiceId, "billing-run"),
+  applyCredit: (invoiceId, actorId) => credits.applyBalance(invoiceId, actorId),
 })

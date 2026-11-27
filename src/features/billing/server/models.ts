@@ -5,12 +5,14 @@ import { model, models, Schema, type Model, type Types } from "mongoose"
 import {
   CHARGE_STATUSES,
   type BillingSettings,
+  type CatalogCategory,
   type CatalogItem,
   type Charge,
   type RunSummary,
   type StoredAddOn,
 } from "../application/engine-ports"
 import type { BillingClient } from "../application/ports"
+import { PRICING_MODELS } from "../domain/catalog"
 import { CONTACT_ROLES } from "../domain/contacts"
 import {
   ADJUSTMENT_KINDS,
@@ -18,7 +20,12 @@ import {
   type Invoice,
 } from "../domain/invoice"
 import { ADD_ON_STATUSES, BILLING_INTERVALS } from "../domain/recurring"
-import { CURRENCIES, INVOICE_STATUSES, PAYMENT_METHODS } from "../domain/schema"
+import {
+  CURRENCIES,
+  INVOICE_STATUSES,
+  LINE_UNITS,
+  PAYMENT_METHODS,
+} from "../domain/schema"
 
 export type BillingClientDoc = Omit<BillingClient, "id"> & {
   _id: Types.ObjectId
@@ -28,6 +35,9 @@ export type InvoiceDoc = Omit<Invoice, "id" | "clientId"> & {
   clientId: Types.ObjectId
 }
 export type CatalogItemDoc = Omit<CatalogItem, "id"> & { _id: Types.ObjectId }
+export type CatalogCategoryDoc = Omit<CatalogCategory, "id"> & {
+  _id: Types.ObjectId
+}
 export type AddOnDoc = Omit<StoredAddOn, "id"> & { _id: Types.ObjectId }
 export type ChargeDoc = Omit<Charge, "id"> & { _id: Types.ObjectId }
 export type BillingSettingsDoc = BillingSettings & { _id: string }
@@ -140,7 +150,12 @@ const invoiceSchema = new Schema(
     termsDays: { type: Number, required: true },
     lineItems: [
       new Schema(
-        { description: String, quantity: Number, unitAmount: Number },
+        {
+          description: String,
+          quantity: Number,
+          unitAmount: Number,
+          unit: { type: String, enum: LINE_UNITS, default: undefined },
+        },
         { _id: false }
       ),
     ],
@@ -225,11 +240,29 @@ export const ProcessedStripeEventModel: Model<ProcessedStripeEventDoc> =
     "processed_stripe_events"
   )
 
+const moneySchema = new Schema(
+  {
+    amount: { type: Number, required: true },
+    currency: { type: String, enum: CURRENCIES, required: true },
+  },
+  { _id: false }
+)
+
+const catalogCategorySchema = new Schema(
+  {
+    name: { type: String, required: true },
+    hourlyRate: { type: moneySchema, default: null },
+  },
+  { timestamps: true }
+)
+
 const catalogItemSchema = new Schema(
   {
     name: { type: String, required: true },
     description: { type: String, default: "" },
-    unitAmount: { type: Number, required: true },
+    categoryId: { type: String, default: null, index: true },
+    pricing: { type: String, enum: PRICING_MODELS, default: "fixed" },
+    unitAmount: { type: Number, default: null },
     currency: { type: String, enum: CURRENCIES, required: true },
     interval: { type: String, enum: BILLING_INTERVALS, required: true },
     archived: { type: Boolean, default: false },
@@ -288,6 +321,7 @@ const billingSettingsSchema = new Schema({
   defaultTaxRateBps: { type: Number, default: 0 },
   reminderOffsets: { type: [Number], default: [-3, 0, 7, 14] },
   autoBillEnabled: { type: Boolean, default: true },
+  defaultHourlyRate: { type: moneySchema, default: null },
 })
 
 const billingRunSchema = new Schema({
@@ -303,6 +337,13 @@ const billingRunSchema = new Schema({
 export const CatalogItemModel: Model<CatalogItemDoc> =
   models.CatalogItem ??
   model<CatalogItemDoc>("CatalogItem", catalogItemSchema, "billing_catalog")
+export const CatalogCategoryModel: Model<CatalogCategoryDoc> =
+  models.CatalogCategory ??
+  model<CatalogCategoryDoc>(
+    "CatalogCategory",
+    catalogCategorySchema,
+    "billing_catalog_categories"
+  )
 export const AddOnModel: Model<AddOnDoc> =
   models.AddOn ?? model<AddOnDoc>("AddOn", addOnSchema, "billing_add_ons")
 export const ChargeModel: Model<ChargeDoc> =

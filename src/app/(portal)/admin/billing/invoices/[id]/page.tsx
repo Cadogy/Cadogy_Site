@@ -19,7 +19,11 @@ import {
 import { invoicePublicPath } from "@/features/billing/domain/invoice"
 import { invoiceBadge } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
-import { billing, credits } from "@/features/billing/server/billing"
+import {
+  billing,
+  billingEngine,
+  credits,
+} from "@/features/billing/server/billing"
 import { adjustInvoiceAction } from "@/features/billing/server/credit-actions"
 
 import { absoluteUrl } from "@/config/site"
@@ -40,7 +44,16 @@ export default async function AdminInvoicePage({ params }: Props) {
   const client = await billing.getClient(invoice.clientId)
 
   if (invoice.status === "draft") {
-    const clients = await billing.listClients({ includeArchived: false })
+    const [clients, catalog] = await Promise.all([
+      billing.listClients({ includeArchived: false }),
+      billingEngine.pricedCatalog({ includeArchived: false }),
+    ])
+    // An archived client is not offered for new drafts, but a draft that
+    // already belongs to one must still show it rather than a different client.
+    const options =
+      client && !clients.some((option) => option.id === client.id)
+        ? [client, ...clients]
+        : clients
     return (
       <>
         <PortalPageHeader
@@ -54,11 +67,24 @@ export default async function AdminInvoicePage({ params }: Props) {
         <InvoiceEditor
           invoiceId={invoice.id}
           initial={draftFromInvoice(invoice)}
-          clients={clients.map((option) => ({
+          clients={options.map((option) => ({
             id: option.id,
-            label: option.company
-              ? `${option.company} — ${option.name}`
-              : option.name,
+            label: `${
+              option.company
+                ? `${option.company} — ${option.name}`
+                : option.name
+            }${option.archivedAt ? " (archived)" : ""}`,
+            currency: option.currency,
+            termsDays: option.defaultTermsDays,
+          }))}
+          catalog={catalog.items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            categoryId: item.categoryId,
+            categoryName: item.category?.name ?? null,
+            currency: item.currency,
+            hourly: item.pricing === "hourly",
+            unitAmount: item.price?.unitAmount ?? null,
           }))}
         />
       </>
@@ -99,6 +125,7 @@ export default async function AdminInvoicePage({ params }: Props) {
           client={snapshot}
           status={invoiceBadge(invoice, new Date())}
           headingLevel={2}
+          showPaymentReferences
         />
         <div className="grid content-start gap-10">
           <InvoiceActions
@@ -108,6 +135,11 @@ export default async function AdminInvoicePage({ params }: Props) {
             amountDue={amountDue}
             creditBalance={
               balance > 0 ? formatMoney(balance, invoice.currency) : null
+            }
+            savedCard={
+              client?.autopay.enabled && client.autopay.card && owed > 0
+                ? `${client.autopay.card.brand} ending ${client.autopay.card.last4}`
+                : null
             }
           />
           {issued && (refundable > 0 || owed > 0) ? (

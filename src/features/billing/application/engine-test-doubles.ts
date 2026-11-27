@@ -1,6 +1,7 @@
 import {
   DEFAULT_SETTINGS,
   type BillingSettings,
+  type CatalogCategory,
   type CatalogItem,
   type Charge,
   type ChargeResult,
@@ -12,6 +13,7 @@ import {
 
 export const createInMemoryEngineRepository = (): EngineRepository => {
   const catalog = new Map<string, CatalogItem>()
+  const categories = new Map<string, CatalogCategory>()
   const addOns = new Map<string, StoredAddOn>()
   const charges = new Map<string, Charge>()
   const runs: RunSummary[] = []
@@ -34,6 +36,22 @@ export const createInMemoryEngineRepository = (): EngineRepository => {
       save: async (item) => {
         catalog.set(item.id, item)
         return item
+      },
+    },
+    categories: {
+      list: async () => [...categories.values()],
+      find: async (categoryId) => categories.get(categoryId) ?? null,
+      insert: async (category) => {
+        const stored = { ...category, id: id("catg") }
+        categories.set(stored.id, stored)
+        return stored
+      },
+      save: async (category) => {
+        categories.set(category.id, category)
+        return category
+      },
+      remove: async (categoryId) => {
+        categories.delete(categoryId)
       },
     },
     addOns: {

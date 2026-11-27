@@ -6,18 +6,14 @@ import { NativeSelect } from "@/components/ui/native-select"
 import { PortalSection } from "@/components/portal/portal-section"
 
 import type {
-  CatalogItem,
   Charge,
+  PricedCatalogItem,
   StoredAddOn,
 } from "../application/engine-ports"
 import type { BillingClient } from "../application/ports"
+import { catalogPriceLabel, groupByCategory } from "../domain/catalog"
 import { isoDay } from "../domain/dates"
-import {
-  cardSummary,
-  formatDate,
-  formatMoney,
-  intervalLabel,
-} from "../domain/format"
+import { cardSummary, formatDate, formatMoney } from "../domain/format"
 import {
   addAddOnAction,
   addChargeAction,
@@ -26,6 +22,7 @@ import {
   setAddOnStatusAction,
   setAutoBillAction,
   updateAddOnAction,
+  updateChargeAction,
   voidChargeAction,
 } from "../server/engine-actions"
 import { PendingCharges } from "./pending-charges"
@@ -45,9 +42,11 @@ const isLive = (addOn: StoredAddOn) =>
 function AddOnRow({
   clientId,
   addOn,
+  archived,
 }: {
   clientId: string
   addOn: StoredAddOn
+  archived: boolean
 }) {
   return (
     <li className="grid gap-3 py-4">
@@ -65,7 +64,7 @@ function AddOnRow({
           </>
         }
       />
-      {isLive(addOn) ? (
+      {isLive(addOn) && !archived ? (
         <div className="flex flex-wrap gap-2">
           {addOn.status === "active" ? (
             <ActionButton
@@ -106,7 +105,7 @@ function AddOnRow({
           </ActionButton>
           <details className="w-full">
             <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm text-muted-foreground hover:text-foreground">
-              Change quantity or price
+              Edit service
             </summary>
             <div className="pt-4">
               <ActionForm
@@ -115,6 +114,20 @@ function AddOnRow({
                 resetOnSuccess={false}
               >
                 <div className="grid gap-5 sm:grid-cols-2">
+                  <Field id={`name-${addOn.id}`} label="Name">
+                    {(control) => (
+                      <Input
+                        {...control}
+                        name="name"
+                        defaultValue={addOn.name}
+                        required
+                      />
+                    )}
+                  </Field>
+                  <IntervalField
+                    id={`interval-${addOn.id}`}
+                    defaultValue={addOn.interval}
+                  />
                   <QuantityField
                     id={`quantity-${addOn.id}`}
                     defaultValue={addOn.quantity}
@@ -123,6 +136,25 @@ function AddOnRow({
                     id={`price-${addOn.id}`}
                     defaultValue={addOn.unitAmount}
                   />
+                  <Field
+                    id={`next-${addOn.id}`}
+                    label={
+                      addOn.interval === "one_time"
+                        ? "Bills on"
+                        : "Next billing date"
+                    }
+                    hint="Later renewals follow on the same day of the month."
+                  >
+                    {(control) => (
+                      <Input
+                        {...control}
+                        name="nextBillingDate"
+                        type="date"
+                        min={isoDay(new Date())}
+                        defaultValue={isoDay(addOn.nextBillingDate)}
+                      />
+                    )}
+                  </Field>
                 </div>
               </ActionForm>
             </div>
@@ -142,21 +174,36 @@ export function ClientBilling({
   client: BillingClient
   addOns: readonly StoredAddOn[]
   pending: readonly Charge[]
-  catalog: readonly CatalogItem[]
+  catalog: readonly PricedCatalogItem[]
 }) {
   const current = addOns.filter(isLive)
   const past = addOns.filter((addOn) => !isLive(addOn))
   const card = client.autopay.card
+  const archived = Boolean(client.archivedAt)
 
   return (
     <>
+      {archived ? (
+        <p
+          role="status"
+          className="rounded-field border px-4 py-3 text-sm text-muted-foreground"
+        >
+          This client is archived. Their services are paused and nothing is
+          billed or reminded. Restore the client to make changes.
+        </p>
+      ) : null}
       <PortalSection title="Services">
         {current.length === 0 ? (
           <EmptyState>No services yet.</EmptyState>
         ) : (
           <ul className="rule-list">
             {current.map((addOn) => (
-              <AddOnRow key={addOn.id} clientId={client.id} addOn={addOn} />
+              <AddOnRow
+                key={addOn.id}
+                clientId={client.id}
+                addOn={addOn}
+                archived={archived}
+              />
             ))}
           </ul>
         )}
@@ -167,73 +214,93 @@ export function ClientBilling({
             </summary>
             <ul className="rule-list">
               {past.map((addOn) => (
-                <AddOnRow key={addOn.id} clientId={client.id} addOn={addOn} />
+                <AddOnRow
+                  key={addOn.id}
+                  clientId={client.id}
+                  addOn={addOn}
+                  archived={archived}
+                />
               ))}
             </ul>
           </details>
         ) : null}
 
-        <div className="mt-10 grid max-w-3xl gap-4">
-          <h3 className="font-medium">Add a service</h3>
-          <ActionForm
-            action={addAddOnAction.bind(null, client.id)}
-            submitLabel="Add service"
-          >
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field
-                id="addon-catalog"
-                label="From your catalog"
-                optional
-                hint="Or leave empty and fill in a custom service."
-              >
-                {(control) => (
-                  <NativeSelect
-                    {...control}
-                    name="catalogItemId"
-                    defaultValue=""
-                  >
-                    <option value="">Custom service</option>
-                    {catalog.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} —{" "}
-                        {formatMoney(item.unitAmount, item.currency)}{" "}
-                        {intervalLabel(item.interval, "per")}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                )}
-              </Field>
-              <Field
-                id="addon-name"
-                label="Name"
-                optional
-                hint="Overrides the catalog name."
-              >
-                {(control) => <Input {...control} name="name" />}
-              </Field>
-              <PriceField id="addon-price" optional />
-              <IntervalField id="addon-interval" optional />
-              <QuantityField
-                id="addon-quantity"
-                hint="Seats, mailboxes, domains…"
-              />
-              <Field
-                id="addon-start"
-                label="Start date"
-                hint="The first period bills on this date. Renewals follow on the same day."
-              >
-                {(control) => (
-                  <Input
-                    {...control}
-                    name="startDate"
-                    type="date"
-                    defaultValue={isoDay(new Date())}
-                  />
-                )}
-              </Field>
-            </div>
-          </ActionForm>
-        </div>
+        {archived ? null : (
+          <div className="mt-10 grid max-w-3xl gap-4">
+            <h3 className="font-medium">Add a service</h3>
+            <ActionForm
+              action={addAddOnAction.bind(null, client.id)}
+              submitLabel="Add service"
+            >
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field
+                  id="addon-catalog"
+                  label="From your catalog"
+                  optional
+                  hint="Or leave empty and fill in a custom service."
+                >
+                  {(control) => (
+                    <NativeSelect
+                      {...control}
+                      name="catalogItemId"
+                      defaultValue=""
+                    >
+                      <option value="">Custom service</option>
+                      {groupByCategory(
+                        catalog,
+                        catalog.flatMap((item) =>
+                          item.category ? [item.category] : []
+                        )
+                      ).map((group) => (
+                        <optgroup
+                          key={group.categoryId ?? "none"}
+                          label={group.name}
+                        >
+                          {group.items.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} — {catalogPriceLabel(item)}
+                              {item.currency !== client.currency
+                                ? ` (${item.currency})`
+                                : ""}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </NativeSelect>
+                  )}
+                </Field>
+                <Field
+                  id="addon-name"
+                  label="Name"
+                  optional
+                  hint="Overrides the catalog name."
+                >
+                  {(control) => <Input {...control} name="name" />}
+                </Field>
+                <PriceField id="addon-price" optional />
+                <IntervalField id="addon-interval" optional />
+                <QuantityField
+                  id="addon-quantity"
+                  hint="Seats, mailboxes, domains…"
+                />
+                <Field
+                  id="addon-start"
+                  label="Start date"
+                  hint="The first period bills on this date. Renewals follow on the same day."
+                >
+                  {(control) => (
+                    <Input
+                      {...control}
+                      name="startDate"
+                      type="date"
+                      defaultValue={isoDay(new Date())}
+                    />
+                  )}
+                </Field>
+              </div>
+            </ActionForm>
+          </div>
+        )}
       </PortalSection>
 
       <PortalSection
@@ -252,27 +319,33 @@ export function ClientBilling({
               charge.unitAmount * charge.quantity,
               charge.currency
             ),
+            quantity: charge.quantity,
+            unitAmount: charge.unitAmount,
           }))}
           onBill={invoiceChargesAction.bind(null, client.id)}
           onRemove={voidChargeAction.bind(null, client.id)}
+          onUpdate={updateChargeAction.bind(null, client.id)}
+          readOnly={archived}
         />
-        <div className="mt-10 grid max-w-3xl gap-4">
-          <h3 className="font-medium">Add a one-off charge</h3>
-          <ActionForm
-            action={addChargeAction.bind(null, client.id)}
-            submitLabel="Add charge"
-          >
-            <div className="grid gap-5 sm:grid-cols-[2fr_1fr_1fr]">
-              <Field id="charge-description" label="Description">
-                {(control) => (
-                  <Input {...control} name="description" required />
-                )}
-              </Field>
-              <PriceField id="charge-price" />
-              <QuantityField id="charge-quantity" />
-            </div>
-          </ActionForm>
-        </div>
+        {archived ? null : (
+          <div className="mt-10 grid max-w-3xl gap-4">
+            <h3 className="font-medium">Add a one-off charge</h3>
+            <ActionForm
+              action={addChargeAction.bind(null, client.id)}
+              submitLabel="Add charge"
+            >
+              <div className="grid gap-5 sm:grid-cols-[2fr_1fr_1fr]">
+                <Field id="charge-description" label="Description">
+                  {(control) => (
+                    <Input {...control} name="description" required />
+                  )}
+                </Field>
+                <PriceField id="charge-price" />
+                <QuantityField id="charge-quantity" />
+              </div>
+            </ActionForm>
+          </div>
+        )}
       </PortalSection>
 
       <PortalSection title="Collection">

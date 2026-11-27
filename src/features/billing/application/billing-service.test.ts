@@ -182,17 +182,30 @@ describe("billing service", () => {
     ).toHaveLength(1)
   })
 
-  it("duplicates any invoice into a fresh draft", async () => {
+  it("duplicates what was billed into a fresh draft with today's defaults", async () => {
     const { service } = setup()
-    const { draft } = await draftFor(service, { memo: "Retainer" })
+    const { draft } = await draftFor(service, {
+      memo: "Old bank details",
+      taxRateBps: 500,
+      footer: "Thanks!",
+    })
     expectOk(await service.issue(draft.id, ADMIN))
 
-    const copy = expectOk(await service.duplicate(draft.id, ADMIN))
+    const copy = expectOk(
+      await service.duplicate(draft.id, ADMIN, {
+        taxRateBps: 800,
+        memo: "New bank details",
+      })
+    )
 
     expect(copy.id).not.toBe(draft.id)
     expect(copy.status).toBe("draft")
     expect(copy.number).toBeNull()
-    expect(copy.memo).toBe("Retainer")
+    expect(copy.lineItems).toEqual(draft.lineItems)
+    expect(copy.footer).toBe("Thanks!")
+    expect(copy.memo).toBe("New bank details")
+    expect(copy.taxRateBps).toBe(800)
+    expect(copy.dueDate).toBeNull()
     expect(copy.payments).toEqual([])
   })
 

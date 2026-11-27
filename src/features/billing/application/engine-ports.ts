@@ -1,3 +1,4 @@
+import type { Money, PricingModel, ResolvedPrice } from "../domain/catalog"
 import type { AddOn, BillingInterval } from "../domain/recurring"
 import type { Currency } from "../domain/schema"
 
@@ -5,10 +6,25 @@ export type CatalogItem = {
   readonly id: string
   readonly name: string
   readonly description: string
-  readonly unitAmount: number
+  readonly categoryId: string | null
+  readonly pricing: PricingModel
+  /** Null only for hourly services that inherit a category or default rate. */
+  readonly unitAmount: number | null
   readonly currency: Currency
   readonly interval: BillingInterval
   readonly archived: boolean
+}
+
+export type CatalogCategory = {
+  readonly id: string
+  readonly name: string
+  readonly hourlyRate: Money | null
+}
+
+export type PricedCatalogItem = CatalogItem & {
+  readonly category: CatalogCategory | null
+  /** Null when an hourly service has no rate it can use. */
+  readonly price: ResolvedPrice | null
 }
 
 export type StoredAddOn = AddOn & {
@@ -41,6 +57,7 @@ export type BillingSettings = {
   readonly defaultTaxRateBps: number
   readonly reminderOffsets: readonly number[]
   readonly autoBillEnabled: boolean
+  readonly defaultHourlyRate: Money | null
 }
 
 export const DEFAULT_SETTINGS: BillingSettings = {
@@ -48,6 +65,7 @@ export const DEFAULT_SETTINGS: BillingSettings = {
   defaultTaxRateBps: 0,
   reminderOffsets: [-3, 0, 7, 14],
   autoBillEnabled: true,
+  defaultHourlyRate: null,
 }
 
 export type RunSummary = {
@@ -68,6 +86,15 @@ export type EngineRepository = {
     readonly find: (id: string) => Promise<CatalogItem | null>
     readonly insert: (item: Omit<CatalogItem, "id">) => Promise<CatalogItem>
     readonly save: (item: CatalogItem) => Promise<CatalogItem>
+  }
+  readonly categories: {
+    readonly list: () => Promise<CatalogCategory[]>
+    readonly find: (id: string) => Promise<CatalogCategory | null>
+    readonly insert: (
+      category: Omit<CatalogCategory, "id">
+    ) => Promise<CatalogCategory>
+    readonly save: (category: CatalogCategory) => Promise<CatalogCategory>
+    readonly remove: (id: string) => Promise<void>
   }
   readonly addOns: {
     readonly insert: (addOn: Omit<StoredAddOn, "id">) => Promise<StoredAddOn>

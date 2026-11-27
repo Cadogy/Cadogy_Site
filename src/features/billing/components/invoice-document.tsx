@@ -9,6 +9,7 @@ import {
   PAYMENT_METHOD_LABELS,
 } from "../domain/format"
 import type { ClientSnapshot, Invoice, InvoiceBadge } from "../domain/invoice"
+import type { LineItem } from "../domain/schema"
 import { calculateInvoiceTotals, calculateLineTotal } from "../domain/totals"
 import { StatusBadge } from "./status-badge"
 
@@ -24,19 +25,26 @@ const addressLines = (client: ClientSnapshot) =>
     client.taxId ? `Tax ID: ${client.taxId}` : "",
   ].filter(Boolean)
 
-const formatQuantity = (quantity: number) =>
-  Number.isInteger(quantity) ? String(quantity) : quantity.toFixed(2)
+const formatQuantity = ({ quantity, unit }: LineItem) => {
+  const amount = Number.isInteger(quantity)
+    ? String(quantity)
+    : quantity.toFixed(2)
+  return unit === "hour" ? `${amount} ${quantity === 1 ? "hr" : "hrs"}` : amount
+}
 
 export function InvoiceDocument({
   invoice,
   client,
   status,
   headingLevel = 1,
+  showPaymentReferences = false,
 }: {
   invoice: Invoice
   client: ClientSnapshot
   status: InvoiceBadge
   headingLevel?: 1 | 2
+  /** Staff see wire, check and Stripe references; clients don't. */
+  showPaymentReferences?: boolean
 }) {
   const Heading = headingLevel === 1 ? "h1" : "h2"
   const Subheading = headingLevel === 1 ? "h2" : "h3"
@@ -113,11 +121,9 @@ export function InvoiceDocument({
               <span className="whitespace-pre-line">{item.description}</span>
               <span className="text-sm text-muted-foreground sm:text-right sm:text-base sm:text-foreground">
                 <span className="sm:hidden">
-                  {formatQuantity(item.quantity)} × {money(item.unitAmount)}
+                  {formatQuantity(item)} × {money(item.unitAmount)}
                 </span>
-                <span className="hidden sm:inline">
-                  {formatQuantity(item.quantity)}
-                </span>
+                <span className="hidden sm:inline">{formatQuantity(item)}</span>
               </span>
               <span className="hidden text-right sm:block">
                 {money(item.unitAmount)}
@@ -195,6 +201,9 @@ export function InvoiceDocument({
                 <span className="text-muted-foreground">
                   {formatDate(payment.paidAt)} ·{" "}
                   {PAYMENT_METHOD_LABELS[payment.method]}
+                  {showPaymentReferences && payment.reference
+                    ? ` · ${payment.reference}`
+                    : null}
                 </span>
                 <span>{money(payment.amount)}</span>
               </li>

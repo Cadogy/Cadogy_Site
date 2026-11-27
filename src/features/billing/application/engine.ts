@@ -2,6 +2,7 @@ import { z } from "zod"
 
 import { fail, firstIssue, ok, type Result } from "@/lib/result"
 
+import { PRICING_MODELS, resolveCatalogPrice } from "../domain/catalog"
 import {
   allocatePayment,
   consolidateCharges,
@@ -10,7 +11,8 @@ import {
 } from "../domain/collections"
 import { DAY_MS, startOfUtcDay } from "../domain/dates"
 import { addByCurrency, type AmountsByCurrency } from "../domain/format"
-import { type Invoice } from "../domain/invoice"
+import { wasDelivered, type Invoice } from "../domain/invoice"
+import { isPayable } from "../domain/lifecycle"
 import {
   ADD_ON_STATUSES,
   addInterval,
@@ -28,10 +30,12 @@ import { calculateInvoiceTotals, sum } from "../domain/totals"
 import type { createBillingService } from "./billing-service"
 import type {
   BillingSettings,
+  CatalogCategory,
   CatalogItem,
   Charge,
   EngineRepository,
   PaymentGateway,
+  PricedCatalogItem,
   RunSummary,
   StoredAddOn,
 } from "./engine-ports"
@@ -41,20 +45,53 @@ type Dependencies = {
   readonly repository: EngineRepository
   readonly gateway: PaymentGateway
   readonly clock: () => Date
-  readonly applyCredit?: (invoiceId: string) => Promise<unknown>
+  readonly applyCredit?: (
+    invoiceId: string,
+    actorId: string
+  ) => Promise<unknown>
+}
+
+export type AutopayOutcome = "skipped" | "collected" | "failed"
+
+export type IssuedInvoice = {
+  readonly invoice: Invoice
+  /** False when the "issued" email could not be delivered. */
+  readonly emailed: boolean
+  readonly autopay: AutopayOutcome
 }
 
 const SYSTEM = "system"
+const MAX_AUTOPAY_ATTEMPTS = 3
+const AUTOPAY_RETRY_DAYS = 3
+export const NO_HOURLY_RATE =
+  "This hourly service has no rate. Set one on the service, its category, or in Billing settings."
 const MONTHS_PER_INTERVAL = { month: 1, quarter: 3, year: 12 } as const
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a YYYY-MM-DD date")
 
-const catalogItemSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(500).default(""),
-  unitAmount: minorUnits,
-  currency: z.enum(CURRENCIES).default("USD"),
-  interval: z.enum(BILLING_INTERVALS),
+const moneySchema = z.object({
+  amount: minorUnits.positive(),
+  currency: z.enum(CURRENCIES),
+})
+
+const catalogItemSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    description: z.string().trim().max(500).default(""),
+    categoryId: z.string().min(1).nullable().default(null),
+    pricing: z.enum(PRICING_MODELS).default("fixed"),
+    unitAmount: minorUnits.nullable().default(null),
+    currency: z.enum(CURRENCIES).default("USD"),
+    interval: z.enum(BILLING_INTERVALS),
+  })
+  .refine((item) => item.pricing === "hourly" || item.unitAmount !== null, {
+    message: "Enter a price for fixed-price services",
+    path: ["unitAmount"],
+  })
+
+const categorySchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  hourlyRate: moneySchema.nullable().default(null),
 })
 
 const addOnSchema = z.object({
@@ -72,11 +109,20 @@ const chargeSchema = z.object({
   quantity: wholeQuantity.default(1),
 })
 
+const addOnChangesSchema = z.object({
+  name: z.string().trim().min(1).max(200).optional(),
+  unitAmount: minorUnits.positive().optional(),
+  quantity: wholeQuantity.optional(),
+  interval: z.enum(BILLING_INTERVALS).optional(),
+  nextBillingDate: isoDate.optional(),
+})
+
 const settingsSchema = z.object({
   paymentInstructions: z.string().trim().max(2_000),
   defaultTaxRateBps: z.number().int().min(0).max(10_000),
   reminderOffsets: z.array(z.number().int().min(-60).max(120)).max(8),
   autoBillEnabled: z.boolean(),
+  defaultHourlyRate: moneySchema.nullable().default(null),
 })
 
 const parseDay = (iso: string) => new Date(`${iso}T00:00:00.000Z`)
@@ -109,21 +155,30 @@ export const createBillingEngine = ({
   clock,
   applyCredit,
 }: Dependencies) => {
-  const creditFirst = async (
-    invoice: Invoice,
-    apply: (invoiceId: string) => Promise<unknown>
-  ) => {
-    await apply(invoice.id)
+  const creditFirst = async (invoice: Invoice, actorId: string) => {
+    if (!applyCredit) return invoice
+    await applyCredit(invoice.id, actorId)
     return (await billing.getInvoice(invoice.id)) ?? invoice
+  }
+
+  const parseCatalogItem = async (input: unknown) => {
+    const parsed = catalogItemSchema.safeParse(input)
+    if (!parsed.success) return fail<never>(firstIssue(parsed.error))
+    if (
+      parsed.data.categoryId &&
+      !(await repository.categories.find(parsed.data.categoryId))
+    )
+      return fail<never>("Category not found")
+    return ok(parsed.data)
   }
 
   const createCatalogItem = async (
     input: unknown
   ): Promise<Result<CatalogItem>> => {
-    const parsed = catalogItemSchema.safeParse(input)
-    if (!parsed.success) return fail(firstIssue(parsed.error))
+    const parsed = await parseCatalogItem(input)
+    if (!parsed.ok) return parsed
     return ok(
-      await repository.catalog.insert({ ...parsed.data, archived: false })
+      await repository.catalog.insert({ ...parsed.value, archived: false })
     )
   }
 
@@ -133,9 +188,79 @@ export const createBillingEngine = ({
   ): Promise<Result<CatalogItem>> => {
     const existing = await repository.catalog.find(id)
     if (!existing) return fail("Catalog item not found")
-    const parsed = catalogItemSchema.safeParse(input)
+    const parsed = await parseCatalogItem(input)
+    if (!parsed.ok) return parsed
+    return ok(await repository.catalog.save({ ...existing, ...parsed.value }))
+  }
+
+  const createCategory = async (
+    input: unknown
+  ): Promise<Result<CatalogCategory>> => {
+    const parsed = categorySchema.safeParse(input)
     if (!parsed.success) return fail(firstIssue(parsed.error))
-    return ok(await repository.catalog.save({ ...existing, ...parsed.data }))
+    return ok(await repository.categories.insert(parsed.data))
+  }
+
+  const updateCategory = async (
+    id: string,
+    input: unknown
+  ): Promise<Result<CatalogCategory>> => {
+    const existing = await repository.categories.find(id)
+    if (!existing) return fail("Category not found")
+    const parsed = categorySchema.safeParse(input)
+    if (!parsed.success) return fail(firstIssue(parsed.error))
+    return ok(await repository.categories.save({ ...existing, ...parsed.data }))
+  }
+
+  /** Deleting a category keeps its services; they become uncategorized. */
+  const deleteCategory = async (id: string): Promise<Result<null>> => {
+    if (!(await repository.categories.find(id)))
+      return fail("Category not found")
+    const items = await repository.catalog.list({ includeArchived: true })
+    await Promise.all(
+      items
+        .filter((item) => item.categoryId === id)
+        .map((item) => repository.catalog.save({ ...item, categoryId: null }))
+    )
+    await repository.categories.remove(id)
+    return ok(null)
+  }
+
+  const priceItems = (
+    items: readonly CatalogItem[],
+    categories: readonly CatalogCategory[],
+    settings: BillingSettings
+  ): PricedCatalogItem[] =>
+    items.map((item) => {
+      const category =
+        categories.find((candidate) => candidate.id === item.categoryId) ?? null
+      return {
+        ...item,
+        category,
+        price: resolveCatalogPrice(
+          item,
+          category?.hourlyRate ?? null,
+          settings.defaultHourlyRate
+        ),
+      }
+    })
+
+  const pricedCatalog = async (options: { includeArchived: boolean }) => {
+    const [items, categories, settings] = await Promise.all([
+      repository.catalog.list(options),
+      repository.categories.list(),
+      repository.settings.get(),
+    ])
+    return { items: priceItems(items, categories, settings), categories }
+  }
+
+  const priceOf = async (item: CatalogItem) => {
+    const [categories, settings] = await Promise.all([
+      repository.categories.list(),
+      repository.settings.get(),
+    ])
+    const [priced] = priceItems([item], categories, settings)
+    return priced?.price ?? null
   }
 
   const setCatalogItemArchived = async (
@@ -163,8 +288,15 @@ export const createBillingEngine = ({
       return fail("Catalog item not found")
 
     const name = parsed.data.name ?? item?.name
-    const unitAmount = parsed.data.unitAmount ?? item?.unitAmount
+    const unitAmount =
+      parsed.data.unitAmount ??
+      (item ? (await priceOf(item))?.unitAmount : null)
     const interval = parsed.data.interval ?? item?.interval
+    if (item && item.currency !== client.currency)
+      return fail(
+        `${item.name} is priced in ${item.currency}, but this client is billed in ${client.currency}. Add it as a custom service in ${client.currency} instead.`
+      )
+    if (item?.pricing === "hourly" && !unitAmount) return fail(NO_HOURLY_RATE)
     if (!name || !unitAmount || !interval)
       return fail("Name, price and billing interval are required")
 
@@ -189,29 +321,40 @@ export const createBillingEngine = ({
     )
   }
 
+  /**
+   * Renames, re-prices or reschedules a service. Price and quantity apply from
+   * the next renewal; a new next-billing date becomes the renewal anchor.
+   */
   const updateAddOn = async (
     id: string,
-    input: {
-      readonly quantity?: number
-      readonly unitAmount?: number
-      readonly name?: string
-    }
+    input: unknown
   ): Promise<Result<StoredAddOn>> => {
     const existing = await repository.addOns.find(id)
     if (!existing) return fail("Service not found")
-    const parsed = addOnSchema
-      .pick({ name: true, unitAmount: true })
-      .extend({
-        quantity: wholeQuantity.optional(),
-      })
-      .safeParse(input)
+    if (existing.status === "canceled" || existing.status === "completed")
+      return fail(`A ${existing.status} service can't be changed`)
+    const parsed = addOnChangesSchema.safeParse(input)
     if (!parsed.success) return fail(firstIssue(parsed.error))
+    const changes = parsed.data
+    const nextBillingDate = changes.nextBillingDate
+      ? parseDay(changes.nextBillingDate)
+      : existing.nextBillingDate
+    if (
+      changes.nextBillingDate &&
+      nextBillingDate.getTime() < startOfUtcDay(clock()).getTime()
+    )
+      return fail("The next billing date can't be in the past")
     return ok(
       await repository.addOns.save({
         ...existing,
-        name: parsed.data.name ?? existing.name,
-        unitAmount: parsed.data.unitAmount ?? existing.unitAmount,
-        quantity: parsed.data.quantity ?? existing.quantity,
+        name: changes.name ?? existing.name,
+        unitAmount: changes.unitAmount ?? existing.unitAmount,
+        quantity: changes.quantity ?? existing.quantity,
+        interval: changes.interval ?? existing.interval,
+        nextBillingDate,
+        anchorDay: changes.nextBillingDate
+          ? nextBillingDate.getUTCDate()
+          : existing.anchorDay,
       })
     )
   }
@@ -264,6 +407,19 @@ export const createBillingEngine = ({
     return charge ? ok(charge) : fail("Charge could not be added")
   }
 
+  const updateCharge = async (
+    id: string,
+    input: unknown
+  ): Promise<Result<Charge>> => {
+    const [charge] = await repository.charges.list({ ids: [id] })
+    if (!charge) return fail("Charge not found")
+    if (charge.status !== "pending")
+      return fail("Only pending charges can be edited")
+    const parsed = chargeSchema.safeParse(input)
+    if (!parsed.success) return fail(firstIssue(parsed.error))
+    return ok(await repository.charges.save({ ...charge, ...parsed.data }))
+  }
+
   const voidCharge = async (id: string): Promise<Result<Charge>> => {
     const [charge] = await repository.charges.list({ ids: [id] })
     if (!charge) return fail("Charge not found")
@@ -275,11 +431,99 @@ export const createBillingEngine = ({
   const pendingCharges = (clientId: string) =>
     repository.charges.list({ clientId, status: "pending" })
 
+  const collectWithSavedCard = async (
+    invoice: Invoice
+  ): Promise<AutopayOutcome> => {
+    const client = await billing.getClient(invoice.clientId)
+    const card = client?.autopay.enabled ? client.autopay.card : null
+    const owed = amountDue(invoice)
+    if (!card || owed === 0 || invoice.status !== "open") return "skipped"
+
+    const result = await gateway.chargeSavedCard({
+      customerId: card.stripeCustomerId,
+      paymentMethodId: card.paymentMethodId,
+      amount: owed,
+      currency: invoice.currency,
+      invoiceId: invoice.id,
+      description: `Invoice ${invoice.number ?? invoice.id}`,
+    })
+    if (!result.ok) {
+      await billing.notifyAutopayFailed(invoice.id, result.error)
+      return "failed"
+    }
+    await billing.recordStripePayment({
+      invoiceId: invoice.id,
+      amount: owed,
+      eventId: `autopay:${result.paymentId}`,
+      paymentIntentId: result.paymentId,
+      paidAt: clock(),
+    })
+    return "collected"
+  }
+
+  /**
+   * The one way an invoice gets issued: number it, use up any credit balance,
+   * email it (showing what's left to pay), then charge the saved card if the
+   * client has autopay on. Used by the editor, "Bill now" and the daily run.
+   */
+  const issueAndCollect = async (
+    invoiceId: string,
+    actorId: string
+  ): Promise<Result<IssuedInvoice>> => {
+    const issued = await billing.issue(invoiceId, actorId, {
+      beforeNotify: (invoice) => creditFirst(invoice, actorId),
+    })
+    if (!issued.ok) return issued
+    const emailed = wasDelivered(issued.value, "sent")
+    const autopay = await collectWithSavedCard(issued.value)
+    const invoice =
+      autopay === "skipped"
+        ? issued.value
+        : ((await billing.getInvoice(invoiceId)) ?? issued.value)
+    return ok({ invoice, emailed, autopay })
+  }
+
+  /** Lets staff retry the saved card on an open invoice right away. */
+  const chargeSavedCard = async (
+    invoiceId: string
+  ): Promise<Result<AutopayOutcome>> => {
+    const invoice = await billing.getInvoice(invoiceId)
+    if (!invoice) return fail("Invoice not found")
+    if (invoice.status !== "open")
+      return fail("Only open invoices can be charged")
+    const outcome = await collectWithSavedCard(invoice)
+    if (outcome === "skipped")
+      return fail("This client has no saved card with autopay on")
+    return ok(outcome)
+  }
+
+  const isDisputed = (invoice: Invoice) =>
+    invoice.events.filter((event) => event.type === "disputed").length >
+    invoice.events.filter((event) => event.type === "dispute_closed").length
+
+  /** Retries failed autopay a few days apart, up to a fixed number of tries. */
+  const retryFailedAutopay = async (today: Date, skip: ReadonlySet<string>) => {
+    const open = await billing.listInvoices({ status: "open" })
+    const due = open.filter((invoice) => {
+      if (skip.has(invoice.id) || isDisputed(invoice)) return false
+      const failures = invoice.events.filter(
+        (event) => event.type === "autopay_failed"
+      )
+      const last = failures.at(-1)
+      return (
+        last !== undefined &&
+        failures.length < MAX_AUTOPAY_ATTEMPTS &&
+        today.getTime() - last.at.getTime() >= AUTOPAY_RETRY_DAYS * DAY_MS
+      )
+    })
+    return Promise.all(due.map(collectWithSavedCard))
+  }
+
   const invoiceCharges = async (
     clientId: string,
     chargeIds: readonly string[] | "all",
     actorId: string
-  ): Promise<Result<Invoice[]>> => {
+  ): Promise<Result<IssuedInvoice[]>> => {
     const pending = await pendingCharges(clientId)
     const selected =
       chargeIds === "all"
@@ -292,7 +536,7 @@ export const createBillingEngine = ({
 
     const settings = await repository.settings.get()
     const issued = await consolidateCharges(selected).reduce<
-      Promise<Result<Invoice[]>>
+      Promise<Result<IssuedInvoice[]>>
     >(
       async (previous, group) => {
         const acc = await previous
@@ -308,31 +552,48 @@ export const createBillingEngine = ({
           actorId
         )
         if (!draft.ok) return draft
-        const invoice = await billing.issue(draft.value.id, actorId)
-        if (!invoice.ok) return invoice
-        const settled = applyCredit
-          ? await creditFirst(invoice.value, applyCredit)
-          : invoice.value
-        await Promise.all(
-          selected
-            .filter((charge) => group.chargeIds.includes(charge.id))
-            .map((charge) =>
-              repository.charges.save({
-                ...charge,
-                status: "invoiced",
-                invoiceId: invoice.value.id,
-              })
-            )
+        // Mark the charges billed before collecting, so a slow card charge
+        // can never leave them pending and billed twice.
+        const groupCharges = selected.filter((charge) =>
+          group.chargeIds.includes(charge.id)
         )
-        return ok([...acc.value, settled])
+        await Promise.all(
+          groupCharges.map((charge) =>
+            repository.charges.save({
+              ...charge,
+              status: "invoiced",
+              invoiceId: draft.value.id,
+            })
+          )
+        )
+        const issuedInvoice = await issueAndCollect(draft.value.id, actorId)
+        if (!issuedInvoice.ok) {
+          // Issuing failed, so put the charges back and drop the empty draft.
+          await Promise.all(groupCharges.map(repository.charges.save))
+          await billing.deleteDraft(draft.value.id)
+          return issuedInvoice
+        }
+        return ok([...acc.value, issuedInvoice.value])
       },
       Promise.resolve(ok([]))
     )
     return issued
   }
 
+  const archivedClientIds = async (clientIds: readonly string[]) => {
+    const unique = [...new Set(clientIds)]
+    const clients = await Promise.all(unique.map((id) => billing.getClient(id)))
+    return new Set(
+      clients.flatMap((client) => (client?.archivedAt ? [client.id] : []))
+    )
+  }
+
   const generateCharges = async (today: Date) => {
-    const due = await repository.addOns.list({ dueBy: today })
+    const listed = await repository.addOns.list({ dueBy: today })
+    const archived = await archivedClientIds(
+      listed.map((addOn) => addOn.clientId)
+    )
+    const due = listed.filter((addOn) => !archived.has(addOn.clientId))
     const created = await Promise.all(
       due.map(async (addOn) => {
         const result = dueCharges(addOn, today)
@@ -357,43 +618,16 @@ export const createBillingEngine = ({
     return sum(created)
   }
 
-  const collectWithSavedCard = async (invoice: Invoice) => {
-    const client = await billing.getClient(invoice.clientId)
-    const card = client?.autopay.enabled ? client.autopay.card : null
-    const owed = amountDue(invoice)
-    if (!card || owed === 0) return "skipped" as const
-
-    const result = await gateway.chargeSavedCard({
-      customerId: card.stripeCustomerId,
-      paymentMethodId: card.paymentMethodId,
-      amount: owed,
-      currency: invoice.currency,
-      invoiceId: invoice.id,
-      description: `Invoice ${invoice.number ?? invoice.id}`,
-    })
-    if (!result.ok) {
-      await billing.notifyAutopayFailed(invoice.id)
-      return "failed" as const
-    }
-    await billing.recordStripePayment({
-      invoiceId: invoice.id,
-      amount: owed,
-      eventId: `autopay:${result.paymentId}`,
-      paymentIntentId: result.paymentId,
-      paidAt: clock(),
-    })
-    return "collected" as const
-  }
-
   const autoBill = async (settings: BillingSettings) => {
     if (!settings.autoBillEnabled)
-      return { invoices: [] as Invoice[], errors: [] as string[] }
+      return { invoices: [] as IssuedInvoice[], errors: [] as string[] }
     const pending = await repository.charges.list({ status: "pending" })
     const clientIds = [...new Set(pending.map((charge) => charge.clientId))]
     const results = await Promise.all(
       clientIds.map(async (clientId) => {
         const client = await billing.getClient(clientId)
-        if (!client?.autoBill || client.archivedAt) return ok<Invoice[]>([])
+        if (!client?.autoBill || client.archivedAt)
+          return ok<IssuedInvoice[]>([])
         return invoiceCharges(clientId, "all", SYSTEM)
       })
     )
@@ -409,9 +643,14 @@ export const createBillingEngine = ({
     skip: ReadonlySet<string>
   ) => {
     const open = await billing.listInvoices({ status: "open" })
+    const archived = await archivedClientIds(
+      open.map((invoice) => invoice.clientId)
+    )
     const sent = await Promise.all(
       open
-        .filter((invoice) => !skip.has(invoice.id))
+        .filter(
+          (invoice) => !skip.has(invoice.id) && !archived.has(invoice.clientId)
+        )
         .flatMap((invoice) =>
           dueReminders(invoice, today, settings.reminderOffsets).map((offset) =>
             billing.sendReminder(invoice.id, SYSTEM, reminderKey(offset))
@@ -426,11 +665,16 @@ export const createBillingEngine = ({
     const settings = await repository.settings.get()
     const chargesCreated = await generateCharges(today)
     const billed = await autoBill(settings)
-    const autopay = await Promise.all(billed.invoices.map(collectWithSavedCard))
+    const billedIds = new Set(billed.invoices.map(({ invoice }) => invoice.id))
+    const retried = await retryFailedAutopay(today, billedIds)
+    const autopay = [
+      ...billed.invoices.map((issued) => issued.autopay),
+      ...retried,
+    ]
     const remindersSent = await sendScheduledReminders(
       settings,
       today,
-      new Set(billed.invoices.map((invoice) => invoice.id))
+      billedIds
     )
     const summary: RunSummary = {
       at: today,
@@ -456,7 +700,7 @@ export const createBillingEngine = ({
     if (unique.length === 0) return fail("Select at least one invoice")
     const owned = await billing.listForPortalUser(email)
     const selected = owned.filter(
-      (invoice) => unique.includes(invoice.id) && invoice.status === "open"
+      (invoice) => unique.includes(invoice.id) && isPayable(invoice)
     )
     if (selected.length !== unique.length)
       return fail("Some invoices can't be paid online")
@@ -489,7 +733,7 @@ export const createBillingEngine = ({
       payment.invoiceIds.map((id) => billing.getInvoice(id))
     )
     const open = invoices.filter(
-      (invoice): invoice is Invoice => invoice?.status === "open"
+      (invoice): invoice is Invoice => invoice != null && isPayable(invoice)
     )
     const allocation = allocatePayment(open, payment.amount)
     const results = await Promise.all(
@@ -537,8 +781,31 @@ export const createBillingEngine = ({
       .sort((a, b) => a.nextBillingDate.getTime() - b.nextBillingDate.getTime())
   }
 
+  /** Archiving pauses every live service, so nothing bills in the meantime. */
+  const archiveClient = async (clientId: string) => {
+    const archived = await billing.archiveClient(clientId)
+    if (!archived.ok) return archived
+    const addOns = await repository.addOns.list({ clientIds: [clientId] })
+    await Promise.all(
+      addOns
+        .filter((addOn) => addOn.status === "active")
+        .map((addOn) => repository.addOns.save({ ...addOn, status: "paused" }))
+    )
+    return archived
+  }
+
   return {
+    archiveClient,
+    restoreClient: billing.restoreClient,
+    issueAndCollect,
+    chargeSavedCard,
+    updateCharge,
     listCatalog: repository.catalog.list,
+    pricedCatalog,
+    listCategories: repository.categories.list,
+    createCategory,
+    updateCategory,
+    deleteCategory,
     createCatalogItem,
     updateCatalogItem,
     archiveCatalogItem: (id: string) => setCatalogItemArchived(id, true),

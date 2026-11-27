@@ -22,10 +22,17 @@ import {
 import type Stripe from "stripe"
 
 import { env } from "@/env"
-import { sendDisputeAlert } from "@/lib/email"
+import { sendDisputeAlert, sendUnappliedPaymentAlert } from "@/lib/email"
 
 const logFailure = (subject: string, error: string) =>
   console.error(`Stripe ${subject} not recorded: ${error}`)
+
+const alertCredited = (invoice: Invoice, amount: number) =>
+  sendUnappliedPaymentAlert({
+    reference: invoice.number ?? "an invoice",
+    amount: formatMoney(amount, invoice.currency),
+    url: `${env.NEXT_PUBLIC_APP_URL}/admin/billing/clients/${invoice.clientId}`,
+  })
 
 const handleCheckoutCompleted = async (event: Stripe.Event) => {
   const session = event.data.object as Stripe.Checkout.Session
@@ -33,14 +40,19 @@ const handleCheckoutCompleted = async (event: Stripe.Event) => {
   const paidAt = new Date(event.created * 1000)
 
   if (outcome.kind === "invoice") {
-    const result = await billing.recordStripePayment({
+    // Money that can't go on the invoice (paid meanwhile, voided, …) is kept
+    // as client credit and staff are told, instead of being dropped.
+    const result = await credits.settleCardPayment({
       invoiceId: outcome.invoiceId,
       amount: outcome.amount,
       eventId: event.id,
       paidAt,
       paymentIntentId: outcome.paymentIntentId,
     })
-    if (!result.ok) logFailure(`payment for ${outcome.invoiceId}`, result.error)
+    if (!result.ok)
+      throw new Error(`Payment for ${outcome.invoiceId}: ${result.error}`)
+    if (result.value.credited > 0)
+      await alertCredited(result.value.invoice, result.value.credited)
   }
 
   if (outcome.kind === "batch") {
@@ -51,11 +63,25 @@ const handleCheckoutCompleted = async (event: Stripe.Event) => {
       paidAt,
       paymentIntentId: outcome.paymentIntentId,
     })
-    if (!result.ok) logFailure(`batch payment ${event.id}`, result.error)
-    if (result.ok && result.value.unallocated > 0)
-      console.error(
-        `Stripe batch payment ${event.id} left ${result.value.unallocated} unallocated`
-      )
+    if (!result.ok)
+      throw new Error(`Batch payment ${event.id}: ${result.error}`)
+    const leftover = result.value.unallocated
+    const [firstId] = outcome.invoiceIds
+    const invoice =
+      leftover > 0 && firstId ? await billing.getInvoice(firstId) : null
+    if (invoice) {
+      const credited = await credits.creditUnappliedPayment({
+        clientId: invoice.clientId,
+        amount: leftover,
+        currency: invoice.currency,
+        paymentIntentId: outcome.paymentIntentId ?? event.id,
+        reason:
+          "Card payment for several invoices that was more than they owed",
+      })
+      if (!credited.ok)
+        throw new Error(`Batch payment ${event.id}: ${credited.error}`)
+      await alertCredited(invoice, leftover)
+    }
   }
 
   if (outcome.kind === "setup") {

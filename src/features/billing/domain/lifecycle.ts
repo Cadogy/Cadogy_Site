@@ -25,6 +25,7 @@ type EditableFields = Partial<
     | "memo"
     | "footer"
     | "internalNotes"
+    | "dueDate"
   >
 >
 
@@ -46,6 +47,15 @@ const issueProblem = (
   return null
 }
 
+const dueDateFor = (invoice: Invoice, issueDate: Date): Result<Date> => {
+  if (!invoice.dueDate) return ok(addDays(issueDate, invoice.termsDays))
+  return invoice.dueDate.getTime() < issueDate.getTime()
+    ? fail(
+        "The due date is in the past. Change it or clear it to use the payment terms."
+      )
+    : ok(invoice.dueDate)
+}
+
 export const issueInvoice = (
   invoice: Invoice,
   args: {
@@ -57,6 +67,8 @@ export const issueInvoice = (
 ): Result<Invoice> => {
   const problem = issueProblem(invoice, args.client)
   if (problem) return fail(problem)
+  const dueDate = dueDateFor(invoice, args.issueDate)
+  if (!dueDate.ok) return dueDate
 
   return ok({
     ...invoice,
@@ -64,7 +76,7 @@ export const issueInvoice = (
     number: args.number,
     clientSnapshot: args.client,
     issueDate: args.issueDate,
-    dueDate: addDays(args.issueDate, invoice.termsDays),
+    dueDate: dueDate.value,
     events: withEvent(invoice, {
       type: "issued",
       at: args.issueDate,
@@ -82,8 +94,15 @@ export const updateDraft = (
   return ok({ ...invoice, ...fields })
 }
 
+/**
+ * Open invoices and ones written off as uncollectible can still be paid; a
+ * late payment on a written-off invoice is welcome and closes it as paid.
+ */
+export const isPayable = (invoice: Pick<Invoice, "status">) =>
+  invoice.status === "open" || invoice.status === "uncollectible"
+
 const paymentProblem = (invoice: Invoice, payment: Payment): string | null => {
-  if (invoice.status !== "open" && invoice.status !== "uncollectible")
+  if (!isPayable(invoice))
     return `Payments cannot be recorded on a ${invoice.status} invoice`
   if (payment.amount > calculateInvoiceTotals(invoice).amountDue)
     return "Payment exceeds the amount due"

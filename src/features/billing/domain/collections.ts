@@ -96,5 +96,12 @@ export const dueReminders = (
     .sort((a, b) => a - b)
     .filter((offset) => due + offset * DAY_MS <= today.getTime())
   const latest = reached.at(-1)
-  return latest === undefined || sent.has(reminderKey(latest)) ? [] : [latest]
+  if (latest === undefined || sent.has(reminderKey(latest))) return []
+  // A reminder sent by hand since this step came due already covers it, so
+  // the client never gets a scheduled one on top of a manual one.
+  const stepDue = due + latest * DAY_MS
+  const coveredManually = invoice.events.some(
+    (event) => event.type === "reminder_sent" && event.at.getTime() >= stepDue
+  )
+  return coveredManually ? [] : [latest]
 }

@@ -12,8 +12,10 @@ import { sendTeamInvite } from "@/lib/email"
 import type { TeamActor } from "../application/billing-service"
 import type { ContactRole } from "../domain/contacts"
 import { clientDisplayName } from "../domain/format"
+import { wasDelivered } from "../domain/invoice"
 import { accessRequests } from "./access"
 import { billing } from "./billing"
+import { deliveryFeedback } from "./issue-feedback"
 
 type ActionResult = NonNullable<ActionState>
 
@@ -131,7 +133,11 @@ export async function resendInvoiceAction(
   const admin = await requirePermission("billing:write")
   const result = await billing.resendInvoice(invoiceId, admin.id)
   revalidatePath(`/admin/billing/invoices/${invoiceId}`)
-  return toState(result, "Invoice sent to the billing contacts.")
+  if (!result.ok) return { ok: false, message: result.error }
+  return deliveryFeedback(
+    wasDelivered(result.value, "sent"),
+    "Invoice sent to the billing contacts."
+  )
 }
 
 export async function requestInvoiceAccessAction(

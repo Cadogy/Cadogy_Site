@@ -1,4 +1,5 @@
 import type { Invoice } from "../domain/invoice"
+import type { CreditNote, CreditNoteRepository } from "./credits"
 import type {
   BillingClient,
   BillingNotification,
@@ -79,5 +80,24 @@ export const createRecordingNotifier = (): BillingNotifier & {
     send: async (notification) => {
       sent.push(notification)
     },
+  }
+}
+
+export const createInMemoryCreditNotes = (): CreditNoteRepository => {
+  const notes: CreditNote[] = []
+  return {
+    insert: async (note) => {
+      const stored = { ...note, id: `cn_${notes.length + 1}` }
+      notes.push(stored)
+      return stored
+    },
+    list: async ({ clientId, invoiceId }) =>
+      notes.filter(
+        (note) =>
+          (!clientId || note.clientId === clientId) &&
+          (!invoiceId || note.invoiceId === invoiceId)
+      ),
+    findByStripeRefundId: async (refundId) =>
+      notes.find((note) => note.stripeRefundId === refundId) ?? null,
   }
 }

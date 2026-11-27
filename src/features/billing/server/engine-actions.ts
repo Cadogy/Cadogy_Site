@@ -12,12 +12,18 @@ import { toState, type ActionState } from "@/lib/action-state"
 import { parsePercentToBps } from "../domain/format"
 import type { AddOnStatus } from "../domain/recurring"
 import { billing, billingEngine } from "./billing"
-import { money, optionalText, text, whole } from "./form-fields"
+import { money, optionalMoney, optionalText, text, whole } from "./form-fields"
+import { issuedFeedback } from "./issue-feedback"
 import {
   createBatchCheckout,
   createCardSetupCheckout,
   isStripeConfigured,
 } from "./stripe"
+
+const INVALID_PRICE: ActionState = {
+  ok: false,
+  message: "Enter a valid price, e.g. 150.00",
+}
 
 const refresh = (clientId?: string) => {
   revalidatePath("/admin")
@@ -34,10 +40,14 @@ export async function saveCatalogItemAction(
   formData: FormData
 ): Promise<ActionState> {
   await requirePermission("billing:write")
+  const price = optionalMoney(formData, "price")
+  if (!price.ok) return INVALID_PRICE
   const input = {
     name: text(formData, "name"),
     description: text(formData, "description"),
-    unitAmount: money(formData, "price"),
+    categoryId: optionalText(formData, "categoryId") ?? null,
+    pricing: text(formData, "pricing") || "fixed",
+    unitAmount: price.value,
     currency: text(formData, "currency") || "USD",
     interval: text(formData, "interval"),
   }
@@ -48,6 +58,44 @@ export async function saveCatalogItemAction(
   return toState(
     result,
     itemId ? "Service updated." : "Service added to the catalog."
+  )
+}
+
+const rateFrom = (formData: FormData) => {
+  const rate = optionalMoney(formData, "hourlyRate")
+  if (!rate.ok) return rate
+  return {
+    ok: true as const,
+    value:
+      rate.value === null
+        ? null
+        : { amount: rate.value, currency: text(formData, "currency") || "USD" },
+  }
+}
+
+export async function saveCategoryAction(
+  categoryId: string | null,
+  _previous: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requirePermission("billing:write")
+  const hourlyRate = rateFrom(formData)
+  if (!hourlyRate.ok) return INVALID_PRICE
+  const input = { name: text(formData, "name"), hourlyRate: hourlyRate.value }
+  const result = categoryId
+    ? await billingEngine.updateCategory(categoryId, input)
+    : await billingEngine.createCategory(input)
+  refresh()
+  return toState(result, categoryId ? "Category updated." : "Category added.")
+}
+
+export async function deleteCategoryAction(categoryId: string) {
+  await requirePermission("billing:write")
+  const result = await billingEngine.deleteCategory(categoryId)
+  refresh()
+  return toState(
+    result,
+    "Category deleted. Its services are now uncategorized."
   )
 }
 
@@ -89,13 +137,16 @@ export async function updateAddOnAction(
 ): Promise<ActionState> {
   await requirePermission("billing:write")
   const result = await billingEngine.updateAddOn(addOnId, {
+    name: optionalText(formData, "name"),
     quantity: whole(formData, "quantity"),
     unitAmount: money(formData, "price"),
+    interval: optionalText(formData, "interval"),
+    nextBillingDate: optionalText(formData, "nextBillingDate"),
   })
   refresh(clientId)
   return toState(
     result,
-    "Service updated. Changes apply from the next renewal."
+    "Service updated. Price and quantity changes apply from the next renewal."
   )
 }
 
@@ -132,6 +183,22 @@ export async function addChargeAction(
   return toState(result, "Charge added. It goes on the next invoice.")
 }
 
+export async function updateChargeAction(
+  clientId: string,
+  chargeId: string,
+  _previous: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requirePermission("billing:write")
+  const result = await billingEngine.updateCharge(chargeId, {
+    description: text(formData, "description"),
+    unitAmount: money(formData, "price"),
+    quantity: whole(formData, "quantity"),
+  })
+  refresh(clientId)
+  return toState(result, "Charge updated.")
+}
+
 export async function voidChargeAction(clientId: string, chargeId: string) {
   await requirePermission("billing:write")
   const result = await billingEngine.voidCharge(chargeId)
@@ -151,14 +218,7 @@ export async function invoiceChargesAction(
   )
   refresh(clientId)
   if (!result.ok) return { ok: false, message: result.error }
-  const count = result.value.length
-  return {
-    ok: true,
-    message:
-      count === 1
-        ? "Invoice issued and emailed."
-        : `${count} invoices issued and emailed.`,
-  }
+  return issuedFeedback(result.value)
 }
 
 export async function setAutoBillAction(clientId: string, autoBill: boolean) {
@@ -194,11 +254,14 @@ export async function saveBillingSettingsAction(
   const defaultTaxRateBps = parsePercentToBps(text(formData, "taxPercent"))
   if (defaultTaxRateBps === null)
     return { ok: false, message: "Enter a tax rate between 0 and 100." }
+  const defaultHourlyRate = rateFrom(formData)
+  if (!defaultHourlyRate.ok) return INVALID_PRICE
   const result = await billingEngine.saveSettings({
     paymentInstructions: text(formData, "paymentInstructions"),
     defaultTaxRateBps,
     reminderOffsets: offsetsFrom(text(formData, "reminderOffsets")),
     autoBillEnabled: formData.get("autoBillEnabled") === "on",
+    defaultHourlyRate: defaultHourlyRate.value,
   })
   refresh()
   return toState(result, "Billing settings saved.")

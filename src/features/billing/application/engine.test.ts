@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import type { Invoice } from "../domain/invoice"
 import { calculateInvoiceTotals } from "../domain/totals"
 import { createBillingService } from "./billing-service"
 import { createBillingEngine } from "./engine"
@@ -236,9 +237,9 @@ describe("billing engine", () => {
       })
     )
 
-    const [invoice] = expectOk(
+    const [{ invoice }] = expectOk(
       await engine.invoiceCharges(client.id, [first.id], ADMIN)
-    )
+    ) as unknown as [{ invoice: Invoice }]
 
     expect(invoice?.lineItems.map((line) => line.description)).toEqual([
       "Logo refresh",

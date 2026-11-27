@@ -7,11 +7,13 @@ import {
   toMoneyInput,
 } from "../domain/format"
 import { type Invoice } from "../domain/invoice"
-import type {
-  Currency,
-  Discount,
-  InvoiceDraftInput,
-  LineItem,
+import {
+  MAX_LINE_ITEMS,
+  type Currency,
+  type Discount,
+  type InvoiceDraftPayload,
+  type LineItem,
+  type LineUnit,
 } from "../domain/schema"
 
 export type EditorLine = {
@@ -19,7 +21,37 @@ export type EditorLine = {
   readonly description: string
   readonly quantity: string
   readonly unitPrice: string
+  readonly unit?: LineUnit
 }
+
+/** A catalog service as the invoice editor offers it, priced in its currency. */
+export type CatalogOption = {
+  readonly id: string
+  readonly name: string
+  readonly categoryId: string | null
+  readonly categoryName: string | null
+  readonly currency: Currency
+  readonly hourly: boolean
+  /** Null when an hourly service has no rate it can use yet. */
+  readonly unitAmount: number | null
+}
+
+const MAX_DESCRIPTION = 500
+const MAX_QUANTITY = 1_000_000
+
+const hasAtMostTwoDecimals = (value: number) =>
+  Math.abs(value * 100 - Math.round(value * 100)) < 1e-6
+
+export const lineFromCatalog = (
+  option: CatalogOption,
+  key: string
+): EditorLine => ({
+  key,
+  description: option.name,
+  quantity: "1",
+  unitPrice: option.unitAmount === null ? "" : toMoneyInput(option.unitAmount),
+  ...(option.hourly ? { unit: "hour" as const } : {}),
+})
 
 export type EditorState = {
   readonly clientId: string
@@ -32,20 +64,40 @@ export type EditorState = {
   readonly memo: string
   readonly footer: string
   readonly internalNotes: string
+  /** YYYY-MM-DD, or empty to use the payment terms. */
+  readonly dueDate: string
 }
 
-const isBlankLine = (line: EditorLine) =>
-  !line.description.trim() && !line.quantity.trim() && !line.unitPrice.trim()
+/**
+ * A line with no description and no price is untouched, whatever its
+ * quantity: new lines start at quantity 1, and that alone shouldn't block
+ * saving or count as a line.
+ */
+export const isBlankLine = (line: EditorLine) =>
+  !line.description.trim() && !line.unitPrice.trim()
 
 const parseLine = (line: EditorLine, index: number): Result<LineItem> => {
   const quantity = Number(line.quantity)
   const unitAmount = parseMoneyInput(line.unitPrice)
   const label = `Check line ${index + 1}`
-  if (!line.description.trim()) return fail(`${label}: add a description.`)
-  if (!Number.isFinite(quantity) || quantity <= 0)
+  const description = line.description.trim()
+  if (!description) return fail(`${label}: add a description.`)
+  if (description.length > MAX_DESCRIPTION)
+    return fail(
+      `${label}: keep the description under ${MAX_DESCRIPTION} characters.`
+    )
+  if (!line.quantity.trim() || !Number.isFinite(quantity) || quantity <= 0)
     return fail(`${label}: quantity must be above zero.`)
+  if (quantity > MAX_QUANTITY) return fail(`${label}: quantity is too large.`)
+  if (!hasAtMostTwoDecimals(quantity))
+    return fail(`${label}: quantity can have at most two decimal places.`)
   if (unitAmount === null) return fail(`${label}: enter a valid unit price.`)
-  return ok({ description: line.description.trim(), quantity, unitAmount })
+  return ok({
+    description,
+    quantity,
+    unitAmount,
+    ...(line.unit ? { unit: line.unit } : {}),
+  })
 }
 
 const parseDiscount = (state: EditorState): Result<Discount | null> => {
@@ -62,14 +114,18 @@ const parseDiscount = (state: EditorState): Result<Discount | null> => {
     : ok({ type: "amount", value: amount })
 }
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
+
 export const editorToDraft = (
   state: EditorState
-): Result<InvoiceDraftInput> => {
+): Result<InvoiceDraftPayload> => {
   const lines = state.lineItems
     .filter((line) => !isBlankLine(line))
     .map(parseLine)
   const badLine = lines.find((line) => !line.ok)
   if (badLine && !badLine.ok) return fail(badLine.error)
+  if (lines.length > MAX_LINE_ITEMS)
+    return fail(`An invoice can have at most ${MAX_LINE_ITEMS} lines.`)
 
   const discount = parseDiscount(state)
   if (!discount.ok) return discount
@@ -82,6 +138,9 @@ export const editorToDraft = (
   if (!Number.isInteger(termsDays) || termsDays < 0 || termsDays > 120)
     return fail("Payment terms must be between 0 and 120 days.")
 
+  const dueDate = state.dueDate.trim()
+  if (dueDate && !ISO_DAY.test(dueDate)) return fail("Enter a valid due date.")
+
   return ok({
     clientId: state.clientId,
     currency: state.currency,
@@ -92,6 +151,7 @@ export const editorToDraft = (
     memo: state.memo,
     footer: state.footer,
     internalNotes: state.internalNotes,
+    dueDate: dueDate || null,
   })
 }
 
@@ -106,6 +166,7 @@ export const draftFromInvoice = (invoice: Invoice): EditorState => ({
     description: item.description,
     quantity: String(item.quantity),
     unitPrice: toMoneyInput(item.unitAmount),
+    ...(item.unit ? { unit: item.unit } : {}),
   })),
   discountType: invoice.discount?.type ?? "none",
   discountValue: invoice.discount
@@ -117,4 +178,5 @@ export const draftFromInvoice = (invoice: Invoice): EditorState => ({
   memo: invoice.memo,
   footer: invoice.footer,
   internalNotes: invoice.internalNotes,
+  dueDate: invoice.dueDate ? invoice.dueDate.toISOString().slice(0, 10) : "",
 })

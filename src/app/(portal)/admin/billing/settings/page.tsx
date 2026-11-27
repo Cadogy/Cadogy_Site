@@ -1,5 +1,9 @@
 import type { Metadata } from "next"
 import { requirePermission } from "@/features/auth/server/session"
+import {
+  CurrencyField,
+  PriceField,
+} from "@/features/billing/components/service-fields"
 import { bpsToPercentText, formatDate } from "@/features/billing/domain/format"
 import { billingEngine } from "@/features/billing/server/billing"
 import {
@@ -83,7 +87,7 @@ export default async function BillingSettingsPage() {
 
         <PortalSection
           title="Defaults"
-          description="Used for every automatic invoice. Each invoice keeps the values it was issued with."
+          description="Used for every new invoice, automatic or manual. Each invoice keeps the values it was issued with."
           layout="split"
         >
           <ActionForm
@@ -111,7 +115,7 @@ export default async function BillingSettingsPage() {
                 id="taxPercent"
                 width="xs"
                 label="Default tax rate (%)"
-                hint="Applied to automatic invoices."
+                hint="Applied to new invoices."
               >
                 {(control) => (
                   <Input
@@ -136,11 +140,25 @@ export default async function BillingSettingsPage() {
                 )}
               </Field>
             </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <PriceField
+                id="defaultHourlyRate"
+                name="hourlyRate"
+                label="Default hourly rate"
+                optional
+                hint="Used by hourly services that have no rate of their own or from their category."
+                defaultValue={settings.defaultHourlyRate?.amount}
+              />
+              <CurrencyField
+                id="defaultHourlyRateCurrency"
+                defaultValue={settings.defaultHourlyRate?.currency}
+              />
+            </div>
             <Field
               id="paymentInstructions"
               label="Payment instructions"
               optional
-              hint="Shown on automatic invoices, e.g. bank transfer details."
+              hint="Added to new invoices, e.g. bank transfer details."
             >
               {(control) => (
                 <Textarea

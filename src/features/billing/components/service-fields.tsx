@@ -2,32 +2,42 @@ import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
 
-import type { CatalogItem } from "../application/engine-ports"
+import type { CatalogCategory, CatalogItem } from "../application/engine-ports"
 import { intervalLabel, toMoneyInput } from "../domain/format"
 import { BILLING_INTERVALS, type BillingInterval } from "../domain/recurring"
 import { CURRENCIES, type Currency } from "../domain/schema"
 
-const toPriceInput = (minorUnits: number | undefined) =>
-  minorUnits === undefined ? undefined : toMoneyInput(minorUnits)
+const toPriceInput = (minorUnits: number | null | undefined) =>
+  minorUnits === undefined || minorUnits === null
+    ? undefined
+    : toMoneyInput(minorUnits)
 
 export function PriceField({
   id,
   defaultValue,
   optional,
+  required = !optional,
+  name = "price",
+  label = "Price",
+  hint = "Per unit, e.g. 8.00",
 }: {
   id: string
-  defaultValue?: number
+  defaultValue?: number | null
   optional?: boolean
+  required?: boolean
+  name?: string
+  label?: string
+  hint?: string
 }) {
   return (
-    <Field id={id} label="Price" optional={optional} hint="Per unit, e.g. 8.00">
+    <Field id={id} label={label} optional={optional} hint={hint}>
       {(control) => (
         <Input
           {...control}
-          name="price"
+          name={name}
           inputMode="decimal"
           defaultValue={toPriceInput(defaultValue)}
-          required={!optional}
+          required={required}
         />
       )}
     </Field>
@@ -107,7 +117,43 @@ export function CurrencyField({
   )
 }
 
-export function CatalogItemFields({ item }: { item?: CatalogItem }) {
+export function CategoryFields({ category }: { category?: CatalogCategory }) {
+  const prefix = category ? `category-${category.id}` : "category-new"
+  return (
+    <div className="grid gap-5 sm:grid-cols-[2fr_1fr_1fr]">
+      <Field id={`${prefix}-name`} label="Category name">
+        {(control) => (
+          <Input
+            {...control}
+            name="name"
+            defaultValue={category?.name}
+            required
+          />
+        )}
+      </Field>
+      <PriceField
+        id={`${prefix}-rate`}
+        name="hourlyRate"
+        label="Hourly rate"
+        optional
+        hint="Used by hourly services in this category."
+        defaultValue={category?.hourlyRate?.amount}
+      />
+      <CurrencyField
+        id={`${prefix}-currency`}
+        defaultValue={category?.hourlyRate?.currency}
+      />
+    </div>
+  )
+}
+
+export function CatalogItemFields({
+  item,
+  categories,
+}: {
+  item?: CatalogItem
+  categories: readonly CatalogCategory[]
+}) {
   const prefix = item ? `catalog-${item.id}` : "catalog-new"
   return (
     <div className="grid gap-5 sm:grid-cols-2">
@@ -125,7 +171,40 @@ export function CatalogItemFields({ item }: { item?: CatalogItem }) {
           />
         )}
       </Field>
-      <PriceField id={`${prefix}-price`} defaultValue={item?.unitAmount} />
+      <Field id={`${prefix}-category`} label="Category" optional>
+        {(control) => (
+          <NativeSelect
+            {...control}
+            name="categoryId"
+            defaultValue={item?.categoryId ?? ""}
+          >
+            <option value="">Uncategorized</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </NativeSelect>
+        )}
+      </Field>
+      <Field id={`${prefix}-pricing`} label="Pricing">
+        {(control) => (
+          <NativeSelect
+            {...control}
+            name="pricing"
+            defaultValue={item?.pricing ?? "fixed"}
+          >
+            <option value="fixed">Fixed price</option>
+            <option value="hourly">Hourly</option>
+          </NativeSelect>
+        )}
+      </Field>
+      <PriceField
+        id={`${prefix}-price`}
+        required={false}
+        hint="Fixed: price per unit. Hourly: rate per hour — leave empty to use the category or default rate."
+        defaultValue={item?.unitAmount}
+      />
       <div className="grid grid-cols-2 gap-5">
         <IntervalField
           id={`${prefix}-interval`}

@@ -10,7 +10,7 @@ import {
   sumByCurrency,
 } from "@/features/billing/domain/format"
 import { invoicePublicPath } from "@/features/billing/domain/invoice"
-import { displayStatus } from "@/features/billing/domain/lifecycle"
+import { displayStatus, isPayable } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import { billing } from "@/features/billing/server/billing"
 import { TicketList } from "@/features/support/components/ticket-list"
@@ -34,7 +34,7 @@ export default async function DashboardPage() {
     support.listForUser(user.id),
   ])
 
-  const open = invoices.filter((invoice) => invoice.status === "open")
+  const open = invoices.filter(isPayable)
   const overdue = open.filter(
     (invoice) => displayStatus(invoice, now) === "overdue"
   )

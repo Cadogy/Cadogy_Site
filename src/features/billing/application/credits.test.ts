@@ -3,37 +3,15 @@ import { describe, expect, it } from "vitest"
 import { buildLineItem } from "../domain/test-factories"
 import { calculateInvoiceTotals } from "../domain/totals"
 import { createBillingService } from "./billing-service"
-import {
-  createCredits,
-  type CreditNote,
-  type CreditNoteRepository,
-} from "./credits"
+import { createCredits } from "./credits"
 import {
   createInMemoryBillingRepository,
+  createInMemoryCreditNotes,
   createRecordingNotifier,
 } from "./test-doubles"
 
 const ADMIN = "admin-1"
 const NOW = new Date("2026-11-02T12:00:00.000Z")
-
-const createInMemoryCreditNotes = (): CreditNoteRepository => {
-  const notes: CreditNote[] = []
-  return {
-    insert: async (note) => {
-      const stored = { ...note, id: `cn_${notes.length + 1}` }
-      notes.push(stored)
-      return stored
-    },
-    list: async ({ clientId, invoiceId }) =>
-      notes.filter(
-        (note) =>
-          (!clientId || note.clientId === clientId) &&
-          (!invoiceId || note.invoiceId === invoiceId)
-      ),
-    findByStripeRefundId: async (refundId) =>
-      notes.find((note) => note.stripeRefundId === refundId) ?? null,
-  }
-}
 
 const setup = (refund: "ok" | "declined" = "ok") => {
   const repository = createInMemoryBillingRepository()

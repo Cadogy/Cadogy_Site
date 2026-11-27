@@ -11,7 +11,7 @@ import {
   formatMoney,
 } from "@/features/billing/domain/format"
 import { invoicePublicPath } from "@/features/billing/domain/invoice"
-import { displayStatus } from "@/features/billing/domain/lifecycle"
+import { displayStatus, isPayable } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import {
   billing,
@@ -49,8 +49,8 @@ export default async function ClientBillingPage({ searchParams }: Props) {
     )
   )
     .flat()
-    .filter((addOn) => addOn.status === "active")
-  const open = invoices.filter((invoice) => invoice.status === "open")
+    .filter((addOn) => addOn.status === "active" || addOn.status === "paused")
+  const open = invoices.filter(isPayable)
   const [notes, balances] = await Promise.all([
     Promise.all(
       accounts.map((account) => credits.notesFor({ clientId: account.id }))
@@ -120,7 +120,11 @@ export default async function ClientBillingPage({ searchParams }: Props) {
                 <li key={service.id} className="py-4">
                   <ServiceSummary
                     service={service}
-                    detail={`${service.interval === "one_time" ? "Bills" : "Renews"} ${formatDate(service.nextBillingDate)}`}
+                    detail={
+                      service.status === "paused"
+                        ? "Paused, not billing"
+                        : `${service.interval === "one_time" ? "Bills" : "Renews"} ${formatDate(service.nextBillingDate)}`
+                    }
                   />
                 </li>
               ))}

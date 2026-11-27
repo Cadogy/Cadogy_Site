@@ -58,11 +58,14 @@ const toInvoice = (doc: InvoiceDoc): Invoice => ({
   issueDate: doc.issueDate ?? null,
   dueDate: doc.dueDate ?? null,
   termsDays: doc.termsDays,
-  lineItems: doc.lineItems.map(({ description, quantity, unitAmount }) => ({
-    description,
-    quantity,
-    unitAmount,
-  })),
+  lineItems: doc.lineItems.map(
+    ({ description, quantity, unitAmount, unit }) => ({
+      description,
+      quantity,
+      unitAmount,
+      ...(unit ? { unit } : {}),
+    })
+  ),
   discount: doc.discount
     ? { type: doc.discount.type, value: doc.discount.value }
     : null,

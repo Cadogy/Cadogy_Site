@@ -6,6 +6,7 @@ import { isDuplicateKeyError, withDatabase, withoutId } from "@/lib/mongodb"
 
 import {
   DEFAULT_SETTINGS,
+  type CatalogCategory,
   type CatalogItem,
   type Charge,
   type EngineRepository,
@@ -16,11 +17,13 @@ import {
   AddOnModel,
   BillingRunModel,
   BillingSettingsModel,
+  CatalogCategoryModel,
   CatalogItemModel,
   ChargeModel,
   type AddOnDoc,
   type BillingRunDoc,
   type BillingSettingsDoc,
+  type CatalogCategoryDoc,
   type CatalogItemDoc,
   type ChargeDoc,
 } from "./models"
@@ -31,10 +34,21 @@ const toCatalogItem = (doc: CatalogItemDoc): CatalogItem => ({
   id: doc._id.toString(),
   name: doc.name,
   description: doc.description,
-  unitAmount: doc.unitAmount,
+  categoryId: doc.categoryId ?? null,
+  pricing: doc.pricing ?? "fixed",
+  unitAmount: doc.unitAmount ?? null,
   currency: doc.currency,
   interval: doc.interval,
   archived: doc.archived ?? false,
+})
+
+const toMoney = (money: CatalogCategory["hourlyRate"] | undefined) =>
+  money ? { amount: money.amount, currency: money.currency } : null
+
+const toCategory = (doc: CatalogCategoryDoc): CatalogCategory => ({
+  id: doc._id.toString(),
+  name: doc.name,
+  hourlyRate: toMoney(doc.hourlyRate),
 })
 
 const toAddOn = (doc: AddOnDoc): StoredAddOn => ({
@@ -75,6 +89,7 @@ const toSettings = (doc: BillingSettingsDoc | null) =>
         defaultTaxRateBps: doc.defaultTaxRateBps,
         reminderOffsets: [...doc.reminderOffsets],
         autoBillEnabled: doc.autoBillEnabled,
+        defaultHourlyRate: toMoney(doc.defaultHourlyRate),
       }
     : DEFAULT_SETTINGS
 
@@ -104,6 +119,34 @@ export const mongoEngineRepository: EngineRepository = {
     save: withDatabase(async (item) => {
       await CatalogItemModel.replaceOne({ _id: item.id }, withoutId(item))
       return item
+    }),
+  },
+  categories: {
+    list: withDatabase(async () => {
+      const docs = await CatalogCategoryModel.find()
+        .sort({ name: 1 })
+        .lean<CatalogCategoryDoc[]>()
+      return docs.map(toCategory)
+    }),
+    find: withDatabase(async (id) => {
+      if (!isValidObjectId(id)) return null
+      const doc =
+        await CatalogCategoryModel.findById(id).lean<CatalogCategoryDoc>()
+      return doc ? toCategory(doc) : null
+    }),
+    insert: withDatabase(async (category) =>
+      toCategory((await CatalogCategoryModel.create(category)).toObject())
+    ),
+    save: withDatabase(async (category) => {
+      await CatalogCategoryModel.replaceOne(
+        { _id: category.id },
+        withoutId(category)
+      )
+      return category
+    }),
+    remove: withDatabase(async (id) => {
+      if (!isValidObjectId(id)) return
+      await CatalogCategoryModel.deleteOne({ _id: id })
     }),
   },
   addOns: {

@@ -3,7 +3,7 @@ import { emailButton, emailLayout, escapeHtml } from "@/lib/email/html"
 import type { BillingNotification } from "../application/ports"
 import { formatDate, formatMoney } from "../domain/format"
 import { invoicePublicPath, type Invoice } from "../domain/invoice"
-import { calculateInvoiceTotals } from "../domain/totals"
+import { calculateInvoiceTotals, sum } from "../domain/totals"
 
 type RenderInput = {
   readonly kind: BillingNotification["kind"]
@@ -54,11 +54,29 @@ export const renderBillingEmail = (input: RenderInput): RenderedEmail => {
   const greeting = `Hi ${invoice.clientSnapshot?.name ?? "there"},`
 
   if (input.kind === "issued") {
+    const credit = sum(
+      invoice.payments
+        .filter((payment) => payment.method === "credit")
+        .map((payment) => payment.amount)
+    )
+    if (credit > 0 && totals.amountDue === 0) {
+      return render(input, {
+        subject: `Invoice ${number} from Cadogy — paid from your credit`,
+        lines: [
+          greeting,
+          `Invoice ${number} for ${money(totals.total)} is ready. It's been paid in full from your account credit, so there's nothing to pay.`,
+          "You can view or download it using the link below.",
+        ],
+        cta: "View invoice",
+      })
+    }
     return render(input, {
       subject: `Invoice ${number} from Cadogy — ${money(totals.amountDue)} due ${due}`,
       lines: [
         greeting,
-        `Invoice ${number} for ${money(totals.total)} is ready. Payment is due ${due}.`,
+        credit > 0
+          ? `Invoice ${number} for ${money(totals.total)} is ready. We applied ${money(credit)} of your account credit, so ${money(totals.amountDue)} is due ${due}.`
+          : `Invoice ${number} for ${money(totals.total)} is ready. Payment is due ${due}.`,
         "You can view, download or pay it online using the link below.",
       ],
       cta: "View and pay invoice",

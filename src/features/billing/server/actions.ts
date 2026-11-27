@@ -10,8 +10,10 @@ import {
 import { toState, type ActionState } from "@/lib/action-state"
 
 import { parseMoneyInput } from "../domain/format"
-import { billing, credits } from "./billing"
+import { wasDelivered } from "../domain/invoice"
+import { billing, billingEngine } from "./billing"
 import { text } from "./form-fields"
+import { deliveryFeedback, issuedFeedback } from "./issue-feedback"
 import { createInvoiceCheckout, isStripeConfigured } from "./stripe"
 
 const refreshBilling = (invoiceId?: string) => {
@@ -62,15 +64,29 @@ export async function setClientArchivedAction(
 ) {
   await requirePermission("billing:write")
   const result = archived
-    ? await billing.archiveClient(clientId)
-    : await billing.restoreClient(clientId)
+    ? await billingEngine.archiveClient(clientId)
+    : await billingEngine.restoreClient(clientId)
   refreshBilling()
-  return toState(result, archived ? "Client archived." : "Client restored.")
+  revalidatePath(`/admin/billing/clients/${clientId}`)
+  return toState(
+    result,
+    archived
+      ? "Client archived. Their services are paused and reminders stop."
+      : "Client restored. Resume any paused services you want billed again."
+  )
 }
 
 export async function createDraftAction(clientId: string): Promise<void> {
   const admin = await requirePermission("billing:write")
-  const result = await billing.createDraft({ clientId }, admin.id)
+  const settings = await billingEngine.getSettings()
+  const result = await billing.createDraft(
+    {
+      clientId,
+      taxRateBps: settings.defaultTaxRateBps,
+      memo: settings.paymentInstructions,
+    },
+    admin.id
+  )
   if (!result.ok) throw new Error(result.error)
   refreshBilling()
   redirect(`/admin/billing/invoices/${result.value.id}`)
@@ -93,17 +109,10 @@ export async function issueInvoiceAction(
   const admin = await requirePermission("billing:write")
   const saved = await billing.updateDraftInvoice(invoiceId, draft, admin.id)
   if (!saved.ok) return { ok: false, message: saved.error }
-  const result = await billing.issue(invoiceId, admin.id)
+  const result = await billingEngine.issueAndCollect(invoiceId, admin.id)
   if (!result.ok) return { ok: false, message: result.error }
-  const settled = await credits.applyBalance(invoiceId, admin.id)
   refreshBilling(invoiceId)
-  return {
-    ok: true,
-    message:
-      settled.ok && settled.value.payments.some((p) => p.method === "credit")
-        ? "Invoice issued and emailed. Credit balance applied."
-        : "Invoice issued and emailed to the client.",
-  }
+  return issuedFeedback([result.value])
 }
 
 export async function deleteDraftAction(invoiceId: string) {
@@ -139,13 +148,40 @@ export async function recordPaymentAction(
 }
 
 const INVOICE_COMMANDS = {
-  remind: { run: billing.sendReminder, success: "Reminder sent." },
   void: { run: billing.voidInvoice, success: "Invoice voided." },
   uncollectible: {
     run: billing.markUncollectible,
     success: "Invoice marked uncollectible.",
   },
 } as const
+
+export async function sendReminderAction(
+  invoiceId: string
+): Promise<ActionState> {
+  const admin = await requirePermission("billing:write")
+  const result = await billing.sendReminder(invoiceId, admin.id)
+  refreshBilling(invoiceId)
+  if (!result.ok) return { ok: false, message: result.error }
+  return deliveryFeedback(
+    wasDelivered(result.value, "reminder_sent"),
+    "Reminder sent."
+  )
+}
+
+export async function chargeSavedCardAction(
+  invoiceId: string
+): Promise<ActionState> {
+  await requirePermission("billing:write")
+  const result = await billingEngine.chargeSavedCard(invoiceId)
+  refreshBilling(invoiceId)
+  if (!result.ok) return { ok: false, message: result.error }
+  return result.value === "collected"
+    ? { ok: true, message: "Saved card charged. The invoice is paid." }
+    : {
+        ok: false,
+        message: "The saved card was declined. The client has been emailed.",
+      }
+}
 
 export async function invoiceCommandAction(
   invoiceId: string,
@@ -160,7 +196,11 @@ export async function invoiceCommandAction(
 
 export async function duplicateInvoiceAction(invoiceId: string) {
   const admin = await requirePermission("billing:write")
-  const result = await billing.duplicate(invoiceId, admin.id)
+  const settings = await billingEngine.getSettings()
+  const result = await billing.duplicate(invoiceId, admin.id, {
+    taxRateBps: settings.defaultTaxRateBps,
+    memo: settings.paymentInstructions,
+  })
   if (!result.ok)
     return { ok: false, message: result.error } satisfies ActionState
   refreshBilling()

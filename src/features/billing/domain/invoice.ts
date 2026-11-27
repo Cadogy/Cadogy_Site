@@ -14,6 +14,7 @@ export const INVOICE_EVENT_TYPES = [
   "sent",
   "viewed",
   "reminder_sent",
+  "autopay_failed",
   "payment_recorded",
   "paid",
   "voided",
@@ -91,5 +92,14 @@ export type InvoiceBadge =
   | "partially_refunded"
   | "settled_by_credit"
   | "disputed"
+
+/**
+ * Notifications record their event only once the email is delivered, and it is
+ * always the last thing written, so this tells callers whether it went out.
+ */
+export const wasDelivered = (
+  invoice: Invoice,
+  type: Extract<InvoiceEventType, "sent" | "reminder_sent">
+) => invoice.events.at(-1)?.type === type
 
 export const invoicePublicPath = (token: string) => `/invoice/${token}`

@@ -106,6 +106,7 @@ export const INVOICE_EVENT_LABELS: Record<InvoiceEvent["type"], string> = {
   sent: "Emailed to client",
   viewed: "Viewed by client",
   reminder_sent: "Reminder sent",
+  autopay_failed: "Autopay charge failed",
   payment_recorded: "Payment recorded",
   paid: "Paid in full",
   voided: "Voided",

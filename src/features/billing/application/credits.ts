@@ -7,6 +7,7 @@ import {
   type Invoice,
   type InvoiceAdjustment,
 } from "../domain/invoice"
+import { isPayable } from "../domain/lifecycle"
 import {
   creditNoteCounterKey,
   formatCreditNoteNumber,
@@ -107,6 +108,10 @@ export const createCredits = ({
       readonly kind: InvoiceAdjustment["kind"]
     }
   ): Promise<Result<CreditNote>> => {
+    const existing = note.stripeRefundId
+      ? await repository.findByStripeRefundId(note.stripeRefundId)
+      : null
+    if (existing) return ok(existing)
     const stored = await insertNumbered(note)
     const applied = applyCreditNote(
       invoice,
@@ -187,7 +192,14 @@ export const createCredits = ({
     })
     if (!refunded.ok)
       return fail(`Stripe couldn't refund this payment: ${refunded.error}`)
-    return record(invoice, {
+    // Stripe also sends a refund.created webhook. Whichever records it first
+    // wins; the other finds the note instead of crediting the invoice twice.
+    const recordedByWebhook = await repository.findByStripeRefundId(
+      refunded.refundId
+    )
+    if (recordedByWebhook) return ok(recordedByWebhook)
+    const fresh = await billingRepository.findInvoice(invoiceId)
+    return record(fresh ?? invoice, {
       clientId: invoice.clientId,
       invoiceId,
       kind: "refund",
@@ -225,6 +237,84 @@ export const createCredits = ({
         createdBy: actorId,
       })
     )
+  }
+
+  /**
+   * Card money that couldn't go on an invoice (it was already paid, voided or
+   * paid down by other means) becomes credit for the client instead of being
+   * dropped. Recorded once per payment, so webhook retries are safe.
+   */
+  const creditUnappliedPayment = async (input: {
+    readonly clientId: string
+    readonly amount: number
+    readonly currency: Currency
+    readonly paymentIntentId: string
+    readonly reason: string
+  }): Promise<Result<CreditNote>> => {
+    const notes = await repository.list({ clientId: input.clientId })
+    const existing = notes.find(
+      (note) =>
+        note.kind === "balance_credit" &&
+        note.stripePaymentIntentId === input.paymentIntentId
+    )
+    if (existing) return ok(existing)
+    return ok(
+      await insertNumbered({
+        clientId: input.clientId,
+        invoiceId: null,
+        kind: "balance_credit",
+        amount: input.amount,
+        currency: input.currency,
+        reason: input.reason,
+        stripeRefundId: null,
+        stripePaymentIntentId: input.paymentIntentId,
+        createdBy: "stripe",
+      })
+    )
+  }
+
+  /**
+   * Applies a card payment to its invoice, up to what's still owed, and puts
+   * anything left over on the client's credit balance.
+   */
+  const settleCardPayment = async (payment: {
+    readonly invoiceId: string
+    readonly amount: number
+    readonly eventId: string
+    readonly paidAt: Date
+    readonly paymentIntentId?: string
+  }): Promise<
+    Result<{ invoice: Invoice; applied: number; credited: number }>
+  > => {
+    const invoice = await billingRepository.findInvoice(payment.invoiceId)
+    if (!invoice) return fail("Invoice not found.")
+    const alreadyApplied = sum(
+      invoice.payments
+        .filter((existing) => existing.stripeEventId === payment.eventId)
+        .map((existing) => existing.amount)
+    )
+    const owed = isPayable(invoice)
+      ? calculateInvoiceTotals(invoice).amountDue
+      : 0
+    const toApply = alreadyApplied > 0 ? 0 : Math.min(owed, payment.amount)
+    const recorded =
+      toApply > 0
+        ? await billing.recordStripePayment({ ...payment, amount: toApply })
+        : ok(invoice)
+    if (!recorded.ok) return recorded
+    const applied = alreadyApplied + toApply
+    const leftover = payment.amount - applied
+    if (leftover <= 0)
+      return ok({ invoice: recorded.value, applied, credited: 0 })
+    const credited = await creditUnappliedPayment({
+      clientId: invoice.clientId,
+      amount: leftover,
+      currency: invoice.currency,
+      paymentIntentId: payment.paymentIntentId ?? payment.eventId,
+      reason: `Card payment on ${invoice.number ?? "an invoice"} that was more than it owed`,
+    })
+    if (!credited.ok) return credited
+    return ok({ invoice: recorded.value, applied, credited: leftover })
   }
 
   const balanceFor = async (clientId: string, currency: Currency) => {
@@ -364,6 +454,8 @@ export const createCredits = ({
     creditInvoice,
     refundInvoice,
     creditBalance,
+    creditUnappliedPayment,
+    settleCardPayment,
     balanceFor,
     applyBalance,
     recordStripeRefund: (input: {

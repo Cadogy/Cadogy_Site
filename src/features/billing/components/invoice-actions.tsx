@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Copy, Printer, Send } from "lucide-react"
+import { Copy, CreditCard, Printer, Send } from "lucide-react"
 
 import type { ActionState } from "@/lib/action-state"
 import { ActionMessage, useFormAction } from "@/components/ui/action-controls"
@@ -24,9 +24,11 @@ import { isoDay } from "../domain/dates"
 import { PAYMENT_METHOD_LABELS } from "../domain/format"
 import { PAYMENT_METHODS, type InvoiceStatus } from "../domain/schema"
 import {
+  chargeSavedCardAction,
   duplicateInvoiceAction,
   invoiceCommandAction,
   recordPaymentAction,
+  sendReminderAction,
 } from "../server/actions"
 import { applyBalanceAction } from "../server/credit-actions"
 import { resendInvoiceAction } from "../server/team-actions"
@@ -121,20 +123,22 @@ export function InvoiceActions({
   publicUrl,
   amountDue,
   creditBalance,
+  savedCard = null,
 }: {
   invoiceId: string
   status: InvoiceStatus
   publicUrl: string
   amountDue: string
   creditBalance: string | null
+  /** e.g. "Visa ending 4242" when the client has autopay on. */
+  savedCard?: string | null
 }) {
   const [feedback, setFeedback] = useState<ActionState>(null)
   const [pending, startCommand] = useTransition()
   const open = status === "open"
 
   const command =
-    (name: "remind" | "void" | "uncollectible", confirmation?: string) =>
-    () => {
+    (name: "void" | "uncollectible", confirmation?: string) => () => {
       if (confirmation && !window.confirm(confirmation)) return
       startCommand(async () =>
         setFeedback(await invoiceCommandAction(invoiceId, name))
@@ -171,10 +175,34 @@ export function InvoiceActions({
             <Button
               variant="outline"
               disabled={pending}
-              onClick={command("remind")}
+              onClick={() =>
+                startCommand(async () =>
+                  setFeedback(await sendReminderAction(invoiceId))
+                )
+              }
             >
               Send reminder
             </Button>
+            {savedCard ? (
+              <Button
+                variant="outline"
+                disabled={pending}
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      `Charge ${amountDue} to the client's ${savedCard} now?`
+                    )
+                  )
+                    return
+                  startCommand(async () =>
+                    setFeedback(await chargeSavedCardAction(invoiceId))
+                  )
+                }}
+              >
+                <CreditCard className="size-4" aria-hidden="true" />
+                Charge saved card
+              </Button>
+            ) : null}
             {creditBalance ? (
               <Button
                 variant="outline"

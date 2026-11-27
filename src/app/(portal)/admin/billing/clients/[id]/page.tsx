@@ -43,7 +43,7 @@ export default async function ClientPage({ params }: Props) {
       billing.listInvoices({ clientIds: [client.id] }),
       billingEngine.listAddOns(client.id),
       billingEngine.pendingCharges(client.id),
-      billingEngine.listCatalog({ includeArchived: false }),
+      billingEngine.pricedCatalog({ includeArchived: false }),
       credits.notesFor({ clientId: client.id }),
       credits.balanceFor(client.id, client.currency),
     ])
@@ -73,7 +73,7 @@ export default async function ClientPage({ params }: Props) {
           client={client}
           addOns={addOns}
           pending={pending}
-          catalog={catalog}
+          catalog={catalog.items}
         />
         <PortalSection
           title="Team"

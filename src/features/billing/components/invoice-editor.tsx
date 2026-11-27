@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { Loader2, Plus, Send, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Loader2, Plus, Send, Trash2 } from "lucide-react"
 
 import type { ActionState } from "@/lib/action-state"
 import { isOneOf } from "@/lib/is-one-of"
@@ -14,6 +14,7 @@ import { NativeSelect } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
 import { PortalSection } from "@/components/portal/portal-section"
 
+import { groupByCategory } from "../domain/catalog"
 import { formatMoney } from "../domain/format"
 import { CURRENCIES } from "../domain/schema"
 import { calculateInvoiceTotals } from "../domain/totals"
@@ -24,11 +25,19 @@ import {
 } from "../server/actions"
 import {
   editorToDraft,
+  isBlankLine,
+  lineFromCatalog,
+  type CatalogOption,
   type EditorLine,
   type EditorState,
 } from "./editor-model"
 
-type ClientOption = { readonly id: string; readonly label: string }
+type ClientOption = {
+  readonly id: string
+  readonly label: string
+  readonly currency: EditorState["currency"]
+  readonly termsDays: number
+}
 
 const newLine = (key = crypto.randomUUID()): EditorLine => ({
   key,
@@ -43,10 +52,12 @@ export function InvoiceEditor({
   invoiceId,
   initial,
   clients,
+  catalog,
 }: {
   invoiceId: string
   initial: EditorState
   clients: readonly ClientOption[]
+  catalog: readonly CatalogOption[]
 }) {
   const [state, setState] = useState<EditorState>(
     initial.lineItems.length > 0
@@ -76,6 +87,51 @@ export function InvoiceEditor({
         line.key === key ? { ...line, [field]: value } : line
       ),
     }))
+
+  const inCurrency = catalog.filter((item) => item.currency === state.currency)
+  const otherCurrencies = catalog.length - inCurrency.length
+  const catalogGroups = groupByCategory(
+    inCurrency,
+    inCurrency.flatMap((item) =>
+      item.categoryId && item.categoryName
+        ? [{ id: item.categoryId, name: item.categoryName }]
+        : []
+    )
+  )
+
+  const addFromCatalog = (id: string) => {
+    const option = catalog.find((item) => item.id === id)
+    if (!option) return
+    const line = lineFromCatalog(option, crypto.randomUUID())
+    setState((current) => ({
+      ...current,
+      lineItems: [
+        ...current.lineItems.filter((existing) => !isBlankLine(existing)),
+        line,
+      ],
+    }))
+  }
+
+  const changeClient = (clientId: string) => {
+    const client = clients.find((option) => option.id === clientId)
+    setState((current) => ({
+      ...current,
+      clientId,
+      ...(client
+        ? { currency: client.currency, termsDays: String(client.termsDays) }
+        : {}),
+    }))
+  }
+
+  const moveLine = (index: number, by: -1 | 1) =>
+    setState((current) => {
+      const target = index + by
+      if (target < 0 || target >= current.lineItems.length) return current
+      const lines = [...current.lineItems]
+      const [moved] = lines.splice(index, 1)
+      if (moved) lines.splice(target, 0, moved)
+      return { ...current, lineItems: lines }
+    })
 
   const removeLine = (key: string) =>
     setState((current) => ({
@@ -120,7 +176,7 @@ export function InvoiceEditor({
                 <NativeSelect
                   {...control}
                   value={state.clientId}
-                  onChange={(event) => update("clientId", event.target.value)}
+                  onChange={(event) => changeClient(event.target.value)}
                 >
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
@@ -168,21 +224,37 @@ export function InvoiceEditor({
                 />
               )}
             </Field>
+            <Field
+              id="dueDate"
+              label="Due date"
+              optional
+              className="sm:col-span-2"
+              hint="Set a fixed date instead of counting the payment terms from the issue date."
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="date"
+                  value={state.dueDate}
+                  onChange={(event) => update("dueDate", event.target.value)}
+                />
+              )}
+            </Field>
           </div>
         </PortalSection>
 
         <PortalSection title="Line items">
-          <div className="hidden grid-cols-[1fr_90px_140px_44px] gap-3 pb-3 text-meta md:grid">
+          <div className="hidden grid-cols-[1fr_90px_140px_132px] gap-3 pb-3 text-meta md:grid">
             <span>Description</span>
             <span>Qty</span>
             <span>Unit price</span>
-            <span className="sr-only">Remove</span>
+            <span className="sr-only">Reorder or remove</span>
           </div>
           <ol className="grid gap-4 md:gap-3 md:pb-4">
             {state.lineItems.map((line, index) => (
               <li
                 key={line.key}
-                className="grid grid-cols-2 gap-3 border-t pt-4 md:grid-cols-[1fr_90px_140px_44px] md:items-start md:border-0 md:pt-0"
+                className="grid grid-cols-2 gap-3 border-t pt-4 md:grid-cols-[1fr_90px_140px_132px] md:items-start md:border-0 md:pt-0"
               >
                 <div className="col-span-2 grid gap-1.5 md:col-span-1">
                   <Label
@@ -208,14 +280,28 @@ export function InvoiceEditor({
                   >
                     Quantity
                   </Label>
-                  <Input
-                    id={`${line.key}-quantity`}
-                    inputMode="decimal"
-                    value={line.quantity}
-                    onChange={(event) =>
-                      updateLine(line.key, "quantity", event.target.value)
-                    }
-                  />
+                  <div className="relative">
+                    <Input
+                      id={`${line.key}-quantity`}
+                      inputMode="decimal"
+                      className={line.unit === "hour" ? "pr-10" : undefined}
+                      value={line.quantity}
+                      aria-describedby={
+                        line.unit === "hour" ? `${line.key}-unit` : undefined
+                      }
+                      onChange={(event) =>
+                        updateLine(line.key, "quantity", event.target.value)
+                      }
+                    />
+                    {line.unit === "hour" ? (
+                      <span
+                        id={`${line.key}-unit`}
+                        className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground"
+                      >
+                        hrs
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="grid gap-1.5">
                   <Label htmlFor={`${line.key}-price`} className="md:sr-only">
@@ -231,28 +317,90 @@ export function InvoiceEditor({
                     }
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="col-span-2 justify-self-end md:col-span-1"
-                  aria-label={`Remove line ${index + 1}`}
-                  onClick={() => removeLine(line.key)}
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                </Button>
+                <div className="col-span-2 flex justify-end md:col-span-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Move line ${index + 1} up`}
+                    disabled={index === 0}
+                    onClick={() => moveLine(index, -1)}
+                  >
+                    <ArrowUp className="size-4" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Move line ${index + 1} down`}
+                    disabled={index === state.lineItems.length - 1}
+                    onClick={() => moveLine(index, 1)}
+                  >
+                    <ArrowDown className="size-4" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Remove line ${index + 1}`}
+                    onClick={() => removeLine(line.key)}
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </Button>
+                </div>
               </li>
             ))}
           </ol>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-2"
-            onClick={() => update("lineItems", [...state.lineItems, newLine()])}
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Add line
-          </Button>
+          <div className="mt-2 grid max-w-xl gap-4">
+            <Field
+              id="add-from-catalog"
+              label="Add from your services"
+              hint={
+                catalog.length === 0
+                  ? "No services in your catalog yet."
+                  : otherCurrencies > 0
+                    ? `${otherCurrencies} service${otherCurrencies === 1 ? "" : "s"} priced in other currencies ${otherCurrencies === 1 ? "is" : "are"} hidden.`
+                    : undefined
+              }
+            >
+              {(control) => (
+                <NativeSelect
+                  {...control}
+                  value=""
+                  disabled={inCurrency.length === 0}
+                  onChange={(event) => addFromCatalog(event.target.value)}
+                >
+                  <option value="">Choose a service…</option>
+                  {catalogGroups.map((group) => (
+                    <optgroup
+                      key={group.categoryId ?? "none"}
+                      label={group.name}
+                    >
+                      {group.items.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} —{" "}
+                          {item.unitAmount === null
+                            ? "no rate set"
+                            : `${money(item.unitAmount)}${item.hourly ? " / hour" : ""}`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </NativeSelect>
+              )}
+            </Field>
+            <Button
+              type="button"
+              variant="outline"
+              className="justify-self-start"
+              onClick={() =>
+                update("lineItems", [...state.lineItems, newLine()])
+              }
+            >
+              <Plus className="size-4" aria-hidden="true" />
+              Add custom line
+            </Button>
+          </div>
         </PortalSection>
 
         <PortalSection title="Discount and notes">

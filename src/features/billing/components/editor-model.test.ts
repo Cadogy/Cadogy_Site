@@ -4,6 +4,7 @@ import { buildInvoice, buildLineItem } from "../domain/test-factories"
 import {
   draftFromInvoice,
   editorToDraft,
+  lineFromCatalog,
   type EditorState,
 } from "./editor-model"
 
@@ -25,6 +26,7 @@ const state = (overrides: Partial<EditorState> = {}): EditorState => ({
   memo: "",
   footer: "",
   internalNotes: "",
+  dueDate: "",
   ...overrides,
 })
 
@@ -137,5 +139,113 @@ describe("draftFromInvoice", () => {
     expect(editor.discountValue).toBe("10")
     expect(editor.taxRate).toBe("8.25")
     expect(editorToDraft(editor).ok).toBe(true)
+  })
+})
+
+describe("catalog lines and server-matching validation", () => {
+  const option = {
+    id: "eng",
+    name: "Engineering",
+    categoryId: null,
+    categoryName: null,
+    currency: "USD" as const,
+    hourly: true,
+    unitAmount: 15_000,
+  }
+
+  it("builds an hourly line from a catalog service", () => {
+    expect(lineFromCatalog(option, "k")).toEqual({
+      key: "k",
+      description: "Engineering",
+      quantity: "1",
+      unitPrice: "150.00",
+      unit: "hour",
+    })
+    expect(
+      lineFromCatalog({ ...option, hourly: false }, "k")
+    ).not.toHaveProperty("unit")
+  })
+
+  it("leaves the price empty when an hourly service has no rate yet", () => {
+    expect(
+      lineFromCatalog({ ...option, unitAmount: null }, "k").unitPrice
+    ).toBe("")
+  })
+
+  it("ignores an untouched starter line so an empty draft can be saved", () => {
+    const result = editorToDraft(
+      state({
+        lineItems: [
+          { key: "a", description: "", quantity: "1", unitPrice: "" },
+        ],
+      })
+    )
+    expect(result).toMatchObject({ ok: true, value: { lineItems: [] } })
+  })
+
+  it.each([
+    ["1.555", "quantity can have at most two decimal places."],
+    ["1000001", "quantity is too large."],
+    ["", "quantity must be above zero."],
+  ])("rejects quantity %s like the server does", (quantity, message) => {
+    expect(
+      editorToDraft(
+        state({
+          lineItems: [
+            { key: "a", description: "Build", quantity, unitPrice: "100" },
+          ],
+        })
+      )
+    ).toEqual({ ok: false, error: `Check line 1: ${message}` })
+  })
+
+  it("accepts quantities with two decimals", () => {
+    const result = editorToDraft(
+      state({
+        lineItems: [
+          { key: "a", description: "Build", quantity: "0.29", unitPrice: "1" },
+        ],
+      })
+    )
+    expect(result.ok && result.value.lineItems[0]?.quantity).toBe(0.29)
+  })
+
+  it("rejects descriptions the server would reject", () => {
+    expect(
+      editorToDraft(
+        state({
+          lineItems: [
+            {
+              key: "a",
+              description: "x".repeat(501),
+              quantity: "1",
+              unitPrice: "1",
+            },
+          ],
+        })
+      )
+    ).toEqual({
+      ok: false,
+      error: "Check line 1: keep the description under 500 characters.",
+    })
+  })
+
+  it("keeps the hourly unit through a save and reload", () => {
+    const result = editorToDraft(
+      state({ lineItems: [{ ...lineFromCatalog(option, "a"), quantity: "3" }] })
+    )
+    if (!result.ok) throw new Error(result.error)
+    expect(result.value.lineItems).toEqual([
+      {
+        description: "Engineering",
+        quantity: 3,
+        unitAmount: 15_000,
+        unit: "hour",
+      },
+    ])
+    const reloaded = draftFromInvoice(
+      buildInvoice({ lineItems: result.value.lineItems })
+    )
+    expect(reloaded.lineItems[0]).toMatchObject({ quantity: "3", unit: "hour" })
   })
 })

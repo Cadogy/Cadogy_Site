@@ -217,6 +217,20 @@ export const sendAccessApproved = (email: string, company: string) =>
     outro: "Questions? Just reply to this email.",
   })
 
+export const sendUnappliedPaymentAlert = (details: {
+  readonly reference: string
+  readonly amount: string
+  readonly url: string
+}) =>
+  sendActionEmail({
+    to: siteConfig.email,
+    subject: `Card payment of ${details.amount} added to credit`,
+    intro: `A card payment on ${details.reference} included ${details.amount} more than was owed (the invoice was already paid, voided or paid down another way). It's been added to the client's credit balance and will be used on their next invoice.`,
+    url: details.url,
+    cta: "Open the client",
+    outro: "To return the money instead, refund it in Stripe.",
+  })
+
 export const sendDisputeAlert = (details: {
   readonly invoiceNumber: string
   readonly amount: string

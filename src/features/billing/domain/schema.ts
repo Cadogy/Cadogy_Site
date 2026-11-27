@@ -34,10 +34,16 @@ const quantity = z
     message: "Quantity supports at most two decimal places",
   })
 
+export const LINE_UNITS = ["hour"] as const
+export type LineUnit = (typeof LINE_UNITS)[number]
+
+export const MAX_LINE_ITEMS = 100
+
 export const lineItemSchema = z.object({
   description: z.string().trim().min(1).max(500),
   quantity,
   unitAmount: minorUnits,
+  unit: z.enum(LINE_UNITS).optional(),
 })
 
 const discountSchema = z.discriminatedUnion("type", [
@@ -85,12 +91,19 @@ export const invoiceDraftInputSchema = z.object({
   clientId: z.string().min(1),
   currency: z.enum(CURRENCIES),
   termsDays: z.number().int().min(0).max(120),
-  lineItems: z.array(lineItemSchema).max(100),
+  lineItems: z.array(lineItemSchema).max(MAX_LINE_ITEMS),
   discount: discountSchema.nullable().default(null),
   taxRateBps: z.number().int().min(0).max(10_000).default(0),
   memo: z.string().trim().max(2_000).default(""),
   footer: z.string().trim().max(1_000).default(""),
   internalNotes: z.string().trim().max(2_000).default(""),
+  /** Fixed due date (YYYY-MM-DD) instead of issue date + payment terms. */
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a YYYY-MM-DD due date")
+    .transform((value) => new Date(`${value}T00:00:00.000Z`))
+    .nullable()
+    .default(null),
 })
 
 export const paymentInputSchema = z.object({
@@ -107,6 +120,10 @@ export type Discount = z.infer<typeof discountSchema>
 export type Address = z.infer<typeof addressSchema>
 export type ClientInput = z.infer<typeof clientInputSchema>
 export type InvoiceDraftInput = z.infer<typeof invoiceDraftInputSchema>
+/** What the editor sends: the same draft, with the due date still a string. */
+export type InvoiceDraftPayload = Omit<InvoiceDraftInput, "dueDate"> & {
+  readonly dueDate: string | null
+}
 type PaymentInput = z.infer<typeof paymentInputSchema>
 
 export type Payment = PaymentInput & {
