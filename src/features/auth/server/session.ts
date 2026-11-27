@@ -16,7 +16,11 @@ const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const session = await auth.api.getSession({ headers: requestHeaders })
   if (!session) return null
   const role = toRole(session.user.role)
+  const assurance = session.session.assurance === "multi" ? "multi" : "single"
+  // A session that proved a factor has one, so the passkey lookup (another
+  // database round trip on every staff page) is only needed for the rest.
   const hasSecondFactor =
+    assurance === "multi" ||
     Boolean(session.user.twoFactorEnabled) ||
     (isStaff(role) && (await hasPasskey(requestHeaders)))
   return {
@@ -24,7 +28,7 @@ const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     email: session.user.email,
     name: session.user.name,
     role,
-    assurance: session.session.assurance === "multi" ? "multi" : "single",
+    assurance,
     hasSecondFactor,
     impersonatedBy: session.session.impersonatedBy ?? null,
   }

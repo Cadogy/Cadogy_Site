@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { Suspense, use, useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { Role } from "@/features/auth/domain/permissions"
@@ -49,6 +49,12 @@ import { UserMenu } from "./user-menu"
 
 type NavCounts = Partial<Record<NavCount, number>>
 
+/** Counts arrive after the page: the layout streams them in as a promise. */
+type CountSource = NavCounts | PromiseLike<NavCounts>
+
+const isPending = (source: CountSource): source is PromiseLike<NavCounts> =>
+  "then" in source && typeof source.then === "function"
+
 type ShellUser = {
   readonly name: string
   readonly email: string
@@ -87,6 +93,32 @@ function Waiting({ count, collapsed }: { count: number; collapsed: boolean }) {
   )
 }
 
+function ResolvedCount({
+  source,
+  name,
+  collapsed,
+}: {
+  source: CountSource
+  name: NavCount
+  collapsed: boolean
+}) {
+  const counts = isPending(source) ? use(source) : source
+  return <Waiting count={counts[name] ?? 0} collapsed={collapsed} />
+}
+
+/** A badge that never holds up the sidebar: it appears when its count does. */
+function Count(props: {
+  source: CountSource
+  name: NavCount
+  collapsed: boolean
+}) {
+  return (
+    <Suspense fallback={null}>
+      <ResolvedCount {...props} />
+    </Suspense>
+  )
+}
+
 function NavGroups({
   groups,
   label,
@@ -97,7 +129,7 @@ function NavGroups({
 }: {
   groups: readonly PortalNavGroup[]
   label: string
-  counts?: NavCounts
+  counts?: CountSource
   onNavigate?: () => void
   collapsed?: boolean
   large?: boolean
@@ -133,8 +165,9 @@ function NavGroups({
                 <Icon className="size-[18px] shrink-0" aria-hidden="true" />
                 <span className={cn(collapsed && "sr-only")}>{item.label}</span>
                 {item.count ? (
-                  <Waiting
-                    count={counts[item.count] ?? 0}
+                  <Count
+                    source={counts}
+                    name={item.count}
                     collapsed={collapsed}
                   />
                 ) : null}
@@ -152,7 +185,7 @@ function MobileMenu({
   counts,
 }: {
   groups: readonly PortalNavGroup[]
-  counts: NavCounts
+  counts: CountSource
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -211,7 +244,7 @@ export function PortalShell({
   impersonating?: boolean
   onStopImpersonating?: () => Promise<void>
   sidebarCollapsed?: boolean
-  counts?: NavCounts
+  counts?: CountSource
   children: React.ReactNode
 }) {
   const { collapsed, toggle } = useSidebar(sidebarCollapsed)

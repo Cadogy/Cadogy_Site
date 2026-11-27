@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { act, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -17,7 +17,9 @@ const renderShell = ({
   counts = {},
 }: {
   sidebarCollapsed?: boolean
-  counts?: { inquiries?: number; tickets?: number }
+  counts?:
+    | { inquiries?: number; tickets?: number }
+    | Promise<{ inquiries?: number; tickets?: number }>
 } = {}) =>
   render(
     <PortalShell
@@ -58,6 +60,27 @@ describe("PortalShell", () => {
     ).toBeInTheDocument()
     expect(
       within(sidebar).getByRole("link", { name: "Tickets 1 waiting" })
+    ).toBeInTheDocument()
+  })
+
+  it("shows the page first and the badges when their counts arrive", async () => {
+    let resolve: (counts: { inquiries: number }) => void = () => {}
+    const counts = new Promise<{ inquiries: number }>((done) => {
+      resolve = done
+    })
+    // React tracks a suspended render only inside act().
+    await act(async () => {
+      renderShell({ counts })
+    })
+    const sidebar = screen.getByRole("navigation", { name: "Portal" })
+
+    expect(screen.getByRole("heading", { name: "Invoices" })).toBeVisible()
+    expect(
+      within(sidebar).getByRole("link", { name: "Inquiries" })
+    ).toBeInTheDocument()
+    await act(async () => resolve({ inquiries: 2 }))
+    expect(
+      within(sidebar).getByRole("link", { name: "Inquiries 2 waiting" })
     ).toBeInTheDocument()
   })
 

@@ -14,6 +14,7 @@ import {
   SIDEBAR_COOKIE,
 } from "@/components/portal/navigation"
 import { PortalShell } from "@/components/portal/portal-shell"
+import { PortalSkeleton } from "@/components/portal/portal-skeleton"
 
 export const metadata: Metadata = { robots: { index: false, follow: false } }
 
@@ -37,26 +38,18 @@ export default function PortalLayout({
   children: React.ReactNode
 }) {
   return (
-    <Suspense fallback={<PortalPending />}>
+    <Suspense fallback={<PortalSkeleton />}>
       <PortalFrame>{children}</PortalFrame>
     </Suspense>
   )
 }
 
-function PortalPending() {
-  return (
-    <div aria-busy="true" className="min-h-dvh">
-      <span className="sr-only">Loading your portal</span>
-    </div>
-  )
-}
-
 async function PortalFrame({ children }: { children: React.ReactNode }) {
   const user = await requireSession()
-  const [sidebar, counts] = await Promise.all([
-    cookies().then((store) => store.get(SIDEBAR_COOKIE)?.value),
-    waitingCounts(user),
-  ])
+  const sidebar = (await cookies()).get(SIDEBAR_COOKIE)?.value
+  // Not awaited: the badges stream in after the page instead of holding it
+  // up. A failed count just shows no badge.
+  const counts = waitingCounts(user).catch(() => ({}))
   return (
     <PortalShell
       groups={portalNavigation(user.role)}
