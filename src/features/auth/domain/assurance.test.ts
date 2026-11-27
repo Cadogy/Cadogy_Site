@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   canLoadStaffData,
   isFreshSession,
+  mayChangeFactors,
   sessionAssurance,
   staffAccess,
   upgradesSession,
@@ -40,10 +41,50 @@ describe("sessionAssurance", () => {
 })
 
 describe("upgradesSession", () => {
-  it("upgrades the current session when a second factor is set up", () => {
-    expect(upgradesSession("/two-factor/verify-totp")).toBe(true)
-    expect(upgradesSession("/passkey/verify-registration")).toBe(true)
-    expect(upgradesSession("/change-password")).toBe(false)
+  it("upgrades the session when an authenticator code is verified", () => {
+    expect(upgradesSession("/two-factor/verify-totp", 1)).toBe(true)
+    expect(upgradesSession("/change-password", 0)).toBe(false)
+  })
+
+  it("counts a new passkey as proof only when it's the first factor", () => {
+    expect(upgradesSession("/passkey/verify-registration", 1)).toBe(true)
+    // An account that already had TOTP or a passkey: the new passkey proves
+    // nothing about the factor that was never checked.
+    expect(upgradesSession("/passkey/verify-registration", 2)).toBe(false)
+  })
+})
+
+describe("mayChangeFactors", () => {
+  const change = (
+    path: string,
+    assurance: "single" | "multi",
+    factorCount: number
+  ) => mayChangeFactors({ path, assurance, factorCount })
+
+  it("lets an account without a second factor set one up", () => {
+    expect(change("/passkey/generate-register-options", "single", 0)).toBe(true)
+    expect(change("/two-factor/enable", "single", 0)).toBe(true)
+  })
+
+  it("blocks adding or removing factors from a session that skipped the existing one", () => {
+    for (const path of [
+      "/two-factor/enable",
+      "/two-factor/disable",
+      "/two-factor/generate-backup-codes",
+      "/two-factor/get-totp-uri",
+      "/passkey/generate-register-options",
+      "/passkey/verify-registration",
+      "/passkey/delete-passkey",
+    ])
+      expect(change(path, "single", 1)).toBe(false)
+  })
+
+  it("allows changes once the session has proved a factor", () => {
+    expect(change("/passkey/delete-passkey", "multi", 2)).toBe(true)
+  })
+
+  it("leaves other endpoints alone", () => {
+    expect(change("/change-password", "single", 1)).toBe(true)
   })
 })
 

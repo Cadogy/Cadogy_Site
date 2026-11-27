@@ -1,4 +1,5 @@
 import { fail, ok, type Result } from "@/lib/result"
+import { isToken } from "@/lib/untrusted"
 
 import { billingRecipients } from "../domain/contacts"
 import { clientDisplayName } from "../domain/format"
@@ -111,7 +112,8 @@ export const createAccessRequests = ({
     return ok("requested")
   }
 
-  const findLive = async (token: string, now: Date) => {
+  const findLive = async (token: unknown, now: Date) => {
+    if (!isToken(token)) return null
     const found = await repository.findByTokenHash(hash(token))
     return found && found.status === "pending" && found.expiresAt > now
       ? found

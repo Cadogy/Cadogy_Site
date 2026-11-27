@@ -154,7 +154,6 @@ describe("needsStaffReply", () => {
     userId: client.id,
     subject: "Help",
     category: "general",
-    priority: "medium",
     messages: [],
     lastReplyAt: NOW,
     createdAt: NOW,

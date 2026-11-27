@@ -27,7 +27,7 @@ const findContact = (client: ClientContacts, email: string) =>
 
 const PRIMARY_LOCKED =
   "The primary contact always handles billing. Change the primary email instead."
-const NOT_A_CONTACT = "That person isn't on this account."
+export const NOT_A_CONTACT = "That person isn't on this account."
 
 export const contactRoleFor = (
   client: ClientContacts,

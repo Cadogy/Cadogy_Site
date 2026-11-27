@@ -4,33 +4,15 @@ import { siteConfig } from "@/config/site"
 import { LogoMark } from "@/components/site/logo"
 
 import {
+  clientAddressLines,
   formatDate,
   formatMoney,
+  formatQuantity,
   PAYMENT_METHOD_LABELS,
 } from "../domain/format"
 import type { ClientSnapshot, Invoice, InvoiceBadge } from "../domain/invoice"
-import type { LineItem } from "../domain/schema"
 import { calculateInvoiceTotals, calculateLineTotal } from "../domain/totals"
 import { StatusBadge } from "./status-badge"
-
-const addressLines = (client: ClientSnapshot) =>
-  [
-    client.company,
-    client.address.line1,
-    client.address.line2,
-    [client.address.city, client.address.region, client.address.postalCode]
-      .filter(Boolean)
-      .join(", "),
-    client.address.country,
-    client.taxId ? `Tax ID: ${client.taxId}` : "",
-  ].filter(Boolean)
-
-const formatQuantity = ({ quantity, unit }: LineItem) => {
-  const amount = Number.isInteger(quantity)
-    ? String(quantity)
-    : quantity.toFixed(2)
-  return unit === "hour" ? `${amount} ${quantity === 1 ? "hr" : "hrs"}` : amount
-}
 
 export function InvoiceDocument({
   invoice,
@@ -79,7 +61,7 @@ export function InvoiceDocument({
           <dt className="text-sm text-muted-foreground">Billed to</dt>
           <dd className="mt-1">
             <p className="font-medium">{client.name}</p>
-            {addressLines(client).map((line) => (
+            {clientAddressLines(client).map((line) => (
               <p key={line} className="text-sm text-muted-foreground">
                 {line}
               </p>

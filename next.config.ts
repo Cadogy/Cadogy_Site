@@ -17,10 +17,16 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: "https", hostname: "wp.cadogy.com" }],
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "react-icons", "date-fns"],
+    optimizePackageImports: ["lucide-react", "react-icons"],
   },
   headers: async () => buildHeaderRules(),
   redirects: async () => [
+    {
+      source: "/dashboard/invoices",
+      destination: "/dashboard/billing",
+      permanent: true,
+    },
+    { source: "/dashboard/settings", destination: "/account", permanent: true },
     {
       source: "/auth/verify-email",
       destination: "/verify-email",

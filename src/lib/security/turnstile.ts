@@ -1,3 +1,5 @@
+import { env } from "@/env"
+
 const SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
@@ -34,6 +36,6 @@ export const createTurnstileVerifier =
   }
 
 export const verifyTurnstile = createTurnstileVerifier({
-  secret: process.env.TURNSTILE_SECRET_KEY,
+  secret: env.TURNSTILE_SECRET_KEY,
   environment: process.env.NODE_ENV,
 })

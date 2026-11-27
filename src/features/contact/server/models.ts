@@ -11,7 +11,6 @@ import {
 } from "../domain/schema"
 
 export type InquiryDoc = Inquiry & { _id: Types.ObjectId }
-type RateLimitDoc = { _id: string; count: number; expiresAt: Date }
 
 const inquirySchema = new Schema(
   {
@@ -47,17 +46,5 @@ const inquirySchema = new Schema(
   { versionKey: false }
 )
 
-const rateLimitSchema = new Schema(
-  {
-    _id: { type: String, required: true },
-    count: { type: Number, required: true },
-    expiresAt: { type: Date, required: true, expires: 0 },
-  },
-  { versionKey: false }
-)
-
 export const InquiryModel: Model<InquiryDoc> =
   models.Inquiry ?? model<InquiryDoc>("Inquiry", inquirySchema)
-export const RateLimitModel: Model<RateLimitDoc> =
-  models.RateLimit ??
-  model<RateLimitDoc>("RateLimit", rateLimitSchema, "rate_limits")

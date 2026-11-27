@@ -1,10 +1,14 @@
+import { isOneOf } from "@/lib/is-one-of"
 import { fail, firstIssue, ok, type Result } from "@/lib/result"
+import { isToken } from "@/lib/untrusted"
 
 import {
   addContact as addContactTo,
   billingRecipients,
   changeContactRole,
+  CONTACT_ROLES,
   contactRoleFor,
+  NOT_A_CONTACT,
   removeContact as removeContactFrom,
   type ContactRole,
 } from "../domain/contacts"
@@ -259,18 +263,31 @@ export const createBillingService = ({
     )
   }
 
+  const isContactRole = isOneOf(CONTACT_ROLES)
+
   const setContactRole = (
     clientId: string,
-    email: string,
-    role: ContactRole,
+    email: unknown,
+    role: unknown,
     actor: TeamActor
-  ) =>
-    changeTeam(clientId, actor, (client) =>
+  ) => {
+    if (!isToken(email, 320))
+      return Promise.resolve(fail<BillingClient>(NOT_A_CONTACT))
+    if (!isContactRole(role))
+      return Promise.resolve(
+        fail<BillingClient>("Choose billing or viewer access.")
+      )
+    return changeTeam(clientId, actor, (client) =>
       changeContactRole(client, email, role)
     )
+  }
 
-  const removeContact = (clientId: string, email: string, actor: TeamActor) =>
-    changeTeam(clientId, actor, (client) => removeContactFrom(client, email))
+  const removeContact = (clientId: string, email: unknown, actor: TeamActor) =>
+    isToken(email, 320)
+      ? changeTeam(clientId, actor, (client) =>
+          removeContactFrom(client, email)
+        )
+      : Promise.resolve(fail<BillingClient>(NOT_A_CONTACT))
 
   const createDraft = async (
     input: Partial<Omit<InvoiceDraftInput, "dueDate">> & { clientId: string },
@@ -538,7 +555,8 @@ export const createBillingService = ({
     })
   }
 
-  const getByPublicToken = async (token: string) => {
+  const getByPublicToken = async (token: unknown) => {
+    if (!isToken(token)) return null
     const invoice = await repository.findInvoiceByToken(token)
     return invoice && invoice.status !== "draft" ? invoice : null
   }

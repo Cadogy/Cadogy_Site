@@ -8,18 +8,31 @@ const PRIVATE_SURFACES = [
   "/invoice/:path*",
 ]
 
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
-  "connect-src 'self' https://challenges.cloudflare.com https://*.cadogy.com",
-  "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com",
-  "form-action 'self' https://checkout.stripe.com",
+/**
+ * Enforced: rules that can't break a script, so they're safe to apply now.
+ * They stop framing, <base> hijacking, plugins and forms posting elsewhere.
+ */
+const enforcedPolicy = [
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
+  "form-action 'self' https://checkout.stripe.com",
+].join("; ")
+
+/**
+ * Reported only, for now: a client bundle on /contact still evaluates
+ * strings as code, which an enforced script-src without 'unsafe-eval' would
+ * block. Cloudflare injects its Web Analytics beacon, so that's allowed.
+ */
+const reportedPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://challenges.cloudflare.com https://*.cadogy.com https://cloudflareinsights.com",
+  "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com",
+  enforcedPolicy,
 ].join("; ")
 
 const permissionsPolicy = [
@@ -36,7 +49,8 @@ const securityHeaders: Header[] = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: permissionsPolicy },
-  { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy },
+  { key: "Content-Security-Policy", value: enforcedPolicy },
+  { key: "Content-Security-Policy-Report-Only", value: reportedPolicy },
 ]
 
 const privateHeaders: Header[] = [

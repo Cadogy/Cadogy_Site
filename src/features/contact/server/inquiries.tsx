@@ -4,6 +4,7 @@ import { env } from "@/env"
 import { sendEmail } from "@/lib/email"
 import { renderEmail } from "@/lib/email/render"
 import { connectToDatabase } from "@/lib/mongodb"
+import { hitRateLimit } from "@/lib/rate-limit"
 import { verifyTurnstile } from "@/lib/security/turnstile"
 
 import { createInquiryService } from "../application/inquiry-service"
@@ -15,24 +16,10 @@ import {
   type Inquiry,
 } from "../domain/schema"
 import { InquiryEmail } from "../email/inquiry-email"
-import { InquiryModel, RateLimitModel } from "./models"
+import { InquiryModel } from "./models"
 
 export const formSecret = () =>
   env.FORM_SIGNING_SECRET ?? env.BETTER_AUTH_SECRET
-
-const hitRateLimit = async (key: string, windowMs: number) => {
-  await connectToDatabase()
-  const windowStart = Math.floor(Date.now() / windowMs) * windowMs
-  const bucket = await RateLimitModel.findOneAndUpdate(
-    { _id: `${key}:${windowStart}` },
-    {
-      $inc: { count: 1 },
-      $setOnInsert: { expiresAt: new Date(windowStart + windowMs) },
-    },
-    { upsert: true, new: true }
-  ).lean()
-  return bucket?.count ?? 1
-}
 
 const notifyAdmin = async (inquiry: Inquiry) => {
   const details = [

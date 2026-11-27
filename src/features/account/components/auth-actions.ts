@@ -1,4 +1,5 @@
 import { authClient, humanCheckHeaders } from "@/features/auth/client"
+import { PASSWORD_LENGTH } from "@/features/auth/domain/passwords"
 
 import { authErrorMessage, type ClientResult } from "./auth-errors"
 
@@ -23,8 +24,10 @@ const fieldError = (field: string, error: string): AccountResult => ({
 })
 
 const passwordProblem = (password: string) => {
-  if (password.length < 12) return "Use at least 12 characters."
-  if (password.length > 128) return "Use at most 128 characters."
+  if (password.length < PASSWORD_LENGTH.min)
+    return `Use at least ${PASSWORD_LENGTH.min} characters.`
+  if (password.length > PASSWORD_LENGTH.max)
+    return `Use at most ${PASSWORD_LENGTH.max} characters.`
   return null
 }
 

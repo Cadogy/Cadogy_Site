@@ -7,9 +7,9 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import type { TICKET_CATEGORIES } from "../application/support-service"
+import type { TicketCategory } from "../application/support-service"
 
-export type Category = (typeof TICKET_CATEGORIES)[number]["value"]
+export type Category = TicketCategory
 
 /** How each category is presented: what it's for and what helps us answer. */
 export const CATEGORY_GUIDE: Record<

@@ -9,10 +9,17 @@ import { APIError } from "better-auth/api"
 
 type ActionResult = { readonly ok: boolean; readonly message: string }
 
+// Staff viewing the portal as a client mustn't sign the client out.
+const VIEWING_AS_CLIENT: ActionResult = {
+  ok: false,
+  message: "Device sign-out is turned off while you're viewing as a client.",
+}
+
 export async function revokeSessionAction(
   sessionId: string
 ): Promise<ActionResult> {
-  await requireSession("/account/security")
+  const user = await requireSession("/account/security")
+  if (user.impersonatedBy) return VIEWING_AS_CLIENT
   const requestHeaders = await headers()
   const sessions = await auth.api.listSessions({ headers: requestHeaders })
   const target = sessions.find((session) => session.id === sessionId)
@@ -27,7 +34,8 @@ export async function revokeSessionAction(
 }
 
 export async function revokeOtherSessionsAction(): Promise<ActionResult> {
-  await requireSession("/account/security")
+  const user = await requireSession("/account/security")
+  if (user.impersonatedBy) return VIEWING_AS_CLIENT
   await auth.api.revokeOtherSessions({ headers: await headers() })
   revalidatePath("/account/security")
   return { ok: true, message: "All other devices have been signed out." }

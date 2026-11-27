@@ -5,7 +5,7 @@ import { requirePermission } from "@/features/auth/server/session"
 import { isValidObjectId } from "mongoose"
 
 import { isOneOf } from "@/lib/is-one-of"
-import { connectToDatabase } from "@/lib/mongodb"
+import { connectToDatabase, withId } from "@/lib/mongodb"
 
 import {
   INQUIRY_STATUSES,
@@ -16,10 +16,7 @@ import { InquiryModel, type InquiryDoc } from "./models"
 
 export type StoredInquiry = Inquiry & { readonly id: string }
 
-const toInquiry = ({ _id, ...rest }: InquiryDoc): StoredInquiry => ({
-  ...rest,
-  id: _id.toString(),
-})
+const toInquiry = (doc: InquiryDoc): StoredInquiry => withId(doc)
 
 export async function listInquiries(
   status?: InquiryStatus

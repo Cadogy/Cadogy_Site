@@ -37,3 +37,9 @@ export const isDuplicateKeyError = (error: unknown) =>
 
 export const withoutId = <T extends { id: string }>({ id: _id, ...rest }: T) =>
   rest
+
+/** A lean Mongo document as a domain object: `_id` becomes a string `id`. */
+export const withId = <T extends { _id: { toString(): string } }>({
+  _id,
+  ...rest
+}: T) => ({ ...rest, id: _id.toString() })

@@ -152,4 +152,9 @@ describe("needsOwnerApproval", () => {
     expect(needsOwnerApproval(100_000)).toBe(false)
     expect(needsOwnerApproval(100_001)).toBe(true)
   })
+
+  it("counts recent credits to the same client, so a credit can't be split", () => {
+    expect(needsOwnerApproval(60_000, 50_000)).toBe(true)
+    expect(needsOwnerApproval(40_000, 50_000)).toBe(false)
+  })
 })

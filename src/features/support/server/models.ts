@@ -1,9 +1,12 @@
+import "server-only"
+
+import { model, models, Schema, type Model, type Types } from "mongoose"
+
 import {
   TICKET_CATEGORIES,
   TICKET_STATUSES,
   type SupportTicket,
-} from "@/features/support/application/support-service"
-import { model, models, Schema, type Model, type Types } from "mongoose"
+} from "../application/support-service"
 
 export type TicketDoc = Omit<SupportTicket, "id"> & { _id: Types.ObjectId }
 
@@ -24,11 +27,6 @@ const ticketSchema = new Schema(
       type: String,
       enum: TICKET_CATEGORIES.map((category) => category.value),
       default: "general",
-    },
-    priority: {
-      type: String,
-      enum: ["low", "medium", "high"],
-      default: "medium",
     },
     status: {
       type: String,

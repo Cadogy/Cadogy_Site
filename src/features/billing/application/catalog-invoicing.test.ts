@@ -183,7 +183,9 @@ describe("service categories and hourly pricing", () => {
 
     expectOk(await engine.deleteCategory(design.id))
 
-    expect(await engine.listCategories()).toEqual([])
+    expect(
+      (await engine.pricedCatalog({ includeArchived: true })).categories
+    ).toEqual([])
     expect(await engine.listCatalog({ includeArchived: true })).toEqual([
       expect.objectContaining({ id: item.id, categoryId: null }),
     ])

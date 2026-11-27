@@ -26,16 +26,24 @@ describe("security headers", () => {
     expect(policy).toContain("payment=()")
   })
 
-  it("rolls out the content security policy in report-only mode", () => {
+  it("enforces the rules that can't break a script", () => {
+    const csp = valueOf("/:path*", "Content-Security-Policy")
+    expect(csp).toBe(
+      "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self' https://checkout.stripe.com"
+    )
+    expect(csp).not.toContain("script-src")
+  })
+
+  it("reports the full policy, including Turnstile, YouTube and Cloudflare analytics", () => {
     const csp = valueOf("/:path*", "Content-Security-Policy-Report-Only")
     expect(csp).toContain("default-src 'self'")
     expect(csp).toContain("frame-ancestors 'none'")
     expect(csp).toContain("https://challenges.cloudflare.com")
+    expect(csp).toContain("https://static.cloudflareinsights.com")
     expect(csp).toContain("https://checkout.stripe.com")
     expect(csp).toContain(
       "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com"
     )
-    expect(valueOf("/:path*", "Content-Security-Policy")).toBeUndefined()
   })
 })
 

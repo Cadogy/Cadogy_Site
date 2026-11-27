@@ -18,7 +18,7 @@ export const TICKET_STATUSES = [
   "closed",
 ] as const
 
-type TicketCategory = (typeof TICKET_CATEGORIES)[number]["value"]
+export type TicketCategory = (typeof TICKET_CATEGORIES)[number]["value"]
 export type TicketStatus = (typeof TICKET_STATUSES)[number]
 
 type TicketMessage = {
@@ -32,7 +32,6 @@ export type SupportTicket = {
   readonly userId: string
   readonly subject: string
   readonly category: TicketCategory
-  readonly priority: "low" | "medium" | "high"
   readonly status: TicketStatus
   readonly messages: readonly TicketMessage[]
   readonly lastReplyAt: Date
@@ -115,7 +114,6 @@ export const createSupportService = ({
       userId: user.id,
       subject: parsed.data.subject,
       category: parsed.data.category,
-      priority: "medium",
       status: "open",
       messages: [
         { authorId: user.id, content: parsed.data.message, createdAt: now },

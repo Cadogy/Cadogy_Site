@@ -2,7 +2,7 @@ import "server-only"
 
 import { model, models, Schema, type Model, type Types } from "mongoose"
 
-import { withDatabase } from "@/lib/mongodb"
+import { withDatabase, withId } from "@/lib/mongodb"
 
 import type { CreditNote, CreditNoteRepository } from "../application/credits"
 import { CREDIT_NOTE_KINDS } from "../domain/invoice"
@@ -43,10 +43,7 @@ const CreditNoteModel: Model<CreditNoteDoc> =
   models.CreditNote ??
   model<CreditNoteDoc>("CreditNote", creditNoteSchema, "billing_credit_notes")
 
-const toNote = ({ _id, ...rest }: CreditNoteDoc): CreditNote => ({
-  ...rest,
-  id: _id.toString(),
-})
+const toNote = (doc: CreditNoteDoc): CreditNote => withId(doc)
 
 export const mongoCreditNoteRepository: CreditNoteRepository = {
   insert: withDatabase(async (note) =>

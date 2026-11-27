@@ -18,7 +18,14 @@ describe("safeCallbackPath", () => {
     "dashboard",
     "",
     null,
-  ])("replaces unsafe target %s with the dashboard", (input) => {
+    // Browsers strip tabs and newlines, turning these into "//evil.example".
+    "/\t/evil.example",
+    "/\n/evil.example",
+    "/\r\n/evil.example",
+    "/\\/evil.example",
+    "/x\\..\\..\\evil.example",
+    "https://cadogy.com.evil.example/phish",
+  ])("replaces unsafe target %j with the dashboard", (input) => {
     expect(safeCallbackPath(input)).toBe("/dashboard")
   })
 
@@ -29,5 +36,26 @@ describe("safeCallbackPath", () => {
         "https://cadogy.com"
       )
     ).toBe("/dashboard/tickets")
+  })
+})
+
+describe("safeCallbackPath edge cases", () => {
+  it("rejects look-alike origins", () => {
+    expect(
+      safeCallbackPath(
+        "https://cadogy.com.evil.example/x",
+        "https://cadogy.com"
+      )
+    ).toBe("/dashboard")
+  })
+
+  it("keeps query strings and fragments on our own paths", () => {
+    expect(safeCallbackPath("/dashboard/tickets?category=billing#new")).toBe(
+      "/dashboard/tickets?category=billing#new"
+    )
+  })
+
+  it("treats percent-encoded characters as part of the path", () => {
+    expect(safeCallbackPath("/%09/evil.example")).toBe("/%09/evil.example")
   })
 })

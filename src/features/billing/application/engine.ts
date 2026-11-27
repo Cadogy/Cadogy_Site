@@ -1071,7 +1071,6 @@ export const createBillingEngine = ({
     updateCharge,
     listCatalog: repository.catalog.list,
     pricedCatalog,
-    listCategories: repository.categories.list,
     createCategory,
     updateCategory,
     deleteCategory,

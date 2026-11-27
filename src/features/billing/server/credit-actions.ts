@@ -6,10 +6,11 @@ import { requirePermission } from "@/features/auth/server/session"
 
 import { toState, type ActionState } from "@/lib/action-state"
 
-import { needsOwnerApproval } from "../domain/credits"
+import { APPROVAL_WINDOW_DAYS, needsOwnerApproval } from "../domain/credits"
+import { DAY_MS } from "../domain/dates"
 import { parseMoneyInput } from "../domain/format"
 import { CURRENCIES } from "../domain/schema"
-import { credits } from "./billing"
+import { billing, credits } from "./billing"
 
 type Outcome = NonNullable<ActionState>
 
@@ -20,13 +21,29 @@ type CreditInput = {
 
 const text = (value: unknown) => (typeof value === "string" ? value.trim() : "")
 
-const readRequest = (input: CreditInput, role: Role) => {
+/** What the client was credited in the approval window, across every note. */
+const recentlyCredited = async (clientId: string) => {
+  const since = Date.now() - APPROVAL_WINDOW_DAYS * DAY_MS
+  const notes = await credits.notesFor({ clientId })
+  return notes
+    .filter((note) => note.createdAt.getTime() >= since)
+    .reduce((total, note) => total + note.amount, 0)
+}
+
+const readRequest = async (
+  input: CreditInput,
+  role: Role,
+  clientId: string
+) => {
   const amount = parseMoneyInput(text(input.amount))
   const reason = text(input.reason).slice(0, 300)
   if (amount === null || amount <= 0) return "Enter a valid amount."
   if (!reason) return "Add a reason. It appears on the credit note."
-  if (needsOwnerApproval(amount) && !can(role, "billing:approve-credits"))
-    return "Credit notes over $1,000 need the owner. Ask them to issue this one."
+  if (
+    !can(role, "billing:approve-credits") &&
+    needsOwnerApproval(amount, await recentlyCredited(clientId))
+  )
+    return `Credits to one client over $1,000 in ${APPROVAL_WINDOW_DAYS} days need the owner. Ask them to issue this one.`
   return { amount, reason }
 }
 
@@ -41,7 +58,9 @@ export async function adjustInvoiceAction(
   input: CreditInput & { readonly kind: string }
 ): Promise<Outcome> {
   const admin = await requirePermission("billing:write")
-  const request = readRequest(input, admin.role)
+  const invoice = await billing.getInvoice(invoiceId)
+  if (!invoice) return { ok: false, message: "Invoice not found." }
+  const request = await readRequest(input, admin.role, invoice.clientId)
   if (typeof request === "string") return { ok: false, message: request }
   const refund = input.kind === "refund"
   const result = refund
@@ -62,7 +81,7 @@ export async function creditBalanceAction(
   input: CreditInput & { readonly currency: string }
 ): Promise<Outcome> {
   const admin = await requirePermission("billing:write")
-  const request = readRequest(input, admin.role)
+  const request = await readRequest(input, admin.role, clientId)
   if (typeof request === "string") return { ok: false, message: request }
   const currency = CURRENCIES.find((value) => value === input.currency)
   if (!currency) return { ok: false, message: "Choose a currency." }

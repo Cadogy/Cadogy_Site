@@ -1,6 +1,8 @@
-import type { InvoiceEvent } from "./invoice"
+import { formatDayUtc } from "@/lib/format-date"
+
+import type { ClientSnapshot, InvoiceEvent } from "./invoice"
 import type { BillingInterval } from "./recurring"
-import type { Currency, Payment } from "./schema"
+import type { Currency, LineItem, Payment } from "./schema"
 
 const MONEY_PATTERN = /^\d+(\.\d+)?$/
 const PERCENT_PATTERN = /^\d+(\.\d{1,2})?$/
@@ -20,13 +22,6 @@ const moneyFormatter = (currency: Currency) => {
   moneyFormatters.set(currency, formatter)
   return formatter
 }
-
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-})
 
 export const formatMoney = (minorUnits: number, currency: Currency) =>
   moneyFormatter(currency).format(minorUnits / 100)
@@ -50,7 +45,36 @@ export const parsePercentToBps = (value: string): number | null => {
   return bps <= MAX_BPS ? bps : null
 }
 
-export const formatDate = (date: Date) => dateFormatter.format(date)
+/** "Nov 26, 2026", in UTC like every billing date. */
+export const formatDate = formatDayUtc
+
+/** "2", "1.50", or "1.50 hrs" for hourly lines. */
+export const formatQuantity = ({
+  quantity,
+  unit,
+}: Pick<LineItem, "quantity" | "unit">) => {
+  const amount = Number.isInteger(quantity)
+    ? String(quantity)
+    : quantity.toFixed(2)
+  return unit === "hour" ? `${amount} ${quantity === 1 ? "hr" : "hrs"}` : amount
+}
+
+/** The "Billed to" lines under the client's name. */
+export const clientAddressLines = (
+  client: ClientSnapshot,
+  { withEmail = false }: { readonly withEmail?: boolean } = {}
+) =>
+  [
+    client.company,
+    client.address.line1,
+    client.address.line2,
+    [client.address.city, client.address.region, client.address.postalCode]
+      .filter(Boolean)
+      .join(", "),
+    client.address.country,
+    client.taxId ? `Tax ID: ${client.taxId}` : "",
+    withEmail ? client.email : "",
+  ].filter(Boolean)
 
 export const addByCurrency = (
   totals: AmountsByCurrency,

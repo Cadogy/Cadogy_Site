@@ -25,15 +25,27 @@ vi.mock("@/components/security/human-check", () => ({
 
 const { ContactForm } = await import("./contact-form")
 
+// Pasting instead of typing key by key keeps these tests fast and steady
+// when the whole suite runs in parallel.
+const enter = async (
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+  value: string
+) => {
+  await user.click(screen.getByLabelText(label))
+  await user.paste(value)
+}
+
 const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.type(screen.getByLabelText("Name"), "Grace Hopper")
-  await user.type(screen.getByLabelText("Work email"), "grace@navy.example")
+  await enter(user, "Name", "Grace Hopper")
+  await enter(user, "Work email", "grace@navy.example")
   await user.selectOptions(
     screen.getByLabelText("What do you need help with?"),
     "payments"
   )
-  await user.type(
-    screen.getByLabelText("Tell us about the project"),
+  await enter(
+    user,
+    "Tell us about the project",
     "We need Stripe subscriptions and invoicing for our SaaS."
   )
 }

@@ -44,9 +44,6 @@ const MATRIX: Record<Role, readonly Permission[]> = {
   client: ["portal:self"],
 }
 
-export const permissionsFor = (role: Role): readonly Permission[] =>
-  MATRIX[role]
-
 export const can = (
   role: Role | null | undefined,
   permission: Permission

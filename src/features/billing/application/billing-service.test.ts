@@ -550,3 +550,73 @@ describe("billing service", () => {
     })
   })
 })
+
+describe("untrusted input from server actions", () => {
+  const staff = { kind: "staff" as const, id: ADMIN }
+
+  it("never turns a non-string invoice token into a database query", async () => {
+    const { repository } = setup()
+    const lookups: unknown[] = []
+    const watched = {
+      ...repository,
+      findInvoiceByToken: async (token: string) => {
+        lookups.push(token)
+        return repository.findInvoiceByToken(token)
+      },
+    }
+    const guarded = createBillingService({
+      repository: watched,
+      notifier: { send: async () => {} },
+      clock: () => new Date("2026-11-26T09:00:00.000Z"),
+      generateToken: () => "tok",
+    })
+
+    expect(
+      await guarded.getByPublicToken({ $regex: "^" } as unknown as string)
+    ).toBeNull()
+    expect(await guarded.getByPublicToken("")).toBeNull()
+    expect(lookups).toEqual([])
+  })
+
+  it("rejects a contact role that isn't billing or viewer", async () => {
+    const { service } = setup()
+    const { client } = await draftFor(service)
+    expectOk(
+      await service.addContact(
+        client.id,
+        { email: "lead@analytical.example", name: "Lead", role: "viewer" },
+        staff
+      )
+    )
+
+    const result = await service.setContactRole(
+      client.id,
+      "lead@analytical.example",
+      "owner" as never,
+      staff
+    )
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Choose billing or viewer access.",
+    })
+    expect(
+      await service.portalRoleFor("lead@analytical.example", client.id)
+    ).toBe("viewer")
+  })
+
+  it("rejects a contact email that isn't a string", async () => {
+    const { service } = setup()
+    const { client } = await draftFor(service)
+
+    expect(
+      (
+        await service.removeContact(
+          client.id,
+          { $ne: "" } as unknown as string,
+          staff
+        )
+      ).ok
+    ).toBe(false)
+  })
+})

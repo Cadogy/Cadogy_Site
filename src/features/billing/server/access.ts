@@ -5,7 +5,7 @@ import { model, models, Schema, type Model, type Types } from "mongoose"
 
 import { env } from "@/env"
 import { sendAccessApproved, sendAccessRequest } from "@/lib/email"
-import { withDatabase, withoutId } from "@/lib/mongodb"
+import { withDatabase, withId, withoutId } from "@/lib/mongodb"
 
 import {
   createAccessRequests,
@@ -43,10 +43,7 @@ const AccessRequestModel: Model<AccessRequestDoc> =
     "billing_access_requests"
   )
 
-const toRequest = ({ _id, ...rest }: AccessRequestDoc): AccessRequest => ({
-  ...rest,
-  id: _id.toString(),
-})
+const toRequest = (doc: AccessRequestDoc): AccessRequest => withId(doc)
 
 const repository: AccessRequestRepository = {
   insert: withDatabase(async (request) =>

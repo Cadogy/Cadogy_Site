@@ -4,7 +4,6 @@ import {
   can,
   isStaff,
   PERMISSIONS,
-  permissionsFor,
   ROLES,
   toRole,
   type Permission,
@@ -45,7 +44,9 @@ describe("permissions", () => {
   })
 
   it("limits clients to their own portal", () => {
-    expect(permissionsFor("client")).toEqual(["portal:self"])
+    expect(
+      PERMISSIONS.filter((permission) => can("client", permission))
+    ).toEqual(["portal:self"])
   })
 
   it("gives every role its own portal", () => {

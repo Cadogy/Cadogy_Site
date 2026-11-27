@@ -159,6 +159,7 @@ export const mongoBillingRepository: BillingRepository = {
     return doc ? toInvoice(doc) : null
   }),
   findInvoiceByToken: withDatabase(async (token) => {
+    if (typeof token !== "string") return null
     const doc = await InvoiceModel.findOne({
       publicToken: token,
     }).lean<InvoiceDoc>()

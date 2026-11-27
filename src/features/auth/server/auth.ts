@@ -3,7 +3,11 @@ import "server-only"
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
 import { passkey } from "@better-auth/passkey"
 import { betterAuth } from "better-auth"
-import { APIError, createAuthMiddleware } from "better-auth/api"
+import {
+  APIError,
+  createAuthMiddleware,
+  getSessionFromCtx,
+} from "better-auth/api"
 import { nextCookies } from "better-auth/next-js"
 import { admin } from "better-auth/plugins/admin"
 import { haveIBeenPwned } from "better-auth/plugins/haveibeenpwned"
@@ -15,6 +19,7 @@ import {
   sendDeleteAccountConfirmation,
   sendEmailChangeConfirmation,
   sendExistingAccountNotice,
+  sendMagicLinkDeclinedEmail,
   sendMagicLinkEmail,
   sendPasswordResetEmail,
   sendVerificationEmail,
@@ -22,8 +27,14 @@ import {
 import { clientContext } from "@/lib/security/request-context"
 import { verifyTurnstile } from "@/lib/security/turnstile"
 
-import { sessionAssurance, upgradesSession } from "../domain/assurance"
+import {
+  changesFactors,
+  mayChangeFactors,
+  sessionAssurance,
+  upgradesSession,
+} from "../domain/assurance"
 import { AUTH_COOKIE_PREFIX, TURNSTILE_HEADER } from "../domain/http"
+import { PASSWORD_LENGTH } from "../domain/passwords"
 import { toRole } from "../domain/permissions"
 import { shouldBecomeOwner } from "../domain/roles"
 import { eventForAuthRequest, isSignInEvent } from "../domain/security-events"
@@ -71,7 +82,38 @@ const signInEmail = (body: unknown) =>
     ? body.email
     : ""
 
+/** TOTP plus passkeys: every second factor on the account. */
+const factorCount = async (userId: string) => {
+  const _id = userObjectId(userId)
+  if (!_id) return 0
+  const [user, passkeys] = await Promise.all([
+    findUserById(userId),
+    authDb.collection("passkey").countDocuments({ userId: _id }),
+  ])
+  return (user?.twoFactorEnabled ? 1 : 0) + passkeys
+}
+
+const FACTOR_PROOF_NEEDED =
+  "To change your sign-in protection, sign out and sign back in with your password and current authenticator or passkey."
+
 const beforeRequest = createAuthMiddleware(async (ctx) => {
+  // The admin plugin's endpoints skip the app's own guards (step-up,
+  // last-owner rule, security log), so they're only callable from our server
+  // code via auth.api, never over HTTP.
+  if (ctx.request && ctx.path.startsWith("/admin/"))
+    throw new APIError("NOT_FOUND")
+  if (changesFactors(ctx.path)) {
+    const session = await getSessionFromCtx(ctx)
+    if (
+      session &&
+      !mayChangeFactors({
+        path: ctx.path,
+        assurance: session.session.assurance === "multi" ? "multi" : "single",
+        factorCount: await factorCount(session.user.id),
+      })
+    )
+      throw new APIError("FORBIDDEN", { message: FACTOR_PROOF_NEEDED })
+  }
   if (HUMAN_CHECK_PATHS.has(ctx.path)) {
     const token = ctx.headers?.get(TURNSTILE_HEADER) ?? ""
     if (!(await verifyTurnstile(token, clientContext(ctx.headers).ip)))
@@ -113,8 +155,14 @@ const afterRequest = createAuthMiddleware(async (ctx) => {
   if (!locked) await trackPasswordAttempt(ctx.path, ctx.body, ok)
 
   const newSession = ctx.context.newSession
-  if (ok && !newSession && upgradesSession(ctx.path))
-    await upgradeCurrentSession(ctx.context.session?.session.token)
+  const current = ctx.context.session
+  if (
+    ok &&
+    !newSession &&
+    current &&
+    upgradesSession(ctx.path, await factorCount(current.user.id))
+  )
+    await upgradeCurrentSession(current.session.token)
 
   const type = eventForAuthRequest({
     path: ctx.path,
@@ -196,8 +244,8 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    minPasswordLength: 12,
-    maxPasswordLength: 128,
+    minPasswordLength: PASSWORD_LENGTH.min,
+    maxPasswordLength: PASSWORD_LENGTH.max,
     resetPasswordTokenExpiresIn: 60 * MINUTE,
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
@@ -330,8 +378,15 @@ export const auth = betterAuth({
       disableSignUp: true,
       storeToken: "hashed",
       sendMagicLink: async ({ email, url }) => {
-        if (await users().findOne({ email: email.trim().toLowerCase() }))
-          await sendMagicLinkEmail(email, url)
+        const user = await users().findOne({
+          email: email.trim().toLowerCase(),
+        })
+        if (!user) return
+        // A link would sign in without the authenticator or passkey, so
+        // protected accounts are asked to sign in the usual way instead.
+        if ((await factorCount(user._id.toHexString())) > 0)
+          await sendMagicLinkDeclinedEmail(email)
+        else await sendMagicLinkEmail(email, url)
       },
     }),
     passkey({ rpID: passkeyRpId, rpName: "Cadogy", origin: siteOrigin }),

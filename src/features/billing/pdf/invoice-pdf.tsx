@@ -11,12 +11,13 @@ import { siteConfig } from "@/config/site"
 import { color } from "@/lib/email/theme"
 
 import {
+  clientAddressLines,
   formatDate,
   formatMoney,
+  formatQuantity,
   PAYMENT_METHOD_LABELS,
 } from "../domain/format"
-import type { ClientSnapshot, Invoice } from "../domain/invoice"
-import type { LineItem } from "../domain/schema"
+import type { Invoice } from "../domain/invoice"
 import { calculateInvoiceTotals, calculateLineTotal } from "../domain/totals"
 
 // Printed documents share the email palette.
@@ -105,26 +106,6 @@ const styles = StyleSheet.create({
   },
 })
 
-const addressLines = (client: ClientSnapshot) =>
-  [
-    client.company,
-    client.address.line1,
-    client.address.line2,
-    [client.address.city, client.address.region, client.address.postalCode]
-      .filter(Boolean)
-      .join(", "),
-    client.address.country,
-    client.taxId ? `Tax ID: ${client.taxId}` : "",
-    client.email,
-  ].filter(Boolean)
-
-const quantityLabel = ({ quantity, unit }: LineItem) => {
-  const amount = Number.isInteger(quantity)
-    ? String(quantity)
-    : quantity.toFixed(2)
-  return unit === "hour" ? `${amount} ${quantity === 1 ? "hr" : "hrs"}` : amount
-}
-
 const STAMPS: Partial<Record<Invoice["status"], string>> = {
   paid: "PAID",
   void: "VOID",
@@ -171,7 +152,7 @@ function InvoicePdf({ invoice }: { invoice: Invoice }) {
                 <Text style={[styles.strong, { marginTop: 3 }]}>
                   {client.name}
                 </Text>
-                {addressLines(client).map((line) => (
+                {clientAddressLines(client, { withEmail: true }).map((line) => (
                   <Text key={line} style={styles.muted}>
                     {line}
                   </Text>
@@ -211,7 +192,7 @@ function InvoicePdf({ invoice }: { invoice: Invoice }) {
               wrap={false}
             >
               <Text style={styles.description}>{item.description}</Text>
-              <Text style={styles.qty}>{quantityLabel(item)}</Text>
+              <Text style={styles.qty}>{formatQuantity(item)}</Text>
               <Text style={styles.price}>{money(item.unitAmount)}</Text>
               <Text style={styles.amount}>
                 {money(calculateLineTotal(item))}

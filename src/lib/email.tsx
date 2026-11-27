@@ -165,6 +165,19 @@ export const sendMagicLinkEmail = (email: string, url: string) =>
       "If you didn't ask for this, you can ignore this email. No one can sign in without the link.",
   })
 
+export const sendMagicLinkDeclinedEmail = (email: string) =>
+  sendActionEmail({
+    to: email,
+    subject: "Sign in with your password and second factor",
+    title: "Sign in the usual way",
+    intro:
+      "Someone asked for a sign-in link for your Cadogy account. Your account is protected by an authenticator app or a passkey, and a sign-in link would skip it, so we didn't send one.",
+    url: `${env.NEXT_PUBLIC_APP_URL}/login`,
+    cta: "Go to sign in",
+    outro:
+      "Sign in with your password and authenticator code, or with your passkey. If you didn't ask for a link, you can ignore this email.",
+  })
+
 const securityUrl = () => `${env.NEXT_PUBLIC_APP_URL}/account/security`
 
 export const sendSecurityNotice = ({

@@ -8,6 +8,7 @@ import {
 
 import { toState, type ActionState } from "@/lib/action-state"
 import { sendTeamInvite } from "@/lib/email"
+import { TOO_MANY_REQUESTS, withinRateLimit } from "@/lib/rate-limit"
 
 import type { TeamActor } from "../application/billing-service"
 import type { ContactRole } from "../domain/contacts"
@@ -81,8 +82,12 @@ export async function inviteTeamContactAction(
   clientId: string,
   input: InviteInput
 ): Promise<ActionResult> {
-  const actor = contactActor(await requireSession("/dashboard/team"))
-  return actor ? invite(clientId, input, actor) : VIEWING_AS_CLIENT
+  const user = await requireSession("/dashboard/team")
+  const actor = contactActor(user)
+  if (!actor) return VIEWING_AS_CLIENT
+  if (!(await withinRateLimit(`team:invite:${user.id}`, 10, 60 * 60_000)))
+    return { ok: false, message: TOO_MANY_REQUESTS }
+  return invite(clientId, input, actor)
 }
 
 export async function setTeamContactRoleAction(
@@ -144,6 +149,14 @@ export async function requestInvoiceAccessAction(
   invoiceToken: string
 ): Promise<ActionResult> {
   const user = await requireSession(`/invoice/${invoiceToken}`)
+  if (user.impersonatedBy)
+    return {
+      ok: false,
+      message:
+        "Access requests are turned off while you're viewing as a client.",
+    }
+  if (!(await withinRateLimit(`access:request:${user.id}`, 5, 60 * 60_000)))
+    return { ok: false, message: TOO_MANY_REQUESTS }
   const result = await accessRequests.request({
     invoiceToken,
     email: user.email,

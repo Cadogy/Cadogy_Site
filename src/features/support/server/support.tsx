@@ -1,7 +1,6 @@
 import "server-only"
 
 import { findUserContact } from "@/features/auth/server/database"
-import { Ticket, type TicketDoc } from "@/models/Ticket"
 import { isValidObjectId } from "mongoose"
 
 import { env } from "@/env"
@@ -16,13 +15,13 @@ import {
   type TicketNotification,
 } from "../application/support-service"
 import { SupportEmail } from "../email/support-email"
+import { Ticket, type TicketDoc } from "./models"
 
 const toTicket = (doc: TicketDoc): SupportTicket => ({
   id: doc._id.toString(),
   userId: doc.userId,
   subject: doc.subject,
   category: doc.category,
-  priority: doc.priority,
   status: doc.status,
   messages: doc.messages.map((message) => ({
     authorId: message.authorId,

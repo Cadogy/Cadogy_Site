@@ -65,5 +65,12 @@ export const applyCreditNote = (
 
 const OWNER_APPROVAL_ABOVE = 100_000
 
-export const needsOwnerApproval = (amount: number) =>
-  amount > OWNER_APPROVAL_ABOVE
+/** Credits to one client are added up over this window. */
+export const APPROVAL_WINDOW_DAYS = 30
+
+/**
+ * Over $1,000 needs the owner. Recent credits to the same client count too,
+ * so a large credit can't be split into several smaller ones.
+ */
+export const needsOwnerApproval = (amount: number, recentlyCredited = 0) =>
+  amount + recentlyCredited > OWNER_APPROVAL_ABOVE

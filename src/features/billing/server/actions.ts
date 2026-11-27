@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import {
   isImpersonating,
@@ -8,6 +9,8 @@ import {
 } from "@/features/auth/server/session"
 
 import { toState, type ActionState } from "@/lib/action-state"
+import { TOO_MANY_REQUESTS, withinRateLimit } from "@/lib/rate-limit"
+import { clientContext } from "@/lib/security/request-context"
 
 import { parseMoneyInput } from "../domain/format"
 import { wasDelivered } from "../domain/invoice"
@@ -216,6 +219,10 @@ export async function startCheckoutAction(token: string) {
       message:
         "Payments are turned off while you're viewing the portal as a client.",
     } satisfies ActionState
+  // Anyone with an invoice link can pay, so limit checkouts per network.
+  const { ip } = clientContext(await headers())
+  if (!(await withinRateLimit(`checkout:${ip || "unknown"}`, 20, 10 * 60_000)))
+    return { ok: false, message: TOO_MANY_REQUESTS } satisfies ActionState
   const invoice = await billing.getByPublicToken(token)
   // Same rule as the page: open with something left to pay. A tab left open
   // after a payment or credit must not start a $0 checkout.
