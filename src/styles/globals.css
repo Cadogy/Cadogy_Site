@@ -20,6 +20,7 @@
   --color-story-sidecar: hsl(var(--story-sidecar));
   --color-story-graceful-era: hsl(var(--story-graceful-era));
   --color-story-disciples: hsl(var(--story-disciples));
+  --color-story-oden: hsl(var(--story-oden));
 
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
@@ -268,6 +269,7 @@
     --story-sidecar: 220 8% 15%;
     --story-graceful-era: 158 33% 20%;
     --story-disciples: 36 14% 22%;
+    --story-oden: 216 45% 20%;
     --success: 145 55% 58%;
     --warning: 38 92% 62%;
     --destructive: 0 75% 64%;

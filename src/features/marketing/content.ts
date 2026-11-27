@@ -38,7 +38,8 @@ export type CaseStudy = {
   readonly hero: { readonly image: string; readonly focus: string }
   readonly story: {
     readonly headline: string
-    readonly tone: "playerbay" | "sidecar" | "graceful-era" | "disciples"
+    readonly tone:
+      "playerbay" | "sidecar" | "graceful-era" | "disciples" | "oden"
     readonly image?: string
   }
   /** The situation, as prose. The first paragraph is set large. */
@@ -796,6 +797,119 @@ export const caseStudies: readonly CaseStudy[] = [
       "Microsoft Clarity",
       "Vercel",
     ],
+  },
+  {
+    slug: "oden-watches-jewelry",
+    name: "Oden Watches & Jewelry",
+    website: "https://odenjh.com",
+    links: [],
+    category: "Luxury retail",
+    summary:
+      "A fine jewelry and Swiss watch boutique in Jackson Hole, in the heart of the Tetons. Since 2023 we've looked after its technology end to end: the website and catalog, email, security, brand outreach and hiring.",
+    role: "Long-term technology partner: website, catalog, email, security, brand outreach and hiring support.",
+    image: "/images/studio/oden-home.webp",
+    mobileImage: "/images/studio/oden-home-mobile.webp",
+    hero: {
+      image: "/images/studio/oden-home-hero.webp",
+      focus: "object-top",
+    },
+    imageAlt:
+      "Oden Watches & Jewelry's homepage: the navy and gold antler monogram above a JB Star diamond earring and ring",
+    story: {
+      headline: "The technology partner behind a Jackson Hole boutique.",
+      tone: "oden",
+      image: "/images/studio/oden-home-story.webp",
+    },
+    challenge: [
+      "Oden is a fine jewelry and Swiss watch boutique on Glenwood Street in Jackson, Wyoming. Its founding idea is that luxury should feel warm, welcoming and personal, and its team has spent decades with some of the most respected names in jewelry and watches.",
+      "A small boutique runs on the same technology as a large retailer: a website that has to feel as considered as the showroom, email that customers and brands rely on, accounts that need protecting, and relationships with the designers whose pieces fill the cases. What it doesn't have is an IT department.",
+      "Oden needed one partner to look after all of it, year after year, so the team could stay focused on the people walking through the door.",
+    ],
+    productLabel: "Live site",
+    promises: [
+      "A showroom that's open online",
+      "Repairs that start with a few photos",
+      "One partner for all of the tech",
+      "Looked after since 2023",
+    ],
+    facts: [
+      { value: "2023", label: "Working together since" },
+      { value: "10", label: "Designers featured on the site" },
+      { value: "12", label: "Repair services in the online intake" },
+      { value: "6", label: "Areas we look after" },
+    ],
+    factsSource:
+      "Counted from odenjh.com in November 2026. Areas covered: website, catalog, email, security, brand outreach and hiring.",
+    flow: {
+      title: "What we look after",
+      intro:
+        "Oden doesn't have an IT department. It has us, and this is the work that keeps the boutique's technology out of the team's way.",
+      steps: [
+        {
+          title: "Website",
+          body: "Design, upkeep and new pages as the boutique grows, from the staff and philanthropy pages to banners for each new designer.",
+        },
+        {
+          title: "Catalog",
+          body: "Fine jewelry, engagement pieces and timepieces, organized by category, by designer and, for watches, by movement.",
+        },
+        {
+          title: "Repairs intake",
+          body: "An online form that gathers a piece's details and photos before it ever reaches the bench.",
+        },
+        {
+          title: "Email",
+          body: "The email the boutique depends on, with customers and with the brands it carries.",
+        },
+        {
+          title: "Security",
+          body: "Keeping the site, its accounts and the boutique's systems protected and up to date.",
+        },
+        {
+          title: "Brands and hiring",
+          body: "Outreach to the designers and watchmakers Oden works with, and help finding the right people to join the team.",
+        },
+      ],
+    },
+    chapters: [
+      {
+        title: "A showroom that's open online",
+        paragraphs: [
+          "Walking into Oden should feel personal, and the website had to feel the same way. The navy and gold antler monogram leads every page, and the site is arranged the way the showroom is: fine jewelry by category and by designer, an engagement collection with wedding bands and a diamond guide, and timepieces by movement and by maker.",
+          "Each designer gets room to show their work. Full-width banners introduce JB Star's diamonds, Norqain's Swiss watches and Breitling's timepieces, with names like Vincent Peach, Shy Creation and Locman alongside. When the boutique takes on a new designer or a new season's pieces arrive, the site changes with it.",
+        ],
+      },
+      {
+        title: "Repairs that start before the visit",
+        paragraphs: [
+          "Oden has its own jewelry workshop and watchmaker, and repair work is a big part of what brings people back. The repair page lets a customer start the conversation from home: what the piece is, who made it, the metal and stones, which of twelve services it needs, from ring sizing and pearl restringing to a full watch service, and a few well-lit photos.",
+          "By the time the piece arrives, the team already knows what they're looking at. A hidden trap field catches spam bots quietly, without asking customers to solve a puzzle first.",
+        ],
+      },
+      {
+        title: "More than a website",
+        paragraphs: [
+          "Most of what we do for Oden never shows up on a page. We run the boutique's email, so messages to customers and designers arrive and replies don't go missing. We look after security, keeping the site, its accounts and the boutique's systems patched and protected.",
+          "We also work on the business side. We've helped with outreach to the brands Oden carries and wants to carry, and with hiring as the team has grown. For a small team, having one partner who already knows how everything fits together means a question gets answered in a message, not a project.",
+        ],
+      },
+      {
+        title: "Years, not a launch",
+        paragraphs: [
+          "A boutique's website is never finished. Since 2023 we've added pages for the staff and for the causes Oden supports, introduced new designers, refreshed seasonal banners and kept everything underneath current.",
+          "That's the kind of work we like best: the long relationship where we know the business well enough to see what it needs next.",
+        ],
+      },
+    ],
+    pullLine:
+      "A small boutique runs on the same technology as a large retailer. It just doesn't have an IT department.",
+    outcome: {
+      title: "Where it is now",
+      paragraphs: [
+        "Oden is open on Glenwood Street and online at odenjh.com, and we're still looking after its technology day to day.",
+      ],
+    },
+    stack: ["WordPress", "WooCommerce"],
   },
 ]
 

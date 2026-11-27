@@ -247,6 +247,39 @@ describe("Disciples Insurance case study", () => {
   })
 })
 
+const renderOden = async () =>
+  render(
+    await CaseStudyPage({
+      params: Promise.resolve({ slug: "oden-watches-jewelry" }),
+    })
+  )
+
+describe("Oden Watches & Jewelry case study", () => {
+  it("has a single h1 and links to the live site", async () => {
+    await renderOden()
+
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(
+      screen.getByRole("link", { name: /Visit odenjh\.com/ })
+    ).toHaveAttribute("href", "https://odenjh.com")
+  })
+
+  it("covers the work beyond the website", async () => {
+    await renderOden()
+    const beyond = screen.getByRole("region", { name: "More than a website" })
+
+    expect(beyond).toHaveTextContent(/email/)
+    expect(beyond).toHaveTextContent(/security/)
+    expect(beyond).toHaveTextContent(/hiring/)
+  })
+
+  it("keeps the owners' and staff's names off the page", async () => {
+    const { container } = await renderOden()
+
+    expect(container.textContent).not.toMatch(/Lisa|Dave|Knapp|Bella/)
+  })
+})
+
 describe("case study videos", () => {
   it("offers the Sidecar demo without loading YouTube until it's played", async () => {
     await renderSidecar()
