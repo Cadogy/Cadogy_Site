@@ -11,6 +11,8 @@ import { toState, type ActionState } from "@/lib/action-state"
 
 import { parseMoneyInput } from "../domain/format"
 import { wasDelivered } from "../domain/invoice"
+import { isPayable } from "../domain/lifecycle"
+import { calculateInvoiceTotals } from "../domain/totals"
 import { billing, billingEngine } from "./billing"
 import { text } from "./form-fields"
 import { deliveryFeedback, issuedFeedback } from "./issue-feedback"
@@ -215,8 +217,12 @@ export async function startCheckoutAction(token: string) {
         "Payments are turned off while you're viewing the portal as a client.",
     } satisfies ActionState
   const invoice = await billing.getByPublicToken(token)
+  // Same rule as the page: open with something left to pay. A tab left open
+  // after a payment or credit must not start a $0 checkout.
   const payable =
-    invoice?.status === "open" || invoice?.status === "uncollectible"
+    invoice !== null &&
+    isPayable(invoice) &&
+    calculateInvoiceTotals(invoice).amountDue > 0
   if (!invoice || !payable || !isStripeConfigured()) {
     return {
       ok: false,

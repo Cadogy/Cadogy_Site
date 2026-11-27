@@ -6,6 +6,7 @@ import type { CatalogCategory, CatalogItem } from "../application/engine-ports"
 import { intervalLabel, toMoneyInput } from "../domain/format"
 import { BILLING_INTERVALS, type BillingInterval } from "../domain/recurring"
 import { CURRENCIES, type Currency } from "../domain/schema"
+import { IncludedServicesPicker } from "./included-services-picker"
 
 const UNIT_SUGGESTIONS_ID = "catalog-unit-suggestions"
 const UNIT_SUGGESTIONS = [
@@ -90,20 +91,49 @@ export function QuantityField({
   id,
   defaultValue = 1,
   hint,
+  hours = false,
 }: {
   id: string
   defaultValue?: number
   hint?: string
+  /** Hours take quarter and half hours, e.g. 1.5. */
+  hours?: boolean
 }) {
   return (
-    <Field id={id} label="Quantity" hint={hint}>
+    <Field id={id} label={hours ? "Hours" : "Quantity"} hint={hint}>
       {(control) => (
         <Input
           {...control}
           name="quantity"
           type="number"
-          min={1}
+          min={hours ? 0.01 : 1}
+          step={hours ? 0.01 : 1}
           defaultValue={defaultValue}
+        />
+      )}
+    </Field>
+  )
+}
+
+/** Hours of work included each period; blank for none. */
+export function IncludedHoursField({
+  id,
+  defaultValue,
+  hint = "Hours of work included each billing period. Logged time beyond this is billed at the hourly rate.",
+}: {
+  id: string
+  defaultValue?: number | null
+  hint?: string
+}) {
+  return (
+    <Field id={id} label="Included hours" optional hint={hint}>
+      {(control) => (
+        <Input
+          {...control}
+          name="includedHours"
+          inputMode="decimal"
+          defaultValue={defaultValue ?? undefined}
+          placeholder="e.g. 3"
         />
       )}
     </Field>
@@ -270,6 +300,21 @@ export function CatalogItemFields({
           </span>
         </span>
       </label>
+      <div className="grid gap-5 border-t pt-5 sm:col-span-2 sm:grid-cols-2">
+        <p className="text-sm text-muted-foreground sm:col-span-2">
+          <span className="font-medium text-foreground">Package</span> ·
+          Optional. Bundle other services and a monthly allowance of hours into
+          this one, like a care plan.
+        </p>
+        <IncludedHoursField
+          id={`${prefix}-included-hours`}
+          defaultValue={item?.includedHours}
+        />
+        <IncludedServicesPicker
+          selected={item?.includedItemIds ?? []}
+          excludeId={item?.id}
+        />
+      </div>
       <div className="grid grid-cols-2 gap-5">
         <IntervalField
           id={`${prefix}-interval`}

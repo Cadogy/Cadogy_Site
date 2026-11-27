@@ -62,8 +62,12 @@ export default async function HostedInvoicePage({
 
   return (
     <div className="paper min-h-dvh">
-      <header className="print-hidden container-page flex h-16 items-center justify-between">
-        <Logo />
+      <header className="print-hidden container-page flex h-16 items-center justify-end lg:justify-between">
+        {/* The invoice itself carries the brand; on narrow screens a second
+            logo just pushes it down. */}
+        <span className="hidden lg:block">
+          <Logo />
+        </span>
         <a
           href={`mailto:${siteConfig.email}`}
           className="text-sm text-muted-foreground hover:text-foreground"

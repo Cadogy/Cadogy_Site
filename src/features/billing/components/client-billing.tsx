@@ -5,15 +5,23 @@ import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/native-select"
 import { PortalSection } from "@/components/portal/portal-section"
 
+import type { PlanAllowance } from "../application/engine"
 import type {
   Charge,
   PricedCatalogItem,
   StoredAddOn,
+  TimeEntry,
 } from "../application/engine-ports"
 import type { BillingClient } from "../application/ports"
 import { catalogPriceLabel, groupByCategory } from "../domain/catalog"
 import { isoDay } from "../domain/dates"
-import { cardSummary, formatDate, formatMoney } from "../domain/format"
+import {
+  cardSummary,
+  formatDate,
+  formatMoney,
+  intervalLabel,
+} from "../domain/format"
+import { formatHours } from "../domain/packages"
 import {
   addAddOnAction,
   addChargeAction,
@@ -25,8 +33,14 @@ import {
   updateChargeAction,
   voidChargeAction,
 } from "../server/engine-actions"
+import { ClientHours } from "./client-hours"
 import { PendingCharges } from "./pending-charges"
-import { IntervalField, PriceField, QuantityField } from "./service-fields"
+import {
+  IncludedHoursField,
+  IntervalField,
+  PriceField,
+  QuantityField,
+} from "./service-fields"
 import { ServiceSummary } from "./service-summary"
 
 const STATUS_LABELS: Record<StoredAddOn["status"], string> = {
@@ -60,6 +74,9 @@ function AddOnRow({
               : null}
             {addOn.status === "active" && addOn.interval === "one_time"
               ? ` · bills ${formatDate(addOn.nextBillingDate)}`
+              : null}
+            {addOn.includedHours && addOn.interval !== "one_time"
+              ? ` · ${formatHours(addOn.includedHours * addOn.quantity)} of work included ${intervalLabel(addOn.interval, "per")}`
               : null}
           </>
         }
@@ -136,6 +153,13 @@ function AddOnRow({
                     id={`price-${addOn.id}`}
                     defaultValue={addOn.unitAmount}
                   />
+                  {addOn.interval !== "one_time" ? (
+                    <IncludedHoursField
+                      id={`hours-${addOn.id}`}
+                      defaultValue={addOn.includedHours}
+                      hint="Per unit, each billing period. Changes apply to time logged from now on."
+                    />
+                  ) : null}
                   <Field
                     id={`next-${addOn.id}`}
                     label={
@@ -170,11 +194,16 @@ export function ClientBilling({
   addOns,
   pending,
   catalog,
+  hours,
 }: {
   client: BillingClient
   addOns: readonly StoredAddOn[]
   pending: readonly Charge[]
   catalog: readonly PricedCatalogItem[]
+  hours: {
+    readonly allowances: readonly PlanAllowance[]
+    readonly entries: readonly TimeEntry[]
+  }
 }) {
   const current = addOns.filter(isLive)
   const past = addOns.filter((addOn) => !isLive(addOn))
@@ -303,6 +332,13 @@ export function ClientBilling({
         )}
       </PortalSection>
 
+      <ClientHours
+        client={client}
+        allowances={hours.allowances}
+        entries={hours.entries}
+        catalog={catalog}
+      />
+
       <PortalSection
         title="Waiting to be billed"
         description={
@@ -321,6 +357,13 @@ export function ClientBilling({
             ),
             quantity: charge.quantity,
             unitAmount: charge.unitAmount,
+            hours: charge.unit === "hour",
+            detail:
+              charge.unit === "hour"
+                ? `${formatHours(charge.quantity)} × ${formatMoney(charge.unitAmount, charge.currency)}`
+                : charge.quantity > 1
+                  ? `${charge.quantity} × ${formatMoney(charge.unitAmount, charge.currency)}`
+                  : undefined,
           }))}
           onBill={invoiceChargesAction.bind(null, client.id)}
           onRemove={voidChargeAction.bind(null, client.id)}

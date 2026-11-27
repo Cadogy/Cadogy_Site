@@ -1,6 +1,6 @@
 import type { Money, PricingModel, ResolvedPrice } from "../domain/catalog"
 import type { AddOn, BillingInterval } from "../domain/recurring"
-import type { Currency } from "../domain/schema"
+import type { Currency, LineUnit } from "../domain/schema"
 
 export type CatalogItem = {
   readonly id: string
@@ -17,6 +17,10 @@ export type CatalogItem = {
   readonly unit: string | null
   /** The price is a starting point ("from $1,500"), adjusted per job. */
   readonly priceFrom: boolean
+  /** For packages: the catalog services this one includes. */
+  readonly includedItemIds: readonly string[]
+  /** For packages: hours of work included each billing period. */
+  readonly includedHours: number | null
   readonly currency: Currency
   readonly interval: BillingInterval
   readonly archived: boolean
@@ -38,6 +42,31 @@ export type StoredAddOn = AddOn & {
   readonly catalogItemId: string | null
   readonly startDate: Date
   readonly canceledAt: Date | null
+  /**
+   * Hours of work included per billing period, per unit. Copied from the
+   * catalog when added, so catalog edits never change an existing client.
+   */
+  readonly includedHours: number | null
+}
+
+/** Work logged for a client, covered by a plan's hours or billed. */
+export type TimeEntry = {
+  readonly id: string
+  readonly clientId: string
+  readonly date: Date
+  readonly hours: number
+  readonly description: string
+  readonly catalogItemId: string | null
+  /** The plan whose included hours covered part or all of this. */
+  readonly addOnId: string | null
+  readonly includedHours: number
+  readonly billedHours: number
+  /** Hourly rate used for the billed hours, in minor units. */
+  readonly unitAmount: number | null
+  readonly currency: Currency
+  /** The pending charge for the billed hours, if any. */
+  readonly chargeId: string | null
+  readonly createdAt: Date
 }
 
 export const CHARGE_STATUSES = ["pending", "invoiced", "void"] as const
@@ -51,6 +80,8 @@ export type Charge = {
   readonly description: string
   readonly quantity: number
   readonly unitAmount: number
+  /** "hour" for logged time, so the invoice line reads "1.5 hours". */
+  readonly unit: LineUnit | null
   readonly currency: Currency
   readonly periodStart: Date | null
   readonly periodEnd: Date | null
@@ -120,6 +151,13 @@ export type EngineRepository = {
       status?: ChargeStatus
       ids?: readonly string[]
     }) => Promise<Charge[]>
+  }
+  readonly timeEntries: {
+    readonly insert: (entry: Omit<TimeEntry, "id">) => Promise<TimeEntry>
+    readonly find: (id: string) => Promise<TimeEntry | null>
+    /** Newest first. */
+    readonly list: (filter: { clientId: string }) => Promise<TimeEntry[]>
+    readonly remove: (id: string) => Promise<void>
   }
   readonly settings: {
     readonly get: () => Promise<BillingSettings>

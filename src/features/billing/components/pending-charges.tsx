@@ -16,6 +16,10 @@ export type PendingChargeRow = {
   readonly amountLabel: string
   readonly quantity: number
   readonly unitAmount: number
+  /** Logged time: the quantity is hours and can be fractional. */
+  readonly hours?: boolean
+  /** e.g. "1.5 h × $150.00". */
+  readonly detail?: string
 }
 
 type UpdateCharge = (
@@ -82,7 +86,14 @@ export function PendingCharges({
                     onChange={() => toggle(charge.id)}
                   />
                 )}
-                <span className="flex-1">{charge.description}</span>
+                <span className="grid flex-1">
+                  <span>{charge.description}</span>
+                  {charge.detail ? (
+                    <span className="text-sm text-muted-foreground tabular-nums">
+                      {charge.detail}
+                    </span>
+                  ) : null}
+                </span>
                 <span className="font-medium tabular-nums">
                   {charge.amountLabel}
                 </span>
@@ -134,6 +145,7 @@ export function PendingCharges({
                       <QuantityField
                         id={`charge-${charge.id}-quantity`}
                         defaultValue={charge.quantity}
+                        hours={charge.hours}
                       />
                     </div>
                   </ActionForm>

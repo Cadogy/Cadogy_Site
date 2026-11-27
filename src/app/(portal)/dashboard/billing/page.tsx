@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { requireSession } from "@/features/auth/server/session"
+import { periodLabel } from "@/features/billing/components/client-hours"
 import { CreditNoteList } from "@/features/billing/components/credit-note-list"
 import { InvoiceList } from "@/features/billing/components/invoice-list"
 import { PayBalance } from "@/features/billing/components/pay-balance"
@@ -12,6 +13,7 @@ import {
 } from "@/features/billing/domain/format"
 import { invoicePublicPath } from "@/features/billing/domain/invoice"
 import { displayStatus, isPayable } from "@/features/billing/domain/lifecycle"
+import { formatHours } from "@/features/billing/domain/packages"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import {
   billing,
@@ -50,6 +52,28 @@ export default async function ClientBillingPage({ searchParams }: Props) {
   )
     .flat()
     .filter((addOn) => addOn.status === "active" || addOn.status === "paused")
+  const packaged = services.some(
+    (service) => service.includedHours || service.catalogItemId
+  )
+  const [catalogItems, allowances] = packaged
+    ? await Promise.all([
+        billingEngine.listCatalog({ includeArchived: true }),
+        Promise.all(
+          accounts.map((account) => billingEngine.hoursOverview(account.id))
+        ).then((overviews) =>
+          overviews.flatMap((overview) => overview.allowances)
+        ),
+      ])
+    : [[], []]
+  const includedNames = (catalogItemId: string | null) => {
+    const item = catalogItems.find(
+      (candidate) => candidate.id === catalogItemId
+    )
+    if (!item) return []
+    return catalogItems
+      .filter((candidate) => item.includedItemIds.includes(candidate.id))
+      .map((candidate) => candidate.name)
+  }
   const open = invoices.filter(isPayable)
   const [notes, balances] = await Promise.all([
     Promise.all(
@@ -116,18 +140,40 @@ export default async function ClientBillingPage({ searchParams }: Props) {
         {services.length > 0 ? (
           <PortalSection title="Your services">
             <ul className="rule-list">
-              {services.map((service) => (
-                <li key={service.id} className="py-4">
-                  <ServiceSummary
-                    service={service}
-                    detail={
-                      service.status === "paused"
-                        ? "Paused, not billing"
-                        : `${service.interval === "one_time" ? "Bills" : "Renews"} ${formatDate(service.nextBillingDate)}`
-                    }
-                  />
-                </li>
-              ))}
+              {services.map((service) => {
+                const names = includedNames(service.catalogItemId)
+                const hours = allowances.find(
+                  (allowance) => allowance.addOnId === service.id
+                )
+                return (
+                  <li key={service.id} className="grid gap-2 py-4">
+                    <ServiceSummary
+                      service={service}
+                      detail={
+                        service.status === "paused"
+                          ? "Paused, not billing"
+                          : `${service.interval === "one_time" ? "Bills" : "Renews"} ${formatDate(service.nextBillingDate)}`
+                      }
+                    />
+                    {names.length > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Includes {names.join(", ")}.
+                      </p>
+                    ) : null}
+                    {hours ? (
+                      <p className="text-sm">
+                        <span className="font-medium tabular-nums">
+                          {formatHours(hours.used)} of{" "}
+                          {formatHours(hours.allowance)}
+                        </span>{" "}
+                        <span className="text-muted-foreground">
+                          of included work used, {periodLabel(hours.period)}
+                        </span>
+                      </p>
+                    ) : null}
+                  </li>
+                )
+              })}
             </ul>
             <p className="mt-3 text-sm text-muted-foreground">
               Need to add or change a service? Open a support request and

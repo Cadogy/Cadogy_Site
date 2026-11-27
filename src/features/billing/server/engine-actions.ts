@@ -9,10 +9,18 @@ import {
 
 import { toState, type ActionState } from "@/lib/action-state"
 
+import { loggedTimeMessage } from "../application/engine"
 import { parsePercentToBps } from "../domain/format"
 import type { AddOnStatus } from "../domain/recurring"
 import { billing, billingEngine } from "./billing"
-import { money, optionalMoney, optionalText, text, whole } from "./form-fields"
+import {
+  money,
+  optionalDecimal,
+  optionalMoney,
+  optionalText,
+  text,
+  whole,
+} from "./form-fields"
 import { issuedFeedback } from "./issue-feedback"
 import {
   createBatchCheckout,
@@ -50,6 +58,11 @@ export async function saveCatalogItemAction(
     unitAmount: price.value,
     unit: optionalText(formData, "unit") ?? null,
     priceFrom: formData.get("priceFrom") === "on",
+    includedItemIds: formData
+      .getAll("includedItemIds")
+      .map(String)
+      .filter(Boolean),
+    includedHours: optionalDecimal(formData, "includedHours"),
     currency: text(formData, "currency") || "USD",
     interval: text(formData, "interval"),
   }
@@ -144,6 +157,9 @@ export async function updateAddOnAction(
     unitAmount: money(formData, "price"),
     interval: optionalText(formData, "interval"),
     nextBillingDate: optionalText(formData, "nextBillingDate"),
+    ...(formData.has("includedHours")
+      ? { includedHours: optionalDecimal(formData, "includedHours") }
+      : {}),
   })
   refresh(clientId)
   return toState(
@@ -183,6 +199,37 @@ export async function addChargeAction(
   })
   refresh(clientId)
   return toState(result, "Charge added. It goes on the next invoice.")
+}
+
+export async function logTimeAction(
+  clientId: string,
+  _previous: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requirePermission("billing:write")
+  const rate = optionalMoney(formData, "rate")
+  if (!rate.ok) return INVALID_PRICE
+  const result = await billingEngine.logTime(clientId, {
+    date: text(formData, "date"),
+    hours: optionalDecimal(formData, "hours") ?? undefined,
+    description: text(formData, "description"),
+    catalogItemId: optionalText(formData, "catalogItemId"),
+    unitAmount: rate.value ?? undefined,
+    billSeparately: formData.get("billSeparately") === "on",
+  })
+  refresh(clientId)
+  if (!result.ok) return { ok: false, message: result.error }
+  return { ok: true, message: loggedTimeMessage(result.value) }
+}
+
+export async function removeTimeEntryAction(
+  clientId: string,
+  entryId: string
+): Promise<ActionState> {
+  await requirePermission("billing:write")
+  const result = await billingEngine.removeTimeEntry(entryId)
+  refresh(clientId)
+  return toState(result, "Time entry removed.")
 }
 
 export async function updateChargeAction(

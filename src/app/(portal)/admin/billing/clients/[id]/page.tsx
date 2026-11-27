@@ -38,7 +38,7 @@ export default async function ClientPage({ params }: Props) {
   const { id } = await params
   const client = await billing.getClient(id)
   if (!client) notFound()
-  const [invoices, addOns, pending, catalog, notes, balance] =
+  const [invoices, addOns, pending, catalog, notes, balance, hours] =
     await Promise.all([
       billing.listInvoices({ clientIds: [client.id] }),
       billingEngine.listAddOns(client.id),
@@ -46,6 +46,7 @@ export default async function ClientPage({ params }: Props) {
       billingEngine.pricedCatalog({ includeArchived: false }),
       credits.notesFor({ clientId: client.id }),
       credits.balanceFor(client.id, client.currency),
+      billingEngine.hoursOverview(client.id),
     ])
 
   return (
@@ -74,6 +75,7 @@ export default async function ClientPage({ params }: Props) {
           addOns={addOns}
           pending={pending}
           catalog={catalog.items}
+          hours={hours}
         />
         <PortalSection
           title="Team"

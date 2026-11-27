@@ -14,9 +14,23 @@ import {
   reminderKey,
 } from "../domain/collections"
 import { DAY_MS, startOfUtcDay } from "../domain/dates"
-import { addByCurrency, type AmountsByCurrency } from "../domain/format"
+import {
+  addByCurrency,
+  formatDate,
+  type AmountsByCurrency,
+} from "../domain/format"
 import { wasDelivered, type Invoice } from "../domain/invoice"
 import { isPayable } from "../domain/lifecycle"
+import {
+  allowancePeriod,
+  formatHours,
+  inPeriod,
+  MAX_INCLUDED_HOURS,
+  MAX_LOGGED_HOURS,
+  roundHours,
+  splitHours,
+  type AllowancePeriod,
+} from "../domain/packages"
 import {
   ADD_ON_STATUSES,
   addInterval,
@@ -26,6 +40,7 @@ import {
 } from "../domain/recurring"
 import {
   CURRENCIES,
+  lineQuantity,
   minorUnits,
   wholeQuantity,
   type Currency,
@@ -42,6 +57,7 @@ import type {
   PricedCatalogItem,
   RunSummary,
   StoredAddOn,
+  TimeEntry,
 } from "./engine-ports"
 
 type Dependencies = {
@@ -56,6 +72,35 @@ type Dependencies = {
 }
 
 export type AutopayOutcome = "skipped" | "collected" | "failed"
+
+export type LoggedTime = {
+  readonly entry: TimeEntry
+  /** The plan whose hours covered some of it, if any. */
+  readonly planName: string | null
+}
+
+export type PlanAllowance = {
+  readonly addOnId: string
+  readonly name: string
+  readonly period: AllowancePeriod
+  readonly allowance: number
+  readonly used: number
+  readonly remaining: number
+}
+
+/** "1.5 h covered by Business Care; 0.5 h added to the next invoice." */
+export const loggedTimeMessage = ({ entry, planName }: LoggedTime) => {
+  const covered =
+    entry.includedHours > 0
+      ? `${formatHours(entry.includedHours)} covered by ${planName ?? "the plan"}`
+      : ""
+  const billed =
+    entry.billedHours > 0
+      ? `${formatHours(entry.billedHours)} added to the next invoice`
+      : ""
+  const text = [covered, billed].filter(Boolean).join("; ")
+  return `Time logged. ${text.charAt(0).toUpperCase()}${text.slice(1)}.`
+}
 
 export type IssuedInvoice = {
   readonly invoice: Invoice
@@ -78,6 +123,16 @@ const moneySchema = z.object({
   currency: z.enum(CURRENCIES),
 })
 
+/** Hours with at most two decimals, e.g. 0.25 or 1.5. */
+const hoursSchema = (max: number) =>
+  z
+    .number()
+    .positive("Enter more than 0 hours")
+    .max(max, `Enter at most ${max} hours`)
+    .refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 1e-6, {
+      message: "Use at most two decimal places for hours",
+    })
+
 const catalogItemSchema = z
   .object({
     name: z.string().trim().min(1).max(200),
@@ -87,9 +142,23 @@ const catalogItemSchema = z
     unitAmount: minorUnits.nullable().default(null),
     unit: z.string().max(40).nullable().default(null).transform(normalizeUnit),
     priceFrom: z.boolean().default(false),
+    includedItemIds: z
+      .array(z.string().min(1))
+      .max(200)
+      .default([])
+      .transform((ids) => [...new Set(ids)]),
+    includedHours: hoursSchema(MAX_INCLUDED_HOURS).nullable().default(null),
     currency: z.enum(CURRENCIES).default("USD"),
     interval: z.enum(BILLING_INTERVALS),
   })
+  .refine(
+    (item) => item.includedHours === null || item.interval !== "one_time",
+    {
+      message:
+        "Included hours renew each period, so the service needs a recurring billing schedule",
+      path: ["includedHours"],
+    }
+  )
   .refine((item) => item.pricing !== "fixed" || item.unitAmount !== null, {
     message: "Enter a price for fixed-price services",
     path: ["unitAmount"],
@@ -115,12 +184,25 @@ const chargeSchema = z.object({
   quantity: wholeQuantity.default(1),
 })
 
+// Logged time bills fractional hours.
+const hourChargeSchema = chargeSchema.extend({ quantity: lineQuantity })
+
+const timeEntrySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a YYYY-MM-DD date"),
+  hours: hoursSchema(MAX_LOGGED_HOURS),
+  description: z.string().trim().min(1, "Say what the work was").max(300),
+  catalogItemId: z.string().min(1).optional(),
+  unitAmount: minorUnits.positive().optional(),
+  billSeparately: z.boolean().default(false),
+})
+
 const addOnChangesSchema = z.object({
   name: z.string().trim().min(1).max(200).optional(),
   unitAmount: minorUnits.positive().optional(),
   quantity: wholeQuantity.optional(),
   interval: z.enum(BILLING_INTERVALS).optional(),
   nextBillingDate: isoDate.optional(),
+  includedHours: hoursSchema(MAX_INCLUDED_HOURS).nullable().optional(),
 })
 
 const settingsSchema = z.object({
@@ -167,7 +249,7 @@ export const createBillingEngine = ({
     return (await billing.getInvoice(invoice.id)) ?? invoice
   }
 
-  const parseCatalogItem = async (input: unknown) => {
+  const parseCatalogItem = async (input: unknown, selfId?: string) => {
     const parsed = catalogItemSchema.safeParse(input)
     if (!parsed.success) return fail<never>(firstIssue(parsed.error))
     if (
@@ -175,7 +257,19 @@ export const createBillingEngine = ({
       !(await repository.categories.find(parsed.data.categoryId))
     )
       return fail<never>("Category not found")
-    return ok(parsed.data)
+    const includedItemIds = parsed.data.includedItemIds.filter(
+      (id) => id !== selfId
+    )
+    if (includedItemIds.length > 0) {
+      const known = new Set(
+        (await repository.catalog.list({ includeArchived: true })).map(
+          (item) => item.id
+        )
+      )
+      if (includedItemIds.some((id) => !known.has(id)))
+        return fail<never>("An included service is no longer in the catalog")
+    }
+    return ok({ ...parsed.data, includedItemIds })
   }
 
   const createCatalogItem = async (
@@ -194,7 +288,7 @@ export const createBillingEngine = ({
   ): Promise<Result<CatalogItem>> => {
     const existing = await repository.catalog.find(id)
     if (!existing) return fail("Catalog item not found")
-    const parsed = await parseCatalogItem(input)
+    const parsed = await parseCatalogItem(input, id)
     if (!parsed.ok) return parsed
     return ok(await repository.catalog.save({ ...existing, ...parsed.value }))
   }
@@ -325,6 +419,10 @@ export const createBillingEngine = ({
         nextBillingDate: startDate,
         status: "active",
         canceledAt: null,
+        includedHours:
+          item && item.interval !== "one_time" && interval !== "one_time"
+            ? item.includedHours
+            : null,
       })
     )
   }
@@ -359,6 +457,10 @@ export const createBillingEngine = ({
         unitAmount: changes.unitAmount ?? existing.unitAmount,
         quantity: changes.quantity ?? existing.quantity,
         interval: changes.interval ?? existing.interval,
+        includedHours:
+          changes.includedHours === undefined
+            ? existing.includedHours
+            : changes.includedHours,
         nextBillingDate,
         anchorDay: changes.nextBillingDate
           ? nextBillingDate.getUTCDate()
@@ -405,6 +507,7 @@ export const createBillingEngine = ({
       ...parsed.data,
       clientId,
       addOnId: null,
+      unit: null,
       currency: client.currency,
       periodStart: null,
       periodEnd: null,
@@ -423,7 +526,9 @@ export const createBillingEngine = ({
     if (!charge) return fail("Charge not found")
     if (charge.status !== "pending")
       return fail("Only pending charges can be edited")
-    const parsed = chargeSchema.safeParse(input)
+    const parsed = (
+      charge.unit === "hour" ? hourChargeSchema : chargeSchema
+    ).safeParse(input)
     if (!parsed.success) return fail(firstIssue(parsed.error))
     return ok(await repository.charges.save({ ...charge, ...parsed.data }))
   }
@@ -609,6 +714,7 @@ export const createBillingEngine = ({
           result.charges.map((charge) =>
             repository.charges.insertIfNew({
               ...charge,
+              unit: null,
               status: "pending",
               invoiceId: null,
               createdAt: today,
@@ -790,6 +896,161 @@ export const createBillingEngine = ({
   }
 
   /** Archiving pauses every live service, so nothing bills in the meantime. */
+  const planAllowances = (
+    plans: readonly StoredAddOn[],
+    entries: readonly TimeEntry[],
+    on: Date
+  ) =>
+    plans.flatMap((plan) => {
+      if (plan.status !== "active" || !plan.includedHours) return []
+      const period = allowancePeriod(plan, on)
+      if (!period) return []
+      const used = sum(
+        entries
+          .filter(
+            (entry) => entry.addOnId === plan.id && inPeriod(period, entry.date)
+          )
+          .map((entry) => entry.includedHours)
+      )
+      const allowance = roundHours(plan.includedHours * plan.quantity)
+      return [
+        {
+          addOnId: plan.id,
+          name: plan.name,
+          period,
+          allowance,
+          used: roundHours(used),
+          remaining: roundHours(Math.max(0, allowance - used)),
+        },
+      ]
+    })
+
+  const hourlyRate = async (
+    item: CatalogItem | null,
+    currency: Currency,
+    typed: number | undefined
+  ) => {
+    if (typed) return typed
+    if (item) return (await priceOf(item))?.unitAmount ?? null
+    const { defaultHourlyRate } = await repository.settings.get()
+    return defaultHourlyRate?.currency === currency
+      ? defaultHourlyRate.amount
+      : null
+  }
+
+  /**
+   * Logs work for a client. Hours come out of an active plan's allowance for
+   * the period the work falls in; whatever the plan doesn't cover becomes a
+   * pending charge at the hourly rate.
+   */
+  const logTime = async (
+    clientId: string,
+    input: unknown
+  ): Promise<Result<LoggedTime>> => {
+    const client = await billing.getClient(clientId)
+    if (!client) return fail("Client not found")
+    if (client.archivedAt) return fail("Restore the client before logging time")
+    const parsed = timeEntrySchema.safeParse(input)
+    if (!parsed.success) return fail(firstIssue(parsed.error))
+    const data = parsed.data
+    const date = parseDay(data.date)
+    if (date.getTime() > startOfUtcDay(clock()).getTime())
+      return fail("Time can't be logged for a future date")
+
+    const item = data.catalogItemId
+      ? await repository.catalog.find(data.catalogItemId)
+      : null
+    if (data.catalogItemId && !item) return fail("Catalog item not found")
+    if (item && item.pricing !== "hourly")
+      return fail(`${item.name} isn't an hourly service`)
+    if (item && item.currency !== client.currency)
+      return fail(
+        `${item.name} is priced in ${item.currency}, but this client is billed in ${client.currency}`
+      )
+
+    const [plans, entries] = await Promise.all([
+      data.billSeparately
+        ? Promise.resolve([])
+        : repository.addOns.list({ clientIds: [clientId] }),
+      repository.timeEntries.list({ clientId }),
+    ])
+    const plan = planAllowances(
+      plans.filter((candidate) => candidate.currency === client.currency),
+      entries,
+      date
+    ).find((allowance) => allowance.remaining > 0)
+    const { included, overage } = splitHours(data.hours, plan?.remaining ?? 0)
+    const rate = await hourlyRate(item, client.currency, data.unitAmount)
+    if (overage > 0 && !rate)
+      return fail(
+        "These hours are billable but there's no rate. Pick an hourly service or enter a rate."
+      )
+
+    const label = item ? `${item.name}: ${data.description}` : data.description
+    const charge =
+      overage > 0 && rate
+        ? await repository.charges.insertIfNew({
+            clientId,
+            addOnId: null,
+            description: `${label} (${formatDate(date)}${
+              included > 0 ? `, beyond ${plan?.name ?? "plan"} hours` : ""
+            })`.slice(0, 500),
+            quantity: overage,
+            unit: "hour",
+            unitAmount: rate,
+            currency: client.currency,
+            periodStart: null,
+            periodEnd: null,
+            status: "pending",
+            invoiceId: null,
+            createdAt: clock(),
+          })
+        : null
+    const entry = await repository.timeEntries.insert({
+      clientId,
+      date,
+      hours: data.hours,
+      description: data.description,
+      catalogItemId: item?.id ?? null,
+      addOnId: included > 0 ? (plan?.addOnId ?? null) : null,
+      includedHours: included,
+      billedHours: overage,
+      unitAmount: overage > 0 ? rate : null,
+      currency: client.currency,
+      chargeId: charge?.id ?? null,
+      createdAt: clock(),
+    })
+    return ok({ entry, planName: included > 0 ? (plan?.name ?? null) : null })
+  }
+
+  const removeTimeEntry = async (id: string): Promise<Result<null>> => {
+    const entry = await repository.timeEntries.find(id)
+    if (!entry) return fail("Time entry not found")
+    if (entry.chargeId) {
+      const [charge] = await repository.charges.list({ ids: [entry.chargeId] })
+      if (charge?.status === "invoiced")
+        return fail(
+          "These hours are already on an invoice. Adjust that invoice instead."
+        )
+      if (charge?.status === "pending")
+        await repository.charges.save({ ...charge, status: "void" })
+    }
+    await repository.timeEntries.remove(id)
+    return ok(null)
+  }
+
+  /** Each active plan's hours this period, and the latest logged time. */
+  const hoursOverview = async (clientId: string) => {
+    const [plans, entries] = await Promise.all([
+      repository.addOns.list({ clientIds: [clientId] }),
+      repository.timeEntries.list({ clientId }),
+    ])
+    return {
+      allowances: planAllowances(plans, entries, clock()),
+      entries: entries.slice(0, 30),
+    }
+  }
+
   const archiveClient = async (clientId: string) => {
     const archived = await billing.archiveClient(clientId)
     if (!archived.ok) return archived
@@ -833,6 +1094,9 @@ export const createBillingEngine = ({
     applyBatchPayment,
     getSettings: repository.settings.get,
     saveSettings,
+    logTime,
+    removeTimeEntry,
+    hoursOverview,
     monthlyRecurringRevenue,
     upcomingRenewals,
   }

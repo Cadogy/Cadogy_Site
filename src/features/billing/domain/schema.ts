@@ -26,7 +26,7 @@ export const minorUnits = z.number().int().nonnegative().max(1_000_000_000_00)
 
 export const wholeQuantity = z.number().int().positive().max(10_000)
 
-const quantity = z
+export const lineQuantity = z
   .number()
   .positive()
   .max(1_000_000)
@@ -41,7 +41,7 @@ export const MAX_LINE_ITEMS = 100
 
 export const lineItemSchema = z.object({
   description: z.string().trim().min(1).max(500),
-  quantity,
+  quantity: lineQuantity,
   unitAmount: minorUnits,
   unit: z.enum(LINE_UNITS).optional(),
 })

@@ -10,6 +10,7 @@ import {
   type Charge,
   type RunSummary,
   type StoredAddOn,
+  type TimeEntry,
 } from "../application/engine-ports"
 import type { BillingClient } from "../application/ports"
 import { PRICING_MODELS } from "../domain/catalog"
@@ -35,6 +36,7 @@ export type InvoiceDoc = Omit<Invoice, "id" | "clientId"> & {
   clientId: Types.ObjectId
 }
 export type CatalogItemDoc = Omit<CatalogItem, "id"> & { _id: Types.ObjectId }
+export type TimeEntryDoc = Omit<TimeEntry, "id"> & { _id: Types.ObjectId }
 export type CatalogCategoryDoc = Omit<CatalogCategory, "id"> & {
   _id: Types.ObjectId
 }
@@ -265,6 +267,8 @@ const catalogItemSchema = new Schema(
     unitAmount: { type: Number, default: null },
     unit: { type: String, default: null },
     priceFrom: { type: Boolean, default: false },
+    includedItemIds: { type: [String], default: [] },
+    includedHours: { type: Number, default: null },
     currency: { type: String, enum: CURRENCIES, required: true },
     interval: { type: String, enum: BILLING_INTERVALS, required: true },
     archived: { type: Boolean, default: false },
@@ -286,6 +290,7 @@ const addOnSchema = new Schema(
     nextBillingDate: { type: Date, required: true, index: true },
     status: { type: String, enum: ADD_ON_STATUSES, required: true },
     canceledAt: { type: Date, default: null },
+    includedHours: { type: Number, default: null },
   },
   { timestamps: true }
 )
@@ -298,6 +303,7 @@ const chargeSchema = new Schema(
     quantity: { type: Number, required: true },
     unitAmount: { type: Number, required: true },
     currency: { type: String, enum: CURRENCIES, required: true },
+    unit: { type: String, enum: [...LINE_UNITS, null], default: null },
     periodStart: { type: Date, default: null },
     periodEnd: { type: Date, default: null },
     status: {
@@ -316,6 +322,26 @@ chargeSchema.index(
   { addOnId: 1, periodStart: 1 },
   { unique: true, partialFilterExpression: { addOnId: { $type: "string" } } }
 )
+
+const timeEntrySchema = new Schema(
+  {
+    clientId: { type: String, required: true },
+    date: { type: Date, required: true },
+    hours: { type: Number, required: true },
+    description: { type: String, required: true },
+    catalogItemId: { type: String, default: null },
+    addOnId: { type: String, default: null },
+    includedHours: { type: Number, required: true },
+    billedHours: { type: Number, required: true },
+    unitAmount: { type: Number, default: null },
+    currency: { type: String, enum: CURRENCIES, required: true },
+    chargeId: { type: String, default: null },
+    createdAt: { type: Date, required: true },
+  },
+  { timestamps: { createdAt: false, updatedAt: true } }
+)
+
+timeEntrySchema.index({ clientId: 1, date: -1 })
 
 const billingSettingsSchema = new Schema({
   _id: { type: String, required: true },
@@ -336,6 +362,9 @@ const billingRunSchema = new Schema({
   failures: { type: [String], default: [] },
 })
 
+export const TimeEntryModel: Model<TimeEntryDoc> =
+  models.TimeEntry ??
+  model<TimeEntryDoc>("TimeEntry", timeEntrySchema, "billing_time_entries")
 export const CatalogItemModel: Model<CatalogItemDoc> =
   models.CatalogItem ??
   model<CatalogItemDoc>("CatalogItem", catalogItemSchema, "billing_catalog")

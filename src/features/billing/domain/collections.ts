@@ -1,6 +1,6 @@
 import { DAY_MS } from "./dates"
 import type { Invoice } from "./invoice"
-import type { Currency, LineItem } from "./schema"
+import type { Currency, LineItem, LineUnit } from "./schema"
 import { calculateInvoiceTotals } from "./totals"
 
 export type PendingChargeLine = {
@@ -9,6 +9,7 @@ export type PendingChargeLine = {
   readonly description: string
   readonly quantity: number
   readonly unitAmount: number
+  readonly unit?: LineUnit | null
   readonly currency: Currency
 }
 
@@ -27,6 +28,7 @@ export const consolidateCharges = (
       description: charge.description,
       quantity: charge.quantity,
       unitAmount: charge.unitAmount,
+      ...(charge.unit ? { unit: charge.unit } : {}),
     }
     const index = groups.findIndex(
       (group) =>

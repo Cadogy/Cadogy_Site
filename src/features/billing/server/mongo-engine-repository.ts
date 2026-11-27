@@ -12,6 +12,7 @@ import {
   type EngineRepository,
   type RunSummary,
   type StoredAddOn,
+  type TimeEntry,
 } from "../application/engine-ports"
 import {
   AddOnModel,
@@ -20,12 +21,14 @@ import {
   CatalogCategoryModel,
   CatalogItemModel,
   ChargeModel,
+  TimeEntryModel,
   type AddOnDoc,
   type BillingRunDoc,
   type BillingSettingsDoc,
   type CatalogCategoryDoc,
   type CatalogItemDoc,
   type ChargeDoc,
+  type TimeEntryDoc,
 } from "./models"
 
 const SETTINGS_ID = "default"
@@ -39,6 +42,8 @@ const toCatalogItem = (doc: CatalogItemDoc): CatalogItem => ({
   unitAmount: doc.unitAmount ?? null,
   unit: doc.unit ?? null,
   priceFrom: doc.priceFrom ?? false,
+  includedItemIds: [...(doc.includedItemIds ?? [])],
+  includedHours: doc.includedHours ?? null,
   currency: doc.currency,
   interval: doc.interval,
   archived: doc.archived ?? false,
@@ -67,6 +72,7 @@ const toAddOn = (doc: AddOnDoc): StoredAddOn => ({
   nextBillingDate: doc.nextBillingDate,
   status: doc.status,
   canceledAt: doc.canceledAt ?? null,
+  includedHours: doc.includedHours ?? null,
 })
 
 const toCharge = (doc: ChargeDoc): Charge => ({
@@ -76,11 +82,28 @@ const toCharge = (doc: ChargeDoc): Charge => ({
   description: doc.description,
   quantity: doc.quantity,
   unitAmount: doc.unitAmount,
+  unit: doc.unit ?? null,
   currency: doc.currency,
   periodStart: doc.periodStart ?? null,
   periodEnd: doc.periodEnd ?? null,
   status: doc.status,
   invoiceId: doc.invoiceId ?? null,
+  createdAt: doc.createdAt,
+})
+
+const toTimeEntry = (doc: TimeEntryDoc): TimeEntry => ({
+  id: doc._id.toString(),
+  clientId: doc.clientId,
+  date: doc.date,
+  hours: doc.hours,
+  description: doc.description,
+  catalogItemId: doc.catalogItemId ?? null,
+  addOnId: doc.addOnId ?? null,
+  includedHours: doc.includedHours,
+  billedHours: doc.billedHours,
+  unitAmount: doc.unitAmount ?? null,
+  currency: doc.currency,
+  chargeId: doc.chargeId ?? null,
   createdAt: doc.createdAt,
 })
 
@@ -196,6 +219,26 @@ export const mongoEngineRepository: EngineRepository = {
         .sort({ createdAt: 1 })
         .lean<ChargeDoc[]>()
       return docs.map(toCharge)
+    }),
+  },
+  timeEntries: {
+    insert: withDatabase(async (entry) =>
+      toTimeEntry((await TimeEntryModel.create(entry)).toObject())
+    ),
+    find: withDatabase(async (id) => {
+      if (!isValidObjectId(id)) return null
+      const doc = await TimeEntryModel.findById(id).lean<TimeEntryDoc>()
+      return doc ? toTimeEntry(doc) : null
+    }),
+    list: withDatabase(async ({ clientId }) => {
+      const docs = await TimeEntryModel.find({ clientId })
+        .sort({ date: -1, createdAt: -1 })
+        .lean<TimeEntryDoc[]>()
+      return docs.map(toTimeEntry)
+    }),
+    remove: withDatabase(async (id) => {
+      if (!isValidObjectId(id)) return
+      await TimeEntryModel.deleteOne({ _id: id })
     }),
   },
   settings: {

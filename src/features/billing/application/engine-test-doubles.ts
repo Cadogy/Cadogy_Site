@@ -9,6 +9,7 @@ import {
   type PaymentGateway,
   type RunSummary,
   type StoredAddOn,
+  type TimeEntry,
 } from "./engine-ports"
 
 export const createInMemoryEngineRepository = (): EngineRepository => {
@@ -16,6 +17,7 @@ export const createInMemoryEngineRepository = (): EngineRepository => {
   const categories = new Map<string, CatalogCategory>()
   const addOns = new Map<string, StoredAddOn>()
   const charges = new Map<string, Charge>()
+  const timeEntries = new Map<string, TimeEntry>()
   const runs: RunSummary[] = []
   let settings: BillingSettings = DEFAULT_SETTINGS
   let counter = 0
@@ -96,6 +98,25 @@ export const createInMemoryEngineRepository = (): EngineRepository => {
             (!status || charge.status === status) &&
             (!ids || ids.includes(charge.id))
         ),
+    },
+    timeEntries: {
+      insert: async (entry) => {
+        const stored = { ...entry, id: id("time") }
+        timeEntries.set(stored.id, stored)
+        return stored
+      },
+      find: async (entryId) => timeEntries.get(entryId) ?? null,
+      list: async ({ clientId }) =>
+        [...timeEntries.values()]
+          .filter((entry) => entry.clientId === clientId)
+          .sort(
+            (a, b) =>
+              b.date.getTime() - a.date.getTime() ||
+              b.createdAt.getTime() - a.createdAt.getTime()
+          ),
+      remove: async (entryId) => {
+        timeEntries.delete(entryId)
+      },
     },
     settings: {
       get: async () => settings,

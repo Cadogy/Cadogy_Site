@@ -9,6 +9,12 @@ export const optionalText = (formData: FormData, key: string) =>
 export const money = (formData: FormData, key: string) =>
   parseMoneyInput(text(formData, key)) ?? undefined
 
+/** Blank is "none" (null); "1.5" and "1,5" both read as one and a half. */
+export const optionalDecimal = (formData: FormData, key: string) => {
+  const value = text(formData, key).replace(",", ".")
+  return value ? Number(value) : null
+}
+
 export const whole = (formData: FormData, key: string) => {
   const value = text(formData, key)
   return value ? Number(value) : undefined
