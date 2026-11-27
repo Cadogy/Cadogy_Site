@@ -41,7 +41,7 @@ export function StoryCard({
         )}
       >
         <p className="text-sm font-medium text-white/80">{study.name}</p>
-        <Heading className="mt-4 text-h2 text-white max-sm:text-[1.5rem]">
+        <Heading className="mt-4 text-h2 text-white">
           {study.story.headline}
         </Heading>
         {/* What the product promises its users says more on a teaser card than
@@ -55,9 +55,7 @@ export function StoryCard({
               <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-white/15">
                 <Check className="size-3.5" aria-hidden="true" />
               </span>
-              <span className="text-base leading-snug max-sm:text-[0.9375rem]">
-                {promise}
-              </span>
+              <span className="text-base leading-snug">{promise}</span>
             </li>
           ))}
         </ul>
