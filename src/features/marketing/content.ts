@@ -700,7 +700,7 @@ export const caseStudies: readonly CaseStudy[] = [
     ],
     productLabel: "Live site",
     promises: [
-      "Coverage explained before it's sold",
+      "Coverage explained up front",
       "Quotes compared across carriers",
       "A direct line to a local broker",
       "Answers in plain language",
@@ -822,7 +822,6 @@ export const caseStudies: readonly CaseStudy[] = [
       headline: "The technology partner behind a Jackson Hole boutique.",
       tone: "oden",
       image: "/images/studio/oden-earrings-story.webp",
-      focus: "object-center",
     },
     challenge: [
       "Oden is a fine jewelry and Swiss watch boutique on Glenwood Street in Jackson, Wyoming. Its founding idea is that luxury should feel warm, welcoming and personal, and its team has spent decades with some of the most respected names in jewelry and watches.",
@@ -832,7 +831,7 @@ export const caseStudies: readonly CaseStudy[] = [
     productLabel: "Live site",
     promises: [
       "A showroom that's open online",
-      "Repairs that start with a few photos",
+      "Repairs start with a few photos",
       "One partner for all of the tech",
       "Looked after since 2023",
     ],
