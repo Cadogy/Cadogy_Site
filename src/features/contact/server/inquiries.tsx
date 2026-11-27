@@ -2,7 +2,7 @@ import "server-only"
 
 import { env } from "@/env"
 import { sendEmail } from "@/lib/email"
-import { emailLayout, escapeHtml } from "@/lib/email/html"
+import { renderEmail } from "@/lib/email/render"
 import { connectToDatabase } from "@/lib/mongodb"
 import { verifyTurnstile } from "@/lib/security/turnstile"
 
@@ -14,6 +14,7 @@ import {
   TIMELINES,
   type Inquiry,
 } from "../domain/schema"
+import { InquiryEmail } from "../email/inquiry-email"
 import { InquiryModel, RateLimitModel } from "./models"
 
 export const formSecret = () =>
@@ -34,31 +35,30 @@ const hitRateLimit = async (key: string, windowMs: number) => {
 }
 
 const notifyAdmin = async (inquiry: Inquiry) => {
-  const rows: [string, string][] = [
-    ["Name", inquiry.name],
-    ["Email", inquiry.email],
-    ["Company", inquiry.company || "—"],
-    ["Looking for", labelFor(PROJECT_TYPES, inquiry.projectType)],
-    ["Budget", labelFor(BUDGETS, inquiry.budget)],
-    ["Timeline", labelFor(TIMELINES, inquiry.timeline)],
+  const details = [
+    { label: "Email", value: inquiry.email },
+    { label: "Company", value: inquiry.company || "—" },
+    {
+      label: "Looking for",
+      value: labelFor(PROJECT_TYPES, inquiry.projectType),
+    },
+    { label: "Budget", value: labelFor(BUDGETS, inquiry.budget) },
+    { label: "Timeline", value: labelFor(TIMELINES, inquiry.timeline) },
   ]
+  const body = await renderEmail(
+    <InquiryEmail
+      baseUrl={env.NEXT_PUBLIC_APP_URL}
+      name={inquiry.name}
+      email={inquiry.email}
+      details={details}
+      message={inquiry.message}
+    />
+  )
   await sendEmail({
     to: env.ADMIN_NOTIFY_EMAIL,
     replyTo: inquiry.email,
     subject: `New inquiry: ${inquiry.name}${inquiry.company ? ` (${inquiry.company})` : ""}`,
-    html: emailLayout({
-      baseUrl: env.NEXT_PUBLIC_APP_URL,
-      preheader: inquiry.message.slice(0, 120),
-      body: `<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">${rows
-        .map(
-          ([label, value]) =>
-            `<tr><td style="padding:4px 12px 4px 0;color:#71717a;white-space:nowrap;">${label}</td><td style="padding:4px 0;">${escapeHtml(value)}</td></tr>`
-        )
-        .join(
-          ""
-        )}</table><p style="margin:0;white-space:pre-wrap;">${escapeHtml(inquiry.message)}</p>`,
-    }),
-    text: `${rows.map(([label, value]) => `${label}: ${value}`).join("\n")}\n\n${inquiry.message}`,
+    ...body,
   })
 }
 

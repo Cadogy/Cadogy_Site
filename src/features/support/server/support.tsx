@@ -6,7 +6,7 @@ import { isValidObjectId } from "mongoose"
 
 import { env } from "@/env"
 import { sendEmail } from "@/lib/email"
-import { emailButton, emailLayout, escapeHtml } from "@/lib/email/html"
+import { renderEmail } from "@/lib/email/render"
 import { withDatabase } from "@/lib/mongodb"
 
 import {
@@ -15,6 +15,7 @@ import {
   type SupportTicket,
   type TicketNotification,
 } from "../application/support-service"
+import { SupportEmail } from "../email/support-email"
 
 const toTicket = (doc: TicketDoc): SupportTicket => ({
   id: doc._id.toString(),
@@ -48,20 +49,25 @@ const notify = async ({ kind, ticket, from }: TicketNotification) => {
   const subject = toTeam
     ? `Support: ${ticket.subject} (${from.email})`
     : `Re: ${ticket.subject}`
-  const intro = toTeam
-    ? `${from.name || from.email} wrote:`
-    : "The Cadogy team replied to your request:"
+  const body = await renderEmail(
+    <SupportEmail
+      baseUrl={env.NEXT_PUBLIC_APP_URL}
+      audience={toTeam ? "team" : "client"}
+      subject={ticket.subject}
+      author={toTeam ? from.name || from.email : "The Cadogy team"}
+      message={latest}
+      url={url}
+    />
+  )
+  // Every message about one request shares a thread in the inbox.
+  const thread = `<ticket-${ticket.id}@cadogy.com>`
 
   await sendEmail({
     to: recipient,
     replyTo: toTeam ? from.email : undefined,
     subject,
-    html: emailLayout({
-      baseUrl: env.NEXT_PUBLIC_APP_URL,
-      preheader: latest.slice(0, 120),
-      body: `<p style="margin:0 0 12px;color:#71717a;">${escapeHtml(intro)}</p><p style="margin:0;white-space:pre-wrap;">${escapeHtml(latest)}</p>${emailButton(url, "View conversation")}`,
-    }),
-    text: `${intro}\n\n${latest}\n\nView conversation: ${url}`,
+    ...body,
+    headers: { "In-Reply-To": thread, References: thread },
   })
 }
 

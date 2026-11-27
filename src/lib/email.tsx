@@ -5,7 +5,14 @@ import { Resend } from "resend"
 import { env } from "@/env"
 import { siteConfig } from "@/config/site"
 
-import { emailButton, emailLayout, escapeHtml } from "./email/html"
+import { ActionEmail } from "./email/action-email"
+import type { DetailRow } from "./email/components"
+import { renderEmail } from "./email/render"
+
+type EmailAttachment = {
+  readonly filename: string
+  readonly content: Buffer
+}
 
 type OutgoingEmail = {
   readonly to: string | readonly string[]
@@ -13,6 +20,9 @@ type OutgoingEmail = {
   readonly html: string
   readonly text: string
   readonly replyTo?: string
+  readonly attachments?: readonly EmailAttachment[]
+  /** Extra headers, e.g. In-Reply-To and References to thread a conversation. */
+  readonly headers?: Readonly<Record<string, string>>
 }
 
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null
@@ -29,70 +39,100 @@ export const sendEmail = async (email: OutgoingEmail) => {
     html: email.html,
     text: email.text,
     replyTo: email.replyTo ?? siteConfig.email,
+    ...(email.attachments?.length
+      ? {
+          attachments: email.attachments.map((attachment) => ({
+            filename: attachment.filename,
+            content: attachment.content,
+          })),
+        }
+      : {}),
+    ...(email.headers ? { headers: { ...email.headers } } : {}),
   })
   if (error)
     throw new Error(`Resend rejected "${email.subject}": ${error.message}`)
 }
 
-type ActionEmail = {
+const ACCOUNT_REASON =
+  "You're receiving this because of activity on your Cadogy account."
+const TEAM_REASON = "Sent to the Cadogy team."
+
+type ActionEmailInput = {
   readonly to: string | readonly string[]
   readonly subject: string
-  readonly preheader?: string
-  readonly intro: string
+  readonly title: string
+  readonly preview?: string
+  readonly intro: string | readonly string[]
+  readonly details?: readonly DetailRow[]
   readonly url: string
   readonly cta: string
   readonly outro: string
+  readonly reason?: string
 }
 
-const sendActionEmail = ({
+const sendActionEmail = async ({
   to,
   subject,
-  preheader,
+  title,
+  preview,
   intro,
+  details,
   url,
   cta,
   outro,
-}: ActionEmail) =>
-  sendEmail({
-    to,
-    subject,
-    html: emailLayout({
-      baseUrl: env.NEXT_PUBLIC_APP_URL,
-      preheader: preheader ?? intro,
-      body: `<p style="margin:0 0 16px;">${escapeHtml(intro)}</p>${emailButton(url, cta)}<p style="margin:0;color:#71717a;font-size:13px;">${escapeHtml(outro)}</p>`,
-    }),
-    text: `${intro}\n\n${cta}: ${url}\n\n${outro}`,
-  })
+  reason = ACCOUNT_REASON,
+}: ActionEmailInput) => {
+  const paragraphs = typeof intro === "string" ? [intro] : intro
+  const body = await renderEmail(
+    <ActionEmail
+      baseUrl={env.NEXT_PUBLIC_APP_URL}
+      preview={preview ?? paragraphs[0] ?? subject}
+      title={title}
+      intro={paragraphs}
+      details={details}
+      url={url}
+      cta={cta}
+      outro={outro}
+      reason={reason}
+    />
+  )
+  await sendEmail({ to, subject, ...body })
+}
 
 export const sendVerificationEmail = (email: string, url: string) =>
   sendActionEmail({
     to: email,
     subject: "Verify your email address",
+    title: "Confirm your email",
     intro:
-      "Confirm your email address to finish setting up your Cadogy account. This link expires in 24 hours.",
+      "Confirm your email address to finish setting up your Cadogy account. The link expires in 24 hours.",
     url,
     cta: "Verify email",
     outro: "If you didn't create an account, you can ignore this email.",
+    reason:
+      "You're receiving this because this address was used to create a Cadogy account.",
   })
 
 export const sendPasswordResetEmail = (email: string, url: string) =>
   sendActionEmail({
     to: email,
     subject: "Reset your password",
+    title: "Reset your password",
     intro:
-      "We received a request to reset the password for your Cadogy account. This link expires in one hour.",
+      "We received a request to reset the password for your Cadogy account. The link expires in one hour.",
     url,
     cta: "Reset password",
     outro:
-      "If you didn't request this, you can ignore this email. Your password won't change.",
+      "If you didn't ask for this, you can ignore this email. Your password won't change.",
   })
 
 export const sendExistingAccountNotice = (email: string) =>
   sendActionEmail({
     to: email,
     subject: "Someone tried to create an account with your email",
+    title: "You already have an account",
     intro:
-      "Someone just tried to register a Cadogy account with this email address. You already have an account, so nothing was created.",
+      "Someone just tried to register a Cadogy account with this email address. You already have one, so nothing was created.",
     url: `${env.NEXT_PUBLIC_APP_URL}/login`,
     cta: "Sign in",
     outro:
@@ -103,6 +143,7 @@ export const sendAccountLockedNotice = (email: string) =>
   sendActionEmail({
     to: email,
     subject: "We paused password sign-in on your account",
+    title: "Password sign-in is paused",
     intro:
       "There were 10 failed attempts to sign in to your Cadogy account with a password in the last 15 minutes, so we've paused password sign-in for 15 minutes.",
     url: `${env.NEXT_PUBLIC_APP_URL}/forgot-password`,
@@ -115,8 +156,9 @@ export const sendMagicLinkEmail = (email: string, url: string) =>
   sendActionEmail({
     to: email,
     subject: "Your Cadogy sign-in link",
+    title: "Sign in to Cadogy",
     intro:
-      "Use the button below to sign in to your Cadogy account. The link works once and expires in 15 minutes.",
+      "Use the button below to sign in. The link works once and expires in 15 minutes.",
     url,
     cta: "Sign in",
     outro:
@@ -128,16 +170,22 @@ const securityUrl = () => `${env.NEXT_PUBLIC_APP_URL}/account/security`
 export const sendSecurityNotice = ({
   to,
   subject,
+  title,
   intro,
+  details,
 }: {
   readonly to: string
   readonly subject: string
+  readonly title?: string
   readonly intro: string
+  readonly details?: readonly DetailRow[]
 }) =>
   sendActionEmail({
     to,
     subject,
+    title: title ?? subject,
     intro,
+    details,
     url: securityUrl(),
     cta: "Review your security settings",
     outro:
@@ -152,6 +200,7 @@ export const sendEmailChangeConfirmation = (
   sendActionEmail({
     to: email,
     subject: "Confirm your new email address",
+    title: "Confirm your new email address",
     intro: `Someone asked to change the email on your Cadogy account to ${newEmail}. Confirm below and we'll send a verification link to the new address.`,
     url,
     cta: "Confirm the change",
@@ -163,6 +212,7 @@ export const sendDeleteAccountConfirmation = (email: string, url: string) =>
   sendActionEmail({
     to: email,
     subject: "Confirm deleting your Cadogy account",
+    title: "Confirm account deletion",
     intro:
       "You asked to delete your Cadogy account. This signs you out everywhere and removes your login. Your paid invoices stay on record, as the law requires.",
     url,
@@ -178,13 +228,15 @@ export const sendTeamInvite = (
   sendActionEmail({
     to: email,
     subject: `You now have access to ${details.company} on Cadogy`,
+    title: `You've been added to ${details.company}`,
     intro:
       details.role === "billing"
-        ? `You've been added to ${details.company}'s Cadogy account as a billing contact. You'll receive invoices and can pay them, manage saved cards and invite your team.`
+        ? `You're now a billing contact on ${details.company}'s Cadogy account. You'll receive invoices and can pay them, manage saved cards and invite your team.`
         : `You've been added to ${details.company}'s Cadogy account. You can see invoices, statements and support requests.`,
     url: `${env.NEXT_PUBLIC_APP_URL}/register`,
     cta: "Sign in or create your account",
     outro: `Use this email address (${email}) so everything appears automatically.`,
+    reason: `You're receiving this because ${details.company} added you to their Cadogy account.`,
   })
 
 export const sendAccessRequest = (
@@ -199,22 +251,25 @@ export const sendAccessRequest = (
   sendActionEmail({
     to,
     subject: `${details.requester} asked to see ${details.company}'s invoices`,
-    preheader: `${details.requester} wants access to your Cadogy account.`,
+    title: `${details.requester} asked for access`,
+    preview: `${details.requester} wants access to your Cadogy account.`,
     intro: `${details.requester} opened invoice ${details.invoiceNumber} and asked to add it to their Cadogy account. Approving lets them see ${details.company}'s invoices, statements and support requests as a viewer.`,
     url: details.approveUrl,
     cta: "Review the request",
     outro:
       "If you don't recognize this person, decline the request. The link expires in 7 days.",
+    reason: `You're receiving this because you manage ${details.company}'s Cadogy account.`,
   })
 
 export const sendAccessApproved = (email: string, company: string) =>
   sendActionEmail({
     to: email,
     subject: `You now have access to ${company} on Cadogy`,
+    title: `You now have access to ${company}`,
     intro: `Your request was approved. ${company}'s invoices now appear in your Cadogy dashboard.`,
     url: `${env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
     cta: "Open your dashboard",
-    outro: "Questions? Just reply to this email.",
+    outro: "Questions? Reply to this email.",
   })
 
 export const sendUnappliedPaymentAlert = (details: {
@@ -225,10 +280,12 @@ export const sendUnappliedPaymentAlert = (details: {
   sendActionEmail({
     to: siteConfig.email,
     subject: `Card payment of ${details.amount} added to credit`,
+    title: `${details.amount} added to a client's credit`,
     intro: `A card payment on ${details.reference} included ${details.amount} more than was owed (the invoice was already paid, voided or paid down another way). It's been added to the client's credit balance and will be used on their next invoice.`,
     url: details.url,
     cta: "Open the client",
     outro: "To return the money instead, refund it in Stripe.",
+    reason: TEAM_REASON,
   })
 
 export const sendDisputeAlert = (details: {
@@ -236,13 +293,15 @@ export const sendDisputeAlert = (details: {
   readonly amount: string
   readonly url: string
   readonly outcome: "opened" | "won" | "lost"
-}) =>
-  sendActionEmail({
+}) => {
+  const subject =
+    details.outcome === "opened"
+      ? `Dispute opened on ${details.invoiceNumber}`
+      : `Dispute ${details.outcome} on ${details.invoiceNumber}`
+  return sendActionEmail({
     to: siteConfig.email,
-    subject:
-      details.outcome === "opened"
-        ? `Dispute opened on ${details.invoiceNumber}`
-        : `Dispute ${details.outcome} on ${details.invoiceNumber}`,
+    subject,
+    title: subject,
     intro:
       details.outcome === "opened"
         ? `The card payment of ${details.amount} on ${details.invoiceNumber} was disputed. Autopay is paused for this client. Respond with evidence in Stripe before the deadline.`
@@ -252,4 +311,6 @@ export const sendDisputeAlert = (details: {
     url: details.url,
     cta: "Open the invoice",
     outro: "Disputes are handled in the Stripe dashboard.",
+    reason: TEAM_REASON,
   })
+}

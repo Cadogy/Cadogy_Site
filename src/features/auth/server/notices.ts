@@ -68,5 +68,12 @@ export const sendNewSignInAlert = (
   sendSecurityNotice({
     to,
     subject: "New sign-in to your Cadogy account",
-    intro: `Your account was just used to sign in from ${sighting.device}${sighting.ip ? ` (${sighting.ip})` : ""} on ${sighting.when}. We're letting you know because we haven't seen this device or network recently.`,
+    title: `New sign-in on ${sighting.device}`,
+    intro:
+      "Your Cadogy account was just signed in to from a device or network we haven't seen recently. If this was you, you don't need to do anything.",
+    details: [
+      { label: "Device", value: sighting.device },
+      ...(sighting.ip ? [{ label: "Network", value: sighting.ip }] : []),
+      { label: "When", value: sighting.when },
+    ],
   })

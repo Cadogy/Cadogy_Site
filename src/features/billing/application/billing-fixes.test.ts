@@ -288,11 +288,13 @@ describe("issuing", () => {
     const emailed = context.sent[0]!.invoice
     expect(calculateInvoiceTotals(emailed).amountDue).toBe(6_000)
     expect(
-      renderBillingEmail({
-        kind: "issued",
-        invoice: emailed,
-        baseUrl: "https://cadogy.com",
-      }).text
+      (
+        await renderBillingEmail({
+          kind: "issued",
+          invoice: emailed,
+          baseUrl: "https://cadogy.com",
+        })
+      ).text
     ).toContain("We applied $40.00 of your account credit")
     expect(issuedFeedback([result]).message).toBe(
       "Invoice issued and emailed. Credit balance applied."
@@ -321,11 +323,13 @@ describe("issuing", () => {
 
     expect(invoice.status).toBe("paid")
     expect(
-      renderBillingEmail({
-        kind: "issued",
-        invoice: context.sent[0]!.invoice,
-        baseUrl: "https://cadogy.com",
-      }).subject
+      (
+        await renderBillingEmail({
+          kind: "issued",
+          invoice: context.sent[0]!.invoice,
+          baseUrl: "https://cadogy.com",
+        })
+      ).subject
     ).toContain("paid from your credit")
   })
 

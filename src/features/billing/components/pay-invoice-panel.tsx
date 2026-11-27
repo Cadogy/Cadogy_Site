@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { CheckCircle2, CreditCard, Loader2, Printer } from "lucide-react"
+import { CheckCircle2, CreditCard, FileDown, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 
@@ -137,9 +137,11 @@ export function PayInvoicePanel({
         </>
       ) : null}
 
-      <Button variant="outline" onClick={() => window.print()}>
-        <Printer className="size-4" aria-hidden="true" />
-        Download PDF
+      <Button variant="outline" asChild>
+        <a href={`/invoice/${token}/pdf`} target="_blank" rel="noopener">
+          <FileDown className="size-4" aria-hidden="true" />
+          Download PDF
+        </a>
       </Button>
     </aside>
   )

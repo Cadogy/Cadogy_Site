@@ -5,6 +5,8 @@ import { buildHeaderRules } from "./src/config/http-headers"
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Uses Node APIs and its own font loading; bundling it breaks PDF output.
+  serverExternalPackages: ["@react-pdf/renderer"],
   cacheComponents: true,
   partialPrefetching: false,
   cacheLife: {
