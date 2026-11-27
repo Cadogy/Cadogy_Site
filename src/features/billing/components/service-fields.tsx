@@ -7,6 +7,19 @@ import { intervalLabel, toMoneyInput } from "../domain/format"
 import { BILLING_INTERVALS, type BillingInterval } from "../domain/recurring"
 import { CURRENCIES, type Currency } from "../domain/schema"
 
+const UNIT_SUGGESTIONS_ID = "catalog-unit-suggestions"
+const UNIT_SUGGESTIONS = [
+  "page",
+  "user",
+  "mailbox",
+  "template",
+  "article",
+  "product",
+  "design",
+  "domain",
+  "website",
+] as const
+
 const toPriceInput = (minorUnits: number | null | undefined) =>
   minorUnits === undefined || minorUnits === null
     ? undefined
@@ -94,6 +107,22 @@ export function QuantityField({
         />
       )}
     </Field>
+  )
+}
+
+/** Common payment terms, offered as suggestions on any terms field. */
+export const TERMS_SUGGESTIONS_ID = "payment-terms-suggestions"
+
+export function PaymentTermsSuggestions() {
+  return (
+    <datalist id={TERMS_SUGGESTIONS_ID}>
+      <option value="0">Due on receipt</option>
+      <option value="7">Net 7</option>
+      <option value="15">Net 15</option>
+      <option value="30">Net 30</option>
+      <option value="45">Net 45</option>
+      <option value="60">Net 60</option>
+    </datalist>
   )
 }
 
@@ -196,15 +225,51 @@ export function CatalogItemFields({
           >
             <option value="fixed">Fixed price</option>
             <option value="hourly">Hourly</option>
+            <option value="at_cost">At cost (third-party expense)</option>
           </NativeSelect>
         )}
       </Field>
       <PriceField
         id={`${prefix}-price`}
         required={false}
-        hint="Fixed: price per unit. Hourly: rate per hour — leave empty to use the category or default rate."
+        hint="Fixed: price per unit. Hourly: rate per hour, or empty to use the category or default rate. At cost: optional typical cost."
         defaultValue={item?.unitAmount}
       />
+      <Field
+        id={`${prefix}-unit`}
+        label="Unit"
+        optional
+        hint="What one unit is, e.g. page, user or mailbox."
+      >
+        {(control) => (
+          <Input
+            {...control}
+            name="unit"
+            defaultValue={item?.unit ?? undefined}
+            list={UNIT_SUGGESTIONS_ID}
+            autoComplete="off"
+          />
+        )}
+      </Field>
+      <datalist id={UNIT_SUGGESTIONS_ID}>
+        {UNIT_SUGGESTIONS.map((unit) => (
+          <option key={unit} value={unit} />
+        ))}
+      </datalist>
+      <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm sm:col-span-2">
+        <input
+          type="checkbox"
+          name="priceFrom"
+          defaultChecked={item?.priceFrom ?? false}
+          className="size-5 accent-foreground"
+        />
+        <span>
+          Starting price{" "}
+          <span className="text-muted-foreground">
+            · shown as “From $1,500” and adjusted per job
+          </span>
+        </span>
+      </label>
       <div className="grid grid-cols-2 gap-5">
         <IntervalField
           id={`${prefix}-interval`}

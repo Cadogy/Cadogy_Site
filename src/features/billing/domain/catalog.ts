@@ -2,7 +2,12 @@ import { formatMoney, intervalLabel } from "./format"
 import type { BillingInterval } from "./recurring"
 import type { Currency } from "./schema"
 
-export const PRICING_MODELS = ["fixed", "hourly"] as const
+/**
+ * fixed: a set price per unit. hourly: a rate per hour, possibly inherited.
+ * at_cost: a third-party expense passed through at what it costs, entered
+ * when billed (a typical cost can still be stored).
+ */
+export const PRICING_MODELS = ["fixed", "hourly", "at_cost"] as const
 
 export type PricingModel = (typeof PRICING_MODELS)[number]
 
@@ -89,19 +94,50 @@ export const groupByCategory = <
   ]
 }
 
-/** "$150.00 / hour · category rate", "$8.00 / month", "Hourly · no rate set". */
+/** What one unit of a service is, e.g. "page", "mailbox" or "user". */
+export const normalizeUnit = (unit: string | null | undefined) => {
+  const trimmed = unit
+    ?.trim()
+    .replace(/^(per|\/)\s*/i, "")
+    .toLowerCase()
+  return trimmed ? trimmed : null
+}
+
+/** "/ page / month", "/ month", "/ page", "one-time". */
+const perLabel = (unit: string | null, interval: BillingInterval) => {
+  const every = interval === "one_time" ? "" : intervalLabel(interval, "per")
+  if (unit) return [`/ ${unit}`, every].filter(Boolean).join(" ")
+  return intervalLabel(interval, "per")
+}
+
+/**
+ * "$150.00 / hour · category rate", "$8.00 / month", "From $1,500.00 one-time",
+ * "$100.00 / page", "$15.00 / user / month", "At cost / month",
+ * "Hourly · no rate set".
+ */
 export const catalogPriceLabel = (item: {
   readonly pricing: PricingModel
   readonly currency: Currency
   readonly interval: BillingInterval
   readonly price: ResolvedPrice | null
+  readonly unit?: string | null
+  readonly priceFrom?: boolean
 }) => {
+  const unit = item.unit ?? null
+  if (item.pricing === "at_cost") {
+    const per = perLabel(unit, item.interval)
+    const typical = item.price
+      ? ` · typically ${formatMoney(item.price.unitAmount, item.currency)}`
+      : ""
+    return `At cost${per === "one-time" ? "" : ` ${per}`}${typical}`
+  }
   if (!item.price) return "Hourly · no rate set"
   const amount = formatMoney(item.price.unitAmount, item.currency)
+  const from = item.priceFrom ? "From " : ""
   if (item.pricing === "fixed")
-    return `${amount} ${intervalLabel(item.interval, "per")}`
+    return `${from}${amount} ${perLabel(unit, item.interval)}`
   return [
-    `${amount} / hour`,
+    `${from}${amount} / hour`,
     item.interval === "one_time" ? "" : intervalLabel(item.interval),
     RATE_SOURCE_LABELS[item.price.source],
   ]

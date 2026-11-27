@@ -35,6 +35,13 @@ export async function listInquiries(
   return docs.map(toInquiry)
 }
 
+/** For badges: counts without loading the inquiries themselves. */
+export async function countInquiries(status: InquiryStatus): Promise<number> {
+  await requirePermission("inquiries:read")
+  await connectToDatabase()
+  return InquiryModel.countDocuments({ status })
+}
+
 export async function updateInquiryStatusAction(
   id: string,
   status: InquiryStatus

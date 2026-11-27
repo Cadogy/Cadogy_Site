@@ -48,6 +48,8 @@ export async function saveCatalogItemAction(
     categoryId: optionalText(formData, "categoryId") ?? null,
     pricing: text(formData, "pricing") || "fixed",
     unitAmount: price.value,
+    unit: optionalText(formData, "unit") ?? null,
+    priceFrom: formData.get("priceFrom") === "on",
     currency: text(formData, "currency") || "USD",
     interval: text(formData, "interval"),
   }

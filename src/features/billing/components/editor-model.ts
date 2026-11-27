@@ -32,8 +32,10 @@ export type CatalogOption = {
   readonly categoryName: string | null
   readonly currency: Currency
   readonly hourly: boolean
-  /** Null when an hourly service has no rate it can use yet. */
+  /** Null when an hourly service has no rate yet, or for at-cost expenses. */
   readonly unitAmount: number | null
+  /** The catalog's own price text, e.g. "From $1,500.00 one-time". */
+  readonly priceLabel: string
 }
 
 const MAX_DESCRIPTION = 500

@@ -36,6 +36,8 @@ const setup = () => {
             (!filter.userId || ticket.userId === filter.userId) &&
             (!filter.status || ticket.status === filter.status)
         ),
+      countAwaitingStaff: async () =>
+        [...tickets.values()].filter(needsStaffReply).length,
     },
     notify: async (notification) => {
       notifications.push(notification)

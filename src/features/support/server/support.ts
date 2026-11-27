@@ -10,6 +10,7 @@ import { emailButton, emailLayout, escapeHtml } from "@/lib/email/html"
 import { withDatabase } from "@/lib/mongodb"
 
 import {
+  ACTIVE_STATUSES,
   createSupportService,
   type SupportTicket,
   type TicketNotification,
@@ -90,6 +91,13 @@ export const support = createSupportService({
         .lean<TicketDoc[]>()
       return docs.map(toTicket)
     }),
+    // A count query: the sidebar badge doesn't need the tickets themselves.
+    countAwaitingStaff: withDatabase(() =>
+      Ticket.countDocuments({
+        lastReplyBy: "user",
+        status: { $in: ACTIVE_STATUSES },
+      })
+    ),
   },
   notify,
 })

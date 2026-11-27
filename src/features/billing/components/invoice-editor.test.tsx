@@ -40,6 +40,7 @@ const catalog: CatalogOption[] = [
     currency: "USD",
     hourly: true,
     unitAmount: 15_000,
+    priceLabel: "$150.00 / hour",
   },
   {
     id: "host",
@@ -49,6 +50,7 @@ const catalog: CatalogOption[] = [
     currency: "USD",
     hourly: false,
     unitAmount: 25_000,
+    priceLabel: "$250.00 one-time",
   },
   {
     id: "eur",
@@ -58,6 +60,7 @@ const catalog: CatalogOption[] = [
     currency: "EUR",
     hourly: false,
     unitAmount: 40_000,
+    priceLabel: "€400.00 one-time",
   },
 ]
 

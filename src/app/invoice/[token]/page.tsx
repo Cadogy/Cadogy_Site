@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { optionalSessionUser } from "@/features/auth/server/session"
 import {
@@ -12,6 +13,7 @@ import { invoicePublicPath } from "@/features/billing/domain/invoice"
 import {
   displayStatus,
   invoiceBadge,
+  isPayable,
 } from "@/features/billing/domain/lifecycle"
 import { calculateInvoiceTotals } from "@/features/billing/domain/totals"
 import { billing } from "@/features/billing/server/billing"
@@ -52,9 +54,11 @@ export default async function HostedInvoicePage({
   const status = displayStatus(invoice, now)
   const badge = invoiceBadge(invoice, now)
   const { amountDue } = calculateInvoiceTotals(invoice)
-  const payable =
-    (invoice.status === "open" || invoice.status === "uncollectible") &&
-    amountDue > 0
+  const payable = isPayable(invoice) && amountDue > 0
+  const askHref = `/dashboard/tickets/new?${new URLSearchParams({
+    category: "billing",
+    subject: `Question about invoice ${invoice.number ?? ""}`.trim(),
+  })}`
 
   return (
     <div className="paper min-h-dvh">
@@ -92,6 +96,14 @@ export default async function HostedInvoicePage({
             invoicePath={invoicePublicPath(token)}
             onRequest={requestInvoiceAccessAction.bind(null, token)}
           />
+          {accountState === "member" ? (
+            <Link
+              href={askHref}
+              className="print-hidden text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Ask about this invoice
+            </Link>
+          ) : null}
         </div>
       </main>
     </div>

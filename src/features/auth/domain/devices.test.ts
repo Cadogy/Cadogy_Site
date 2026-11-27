@@ -49,4 +49,19 @@ describe("displayIp", () => {
     expect(displayIp("203.0.113.7")).toBe("203.0.113.7")
     expect(displayIp(null)).toBe("")
   })
+
+  it("shortens fully written-out IPv6 addresses", () => {
+    expect(displayIp("0000:0000:0000:0000:0000:0000:0000:0001")).toBe("::1")
+    // All zeros means no address was recorded.
+    expect(displayIp("0000:0000:0000:0000:0000:0000:0000:0000")).toBe("")
+    expect(displayIp("2001:0db8:0000:0000:0000:ff00:0042:8329")).toBe(
+      "2001:db8::ff00:42:8329"
+    )
+    expect(displayIp("2001:0db8:0001:0000:0000:0000:0000:0000")).toBe(
+      "2001:db8:1::"
+    )
+    expect(displayIp("2001:0db8:0000:0001:0000:0001:0000:0001")).toBe(
+      "2001:db8:0:1:0:1:0:1"
+    )
+  })
 })

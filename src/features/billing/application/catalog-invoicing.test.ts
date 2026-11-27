@@ -6,6 +6,7 @@ import {
   lineFromCatalog,
   type CatalogOption,
 } from "../components/editor-model"
+import { catalogPriceLabel } from "../domain/catalog"
 import { calculateInvoiceTotals } from "../domain/totals"
 import { createBillingService } from "./billing-service"
 import { createBillingEngine, NO_HOURLY_RATE } from "./engine"
@@ -230,6 +231,64 @@ describe("service categories and hourly pricing", () => {
   })
 })
 
+describe("units, starting prices and at-cost expenses", () => {
+  it("stores a unit and a starting price, normalizing the unit", async () => {
+    const { engine } = setup()
+    const item = expectOk(
+      await engine.createCatalogItem({
+        name: "On-Page SEO Optimization",
+        unitAmount: 10_000,
+        interval: "one_time",
+        unit: " Per Page ",
+        priceFrom: true,
+      })
+    )
+
+    expect(item).toMatchObject({ unit: "page", priceFrom: true })
+  })
+
+  it("keeps services without the new fields as whole, exact-price services", async () => {
+    const { engine } = setup()
+    const item = expectOk(
+      await engine.createCatalogItem({
+        name: "Logo Design",
+        unitAmount: 50_000,
+        interval: "one_time",
+      })
+    )
+
+    expect(item).toMatchObject({ unit: null, priceFrom: false })
+  })
+
+  it("lets at-cost expenses go without a price, but asks for one when billed", async () => {
+    const { billing, engine } = setup()
+    const client = expectOk(
+      await billing.createClient({ name: "Ada", email: "ada@example.com" })
+    )
+    const item = expectOk(
+      await engine.createCatalogItem({
+        name: "Cloud Infrastructure Costs",
+        pricing: "at_cost",
+        interval: "month",
+      })
+    )
+
+    const missing = await engine.addAddOn(client.id, { catalogItemId: item.id })
+    expect(missing).toEqual({
+      ok: false,
+      error:
+        "Cloud Infrastructure Costs is billed at cost. Enter what it costs.",
+    })
+    const addOn = expectOk(
+      await engine.addAddOn(client.id, {
+        catalogItemId: item.id,
+        unitAmount: 4_200,
+      })
+    )
+    expect(addOn).toMatchObject({ unitAmount: 4_200, interval: "month" })
+  })
+})
+
 describe("invoicing from the catalog, end to end", () => {
   it("turns catalog services into an issued invoice with hours and the right totals", async () => {
     const { billing, engine, notifier } = setup()
@@ -266,6 +325,7 @@ describe("invoicing from the catalog, end to end", () => {
       currency: item.currency,
       hourly: item.pricing === "hourly",
       unitAmount: item.price?.unitAmount ?? null,
+      priceLabel: catalogPriceLabel(item),
     }))
     const option = (name: string) => {
       const found = options.find((candidate) => candidate.name === name)

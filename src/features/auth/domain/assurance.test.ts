@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  canLoadStaffData,
   isFreshSession,
   sessionAssurance,
   staffAccess,
@@ -77,5 +78,21 @@ describe("isFreshSession", () => {
 
   it("asks for a new sign-in after that", () => {
     expect(isFreshSession(minutesAgo(11), now)).toBe(false)
+  })
+})
+
+describe("canLoadStaffData", () => {
+  it("only loads staff data once the session is two-factor strong", () => {
+    expect(
+      canLoadStaffData({ assurance: "multi", hasSecondFactor: true })
+    ).toBe(true)
+    // Not enrolled yet: on the way to set up two-factor.
+    expect(
+      canLoadStaffData({ assurance: "single", hasSecondFactor: false })
+    ).toBe(false)
+    // Enrolled but signed in with a password only: must sign in again.
+    expect(
+      canLoadStaffData({ assurance: "single", hasSecondFactor: true })
+    ).toBe(false)
   })
 })

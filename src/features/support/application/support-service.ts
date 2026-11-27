@@ -40,11 +40,11 @@ export type SupportTicket = {
   readonly createdAt: Date
 }
 
-const ACTIVE: readonly TicketStatus[] = ["open", "in-progress"]
+export const ACTIVE_STATUSES: readonly TicketStatus[] = ["open", "in-progress"]
 
 export const needsStaffReply = (
   ticket: Pick<SupportTicket, "status" | "lastReplyBy">
-) => ticket.lastReplyBy === "user" && ACTIVE.includes(ticket.status)
+) => ticket.lastReplyBy === "user" && ACTIVE_STATUSES.includes(ticket.status)
 
 export type Participant = {
   readonly id: string
@@ -70,6 +70,8 @@ type Dependencies = {
       userId?: string
       status?: TicketStatus
     }) => Promise<SupportTicket[]>
+    /** Active tickets whose latest message is from the client. */
+    readonly countAwaitingStaff: () => Promise<number>
   }
   readonly notify: (notification: TicketNotification) => Promise<void>
 }
@@ -186,6 +188,7 @@ export const createSupportService = ({
     get: store.find,
     listForUser: async (userId: string) =>
       (await store.list({ userId })).sort(newestFirst),
+    countAwaitingStaff: store.countAwaitingStaff,
     listAll: async (status?: TicketStatus) =>
       (await store.list({ status })).sort(newestFirst),
   }

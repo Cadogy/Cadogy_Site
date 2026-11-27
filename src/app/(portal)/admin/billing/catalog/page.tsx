@@ -48,7 +48,13 @@ function ServiceRow({
             <p className="text-sm text-muted-foreground">{item.description}</p>
           ) : null}
         </div>
-        <p className={item.price ? "tabular-nums" : "text-sm text-destructive"}>
+        <p
+          className={
+            item.price || item.pricing === "at_cost"
+              ? "tabular-nums"
+              : "text-sm text-destructive"
+          }
+        >
           {catalogPriceLabel(item)}
         </p>
       </div>

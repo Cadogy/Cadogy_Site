@@ -134,6 +134,59 @@ describe("catalogPriceLabel", () => {
       },
       "Hourly · no rate set",
     ],
+    [
+      {
+        pricing: "fixed" as const,
+        interval: "one_time" as const,
+        price: { unitAmount: 150_000, source: "service" as const },
+        priceFrom: true,
+      },
+      "From $1,500.00 one-time",
+    ],
+    [
+      {
+        pricing: "fixed" as const,
+        interval: "one_time" as const,
+        price: { unitAmount: 10_000, source: "service" as const },
+        unit: "page",
+      },
+      "$100.00 / page",
+    ],
+    [
+      {
+        pricing: "fixed" as const,
+        interval: "month" as const,
+        price: { unitAmount: 1_500, source: "service" as const },
+        unit: "user",
+      },
+      "$15.00 / user / month",
+    ],
+    [
+      {
+        pricing: "hourly" as const,
+        interval: "one_time" as const,
+        price: { unitAmount: 50_000, source: "service" as const },
+        priceFrom: true,
+      },
+      "From $500.00 / hour",
+    ],
+    [
+      {
+        pricing: "at_cost" as const,
+        interval: "month" as const,
+        price: null,
+      },
+      "At cost / month",
+    ],
+    [
+      {
+        pricing: "at_cost" as const,
+        interval: "year" as const,
+        price: { unitAmount: 1_200, source: "service" as const },
+        unit: "domain",
+      },
+      "At cost / domain / year · typically $12.00",
+    ],
   ])("labels %o as %s", (item, label) => {
     expect(catalogPriceLabel({ ...item, currency: "USD" })).toBe(label)
   })

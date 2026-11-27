@@ -44,4 +44,15 @@ describe("ReplyForm", () => {
     expect(await screen.findByText("Reply sent.")).toBeInTheDocument()
     expect(screen.getByLabelText("Reply")).toHaveValue("")
   })
+
+  it("sends with Ctrl+Enter", async () => {
+    reply.result = { ok: true, message: "Reply sent." }
+    const user = userEvent.setup()
+    render(<ReplyForm ticketId="t_1" as="user" />)
+
+    await user.type(screen.getByLabelText("Reply"), "Here are the steps.")
+    await user.keyboard("{Control>}{Enter}{/Control}")
+
+    expect(await screen.findByText("Reply sent.")).toBeInTheDocument()
+  })
 })

@@ -36,6 +36,17 @@ export const staffAccess = ({
   return hasSecondFactor ? ("reauthenticate" as const) : ("enroll" as const)
 }
 
+/**
+ * Whether shared portal chrome (the sidebar's waiting counts) may load staff
+ * data. It must never trigger the strong-auth redirect itself: the portal
+ * layout also wraps /account/security, where staff go to set up two-factor,
+ * so redirecting from the layout would loop forever.
+ */
+export const canLoadStaffData = (user: {
+  readonly assurance: Assurance
+  readonly hasSecondFactor: boolean
+}) => staffAccess(user) === "allowed"
+
 const FRESH_FOR_MS = 10 * 60_000
 
 export const isFreshSession = (signedInAt: Date, now: Date) =>

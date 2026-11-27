@@ -8,8 +8,15 @@ export type CatalogItem = {
   readonly description: string
   readonly categoryId: string | null
   readonly pricing: PricingModel
-  /** Null only for hourly services that inherit a category or default rate. */
+  /**
+   * Null for hourly services that inherit a category or default rate, and for
+   * at-cost expenses whose amount is entered when billed.
+   */
   readonly unitAmount: number | null
+  /** What one unit is, e.g. "page" or "mailbox"; null for a whole service. */
+  readonly unit: string | null
+  /** The price is a starting point ("from $1,500"), adjusted per job. */
+  readonly priceFrom: boolean
   readonly currency: Currency
   readonly interval: BillingInterval
   readonly archived: boolean

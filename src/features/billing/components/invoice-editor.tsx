@@ -31,6 +31,7 @@ import {
   type EditorLine,
   type EditorState,
 } from "./editor-model"
+import { PaymentTermsSuggestions, TERMS_SUGGESTIONS_ID } from "./service-fields"
 
 type ClientOption = {
   readonly id: string
@@ -209,6 +210,7 @@ export function InvoiceEditor({
                 <Input
                   {...control}
                   inputMode="numeric"
+                  list={TERMS_SUGGESTIONS_ID}
                   value={state.termsDays}
                   onChange={(event) => update("termsDays", event.target.value)}
                 />
@@ -243,6 +245,7 @@ export function InvoiceEditor({
           </div>
         </PortalSection>
 
+        <PaymentTermsSuggestions />
         <PortalSection title="Line items">
           <div className="hidden grid-cols-[1fr_90px_140px_132px] gap-3 pb-3 text-meta md:grid">
             <span>Description</span>
@@ -378,10 +381,7 @@ export function InvoiceEditor({
                     >
                       {group.items.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.name} —{" "}
-                          {item.unitAmount === null
-                            ? "no rate set"
-                            : `${money(item.unitAmount)}${item.hourly ? " / hour" : ""}`}
+                          {item.name} — {item.priceLabel}
                         </option>
                       ))}
                     </optgroup>

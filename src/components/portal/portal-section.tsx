@@ -40,7 +40,15 @@ export function PortalSection({
           split && "lg:mb-0"
         )}
       >
-        <div className="grid min-w-0 flex-[1_1_16rem] gap-1">
+        <div
+          className={cn(
+            "grid min-w-0 content-start gap-1",
+            // The basis only makes sense side by side; in a split layout the
+            // header is a column, where it would stretch the title block
+            // 16rem tall and push the description away from the title.
+            !split && "flex-[1_1_16rem]"
+          )}
+        >
           <h2 id={id} className="text-lg font-medium">
             {title}
           </h2>

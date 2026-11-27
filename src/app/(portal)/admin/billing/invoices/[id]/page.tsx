@@ -8,6 +8,7 @@ import { InvoiceActions } from "@/features/billing/components/invoice-actions"
 import { InvoiceDocument } from "@/features/billing/components/invoice-document"
 import { InvoiceEditor } from "@/features/billing/components/invoice-editor"
 import { StatusBadge } from "@/features/billing/components/status-badge"
+import { catalogPriceLabel } from "@/features/billing/domain/catalog"
 import { refundableAmount } from "@/features/billing/domain/credits"
 import {
   clientDisplayName,
@@ -85,6 +86,7 @@ export default async function AdminInvoicePage({ params }: Props) {
             currency: item.currency,
             hourly: item.pricing === "hourly",
             unitAmount: item.price?.unitAmount ?? null,
+            priceLabel: catalogPriceLabel(item),
           }))}
         />
       </>

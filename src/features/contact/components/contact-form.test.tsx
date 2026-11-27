@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -104,8 +104,9 @@ describe("ContactForm", () => {
     await fillValidForm(user)
     await user.click(screen.getByRole("button", { name: "Send message" }))
 
+    // The result arrives asynchronously, like the other cases in this file.
     const email = screen.getByLabelText("Work email")
-    expect(email).toHaveAttribute("aria-invalid", "true")
+    await waitFor(() => expect(email).toHaveAttribute("aria-invalid", "true"))
     expect(email).toHaveAccessibleDescription(
       "Please enter a valid email address."
     )

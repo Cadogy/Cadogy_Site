@@ -8,7 +8,11 @@ import { Textarea } from "@/components/ui/textarea"
 
 import type { BillingClient } from "../application/ports"
 import { saveClientAction } from "../server/actions"
-import { CurrencyField } from "./service-fields"
+import {
+  CurrencyField,
+  PaymentTermsSuggestions,
+  TERMS_SUGGESTIONS_ID,
+} from "./service-fields"
 
 export function ClientForm({ client }: { client: BillingClient | null }) {
   const { state, pending, onSubmit } = useFormAction(
@@ -124,6 +128,7 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
               {...control}
               name="defaultTermsDays"
               inputMode="numeric"
+              list={TERMS_SUGGESTIONS_ID}
               defaultValue={String(client?.defaultTermsDays ?? 15)}
             />
           )}
@@ -135,6 +140,7 @@ export function ClientForm({ client }: { client: BillingClient | null }) {
         </Field>
       </fieldset>
 
+      <PaymentTermsSuggestions />
       <Field id="notes" label="Internal notes" optional>
         {(control) => (
           <Textarea

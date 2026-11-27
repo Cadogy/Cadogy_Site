@@ -151,6 +151,7 @@ describe("catalog lines and server-matching validation", () => {
     currency: "USD" as const,
     hourly: true,
     unitAmount: 15_000,
+    priceLabel: "$150.00 / hour",
   }
 
   it("builds an hourly line from a catalog service", () => {

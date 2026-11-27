@@ -263,6 +263,8 @@ const catalogItemSchema = new Schema(
     categoryId: { type: String, default: null, index: true },
     pricing: { type: String, enum: PRICING_MODELS, default: "fixed" },
     unitAmount: { type: Number, default: null },
+    unit: { type: String, default: null },
+    priceFrom: { type: Boolean, default: false },
     currency: { type: String, enum: CURRENCIES, required: true },
     interval: { type: String, enum: BILLING_INTERVALS, required: true },
     archived: { type: Boolean, default: false },

@@ -2,7 +2,11 @@ import { z } from "zod"
 
 import { fail, firstIssue, ok, type Result } from "@/lib/result"
 
-import { PRICING_MODELS, resolveCatalogPrice } from "../domain/catalog"
+import {
+  normalizeUnit,
+  PRICING_MODELS,
+  resolveCatalogPrice,
+} from "../domain/catalog"
 import {
   allocatePayment,
   consolidateCharges,
@@ -81,10 +85,12 @@ const catalogItemSchema = z
     categoryId: z.string().min(1).nullable().default(null),
     pricing: z.enum(PRICING_MODELS).default("fixed"),
     unitAmount: minorUnits.nullable().default(null),
+    unit: z.string().max(40).nullable().default(null).transform(normalizeUnit),
+    priceFrom: z.boolean().default(false),
     currency: z.enum(CURRENCIES).default("USD"),
     interval: z.enum(BILLING_INTERVALS),
   })
-  .refine((item) => item.pricing === "hourly" || item.unitAmount !== null, {
+  .refine((item) => item.pricing !== "fixed" || item.unitAmount !== null, {
     message: "Enter a price for fixed-price services",
     path: ["unitAmount"],
   })
@@ -297,6 +303,8 @@ export const createBillingEngine = ({
         `${item.name} is priced in ${item.currency}, but this client is billed in ${client.currency}. Add it as a custom service in ${client.currency} instead.`
       )
     if (item?.pricing === "hourly" && !unitAmount) return fail(NO_HOURLY_RATE)
+    if (item?.pricing === "at_cost" && !unitAmount)
+      return fail(`${item.name} is billed at cost. Enter what it costs.`)
     if (!name || !unitAmount || !interval)
       return fail("Name, price and billing interval are required")
 

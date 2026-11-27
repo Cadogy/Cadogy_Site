@@ -37,6 +37,8 @@ const toCatalogItem = (doc: CatalogItemDoc): CatalogItem => ({
   categoryId: doc.categoryId ?? null,
   pricing: doc.pricing ?? "fixed",
   unitAmount: doc.unitAmount ?? null,
+  unit: doc.unit ?? null,
+  priceFrom: doc.priceFrom ?? false,
   currency: doc.currency,
   interval: doc.interval,
   archived: doc.archived ?? false,
