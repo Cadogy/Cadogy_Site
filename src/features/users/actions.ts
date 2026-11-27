@@ -13,7 +13,6 @@ import {
 } from "@/features/auth/domain/user-admin"
 import { auth } from "@/features/auth/server/auth"
 import {
-  authDb,
   countOwners,
   findUserById,
   userObjectId,
@@ -30,6 +29,7 @@ import {
 } from "@/features/auth/server/session"
 
 import { toState, type ActionState } from "@/lib/action-state"
+import { database } from "@/lib/mongodb"
 import { clientContext } from "@/lib/security/request-context"
 
 const USER_ACTIONS: readonly UserAction[] = [
@@ -157,8 +157,8 @@ const userAdmin = createUserAdmin({
     resetTwoFactor: async (id) => {
       const _id = userObjectId(id)
       if (!_id) return
-      await authDb.collection("twoFactor").deleteMany({ userId: _id })
-      await authDb
+      await database().collection("twoFactor").deleteMany({ userId: _id })
+      await database()
         .collection("verification")
         .deleteMany({ identifier: { $regex: "^trust-device-" }, value: id })
       await users().updateOne({ _id }, { $set: { twoFactorEnabled: false } })

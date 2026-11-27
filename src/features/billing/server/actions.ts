@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import {
@@ -19,15 +18,8 @@ import { calculateInvoiceTotals } from "../domain/totals"
 import { billing, billingEngine } from "./billing"
 import { text } from "./form-fields"
 import { deliveryFeedback, issuedFeedback } from "./issue-feedback"
+import { refreshBilling } from "./refresh"
 import { createInvoiceCheckout, isStripeConfigured } from "./stripe"
-
-const refreshBilling = (invoiceId?: string) => {
-  revalidatePath("/admin")
-  revalidatePath("/admin/billing/invoices")
-  revalidatePath("/admin/billing/clients")
-  revalidatePath("/dashboard/billing")
-  if (invoiceId) revalidatePath(`/admin/billing/invoices/${invoiceId}`)
-}
 
 const clientFromForm = (formData: FormData) => ({
   name: text(formData, "name"),
@@ -71,8 +63,7 @@ export async function setClientArchivedAction(
   const result = archived
     ? await billingEngine.archiveClient(clientId)
     : await billingEngine.restoreClient(clientId)
-  refreshBilling()
-  revalidatePath(`/admin/billing/clients/${clientId}`)
+  refreshBilling({ clientId })
   return toState(
     result,
     archived
@@ -103,7 +94,7 @@ export async function saveDraftAction(
 ): Promise<ActionState> {
   const admin = await requirePermission("billing:write")
   const result = await billing.updateDraftInvoice(invoiceId, draft, admin.id)
-  refreshBilling(invoiceId)
+  refreshBilling({ invoiceId })
   return toState(result, "Draft saved.")
 }
 
@@ -116,7 +107,7 @@ export async function issueInvoiceAction(
   if (!saved.ok) return { ok: false, message: saved.error }
   const result = await billingEngine.issueAndCollect(invoiceId, admin.id)
   if (!result.ok) return { ok: false, message: result.error }
-  refreshBilling(invoiceId)
+  refreshBilling({ invoiceId })
   return issuedFeedback([result.value])
 }
 
@@ -148,7 +139,7 @@ export async function recordPaymentAction(
     },
     admin.id
   )
-  refreshBilling(invoiceId)
+  refreshBilling({ invoiceId })
   return toState(result, "Payment recorded.")
 }
 
@@ -165,7 +156,7 @@ export async function sendReminderAction(
 ): Promise<ActionState> {
   const admin = await requirePermission("billing:write")
   const result = await billing.sendReminder(invoiceId, admin.id)
-  refreshBilling(invoiceId)
+  refreshBilling({ invoiceId })
   if (!result.ok) return { ok: false, message: result.error }
   return deliveryFeedback(
     wasDelivered(result.value, "reminder_sent"),
@@ -178,7 +169,7 @@ export async function chargeSavedCardAction(
 ): Promise<ActionState> {
   await requirePermission("billing:write")
   const result = await billingEngine.chargeSavedCard(invoiceId)
-  refreshBilling(invoiceId)
+  refreshBilling({ invoiceId })
   if (!result.ok) return { ok: false, message: result.error }
   return result.value === "collected"
     ? { ok: true, message: "Saved card charged. The invoice is paid." }
@@ -195,7 +186,7 @@ export async function invoiceCommandAction(
   const admin = await requirePermission("billing:write")
   const { run, success } = INVOICE_COMMANDS[command]
   const result = await run(invoiceId, admin.id)
-  refreshBilling(invoiceId)
+  refreshBilling({ invoiceId })
   return toState(result, success)
 }
 

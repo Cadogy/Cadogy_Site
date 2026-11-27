@@ -24,6 +24,7 @@ import {
   sendPasswordResetEmail,
   sendVerificationEmail,
 } from "@/lib/email"
+import { database, mongoClient, supportsTransactions } from "@/lib/mongodb"
 import { clientContext } from "@/lib/security/request-context"
 import { verifyTurnstile } from "@/lib/security/turnstile"
 
@@ -40,15 +41,7 @@ import { shouldBecomeOwner } from "../domain/roles"
 import { eventForAuthRequest, isSignInEvent } from "../domain/security-events"
 import { accessControl, authRoles } from "./access"
 import { deletionEligibility } from "./account-deletion"
-import {
-  authDb,
-  authMongoClient,
-  countOwners,
-  findUserById,
-  supportsTransactions,
-  userObjectId,
-  users,
-} from "./database"
+import { countOwners, findUserById, userObjectId, users } from "./database"
 import { lockout } from "./lockout"
 import { sendEventNotice } from "./notices"
 import { securityLog } from "./security-log"
@@ -88,7 +81,7 @@ const factorCount = async (userId: string) => {
   if (!_id) return 0
   const [user, passkeys] = await Promise.all([
     findUserById(userId),
-    authDb.collection("passkey").countDocuments({ userId: _id }),
+    database().collection("passkey").countDocuments({ userId: _id }),
   ])
   return (user?.twoFactorEnabled ? 1 : 0) + passkeys
 }
@@ -142,7 +135,7 @@ const trackPasswordAttempt = async (
 
 const upgradeCurrentSession = async (token: string | undefined) => {
   if (!token) return
-  await authDb
+  await database()
     .collection("session")
     .updateOne({ token }, { $set: { assurance: "multi" } })
 }
@@ -238,8 +231,8 @@ export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [env.NEXT_PUBLIC_APP_URL],
   database: mongodbAdapter(
-    authDb,
-    supportsTransactions ? { client: authMongoClient } : undefined
+    database(),
+    supportsTransactions() ? { client: mongoClient() } : undefined
   ),
   emailAndPassword: {
     enabled: true,

@@ -1,7 +1,13 @@
 import { createAccessControl } from "better-auth/plugins/access"
 import { defaultStatements } from "better-auth/plugins/admin/access"
 
-import type { Permission } from "../domain/permissions"
+import {
+  can,
+  PERMISSIONS,
+  ROLES,
+  type Permission,
+  type Role,
+} from "../domain/permissions"
 
 const statement = {
   ...defaultStatements,
@@ -14,11 +20,12 @@ const statement = {
 
 export const accessControl = createAccessControl(statement)
 
-type Request = {
+type Grants = {
   [Resource in keyof typeof statement]?: (typeof statement)[Resource][number][]
 }
 
-const REQUESTS: Record<Permission, Request> = {
+/** What each app permission means in Better Auth's resource/action terms. */
+const GRANTS: Record<Permission, Grants> = {
   "portal:self": { portal: ["self"] },
   "billing:read": { billing: ["read"] },
   "billing:write": { billing: ["write"] },
@@ -34,38 +41,19 @@ const REQUESTS: Record<Permission, Request> = {
   "security:impersonate": { user: ["impersonate"] },
 }
 
-export const requestFor = (permission: Permission) => REQUESTS[permission]
+/** Every grant behind a role's permissions, merged per resource. */
+const grantsFor = (role: Role): Grants =>
+  PERMISSIONS.filter((permission) => can(role, permission))
+    .flatMap((permission) => Object.entries(GRANTS[permission]))
+    .reduce<Record<string, string[]>>((grants, [resource, actions]) => {
+      grants[resource] = [...new Set([...(grants[resource] ?? []), ...actions])]
+      return grants
+    }, {}) as Grants
 
-const studio = {
-  portal: ["self"],
-  billing: ["read", "write"],
-  support: ["read", "write"],
-  inquiries: ["read", "write"],
-} as const
-
-export const authRoles = {
-  owner: accessControl.newRole({
-    ...studio,
-    billing: ["read", "write", "approve-credits"],
-    security: ["read"],
-    user: [
-      "create",
-      "list",
-      "get",
-      "update",
-      "set-role",
-      "ban",
-      "impersonate",
-      "delete",
-      "set-password",
-      "set-email",
-    ],
-    session: ["list", "revoke", "delete"],
-  }),
-  admin: accessControl.newRole({
-    ...studio,
-    user: ["list", "get", "update", "ban"],
-    session: ["list", "revoke"],
-  }),
-  client: accessControl.newRole({ portal: ["self"] }),
-}
+/**
+ * Better Auth's roles, generated from the app's permission matrix so the two
+ * can't drift apart. The matrix in domain/permissions is the one source.
+ */
+export const authRoles = Object.fromEntries(
+  ROLES.map((role) => [role, accessControl.newRole(grantsFor(role))])
+) as Record<Role, ReturnType<typeof accessControl.newRole>>

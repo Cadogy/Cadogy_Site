@@ -1,11 +1,11 @@
 import "server-only"
 
 import { formatDateTimeUtc } from "@/lib/format-date"
+import { database } from "@/lib/mongodb"
 
 import { describeDevice, displayIp } from "../domain/devices"
 import { SIGN_IN_EVENTS } from "../domain/security-events"
 import { isUnfamiliarSignIn, networkOf } from "../domain/sign-in-alerts"
-import { authDb } from "./database"
 import { sendNewSignInAlert } from "./notices"
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000
@@ -22,7 +22,7 @@ export const alertIfUnfamiliar = async ({
   readonly userAgent: string
 }) => {
   const now = new Date()
-  const history = await authDb
+  const history = await database()
     .collection<{ ip: string; userAgent: string }>("security_events")
     .find({
       targetId: userId,

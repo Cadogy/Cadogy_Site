@@ -1,23 +1,46 @@
 import "server-only"
 
+import { MongoClient } from "mongodb"
 import mongoose from "mongoose"
 
 import { env } from "@/env"
 
 declare global {
-  var mongooseConnection: Promise<typeof mongoose> | undefined
+  var mongoClient: MongoClient | undefined
+  var mongooseReady: Promise<typeof mongoose> | undefined
 }
+
+/**
+ * The app's one connection pool, created on first use. Auth talks to the
+ * driver directly through `database()`; Mongoose models are handed the same
+ * client, so a request never holds two pools to the same database.
+ */
+export const mongoClient = () =>
+  (globalThis.mongoClient ??= new MongoClient(env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 10_000,
+  }))
+
+export const database = () => mongoClient().db()
+
+/** Transactions need a replica set: Atlas (+srv) or an explicit replicaSet. */
+export const supportsTransactions = () =>
+  /^mongodb\+srv:|replicaSet=/.test(env.MONGODB_URI)
 
 const DUPLICATE_KEY = 11000
 
 export const connectToDatabase = async () => {
-  globalThis.mongooseConnection ??= mongoose.connect(env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 10_000,
-  })
+  globalThis.mongooseReady ??= (async () => {
+    const client = await mongoClient().connect()
+    if (
+      mongoose.connection.readyState === mongoose.ConnectionStates.disconnected
+    )
+      mongoose.connection.setClient(client)
+    return mongoose
+  })()
   try {
-    return await globalThis.mongooseConnection
+    return await globalThis.mongooseReady
   } catch (error) {
-    globalThis.mongooseConnection = undefined
+    globalThis.mongooseReady = undefined
     throw error
   }
 }

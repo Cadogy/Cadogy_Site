@@ -1,6 +1,7 @@
 import "server-only"
 
 import { formatDateTimeUtc } from "@/lib/format-date"
+import { database } from "@/lib/mongodb"
 
 import { LOCKOUT } from "../application/lockout"
 import { describeDevice, displayIp } from "../domain/devices"
@@ -10,7 +11,7 @@ import {
   isFailureEvent,
   securityEventLabel,
 } from "../domain/security-events"
-import { authDb, userObjectId, users } from "./database"
+import { userObjectId, users } from "./database"
 import { securityLog } from "./security-log"
 
 export const staffSecurity = async () => {
@@ -18,7 +19,7 @@ export const staffSecurity = async () => {
     .find({ role: { $in: ["owner", "admin"] } })
     .sort({ createdAt: 1 })
     .toArray()
-  const passkeys = await authDb
+  const passkeys = await database()
     .collection("passkey")
     .aggregate<{ _id: unknown; count: number }>([
       { $match: { userId: { $in: staff.map((member) => member._id) } } },
@@ -39,7 +40,7 @@ export const staffSecurity = async () => {
 
 export const activeLockouts = async () => {
   const since = new Date(Date.now() - LOCKOUT.windowMinutes * 60_000)
-  return authDb
+  return database()
     .collection("sign_in_failures")
     .aggregate<{ _id: string; count: number; last: Date }>([
       { $match: { at: { $gte: since } } },

@@ -1,23 +1,8 @@
 import "server-only"
 
-import { MongoClient, ObjectId } from "mongodb"
+import { ObjectId } from "mongodb"
 
-import { env } from "@/env"
-
-declare global {
-  var authMongoClient: MongoClient | undefined
-}
-
-export const authMongoClient = (globalThis.authMongoClient ??= new MongoClient(
-  env.MONGODB_URI,
-  { serverSelectionTimeoutMS: 10_000 }
-))
-
-export const authDb = authMongoClient.db()
-
-export const supportsTransactions = /^mongodb\+srv:|replicaSet=/.test(
-  env.MONGODB_URI
-)
+import { database } from "@/lib/mongodb"
 
 type UserRecord = {
   readonly _id: ObjectId
@@ -31,7 +16,7 @@ type UserRecord = {
   readonly createdAt: Date
 }
 
-export const users = () => authDb.collection<UserRecord>("user")
+export const users = () => database().collection<UserRecord>("user")
 
 export const userObjectId = (id: string) =>
   ObjectId.isValid(id) ? new ObjectId(id) : null

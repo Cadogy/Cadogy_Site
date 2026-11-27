@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import {
   requirePermission,
   requireSession,
@@ -17,6 +16,7 @@ import { wasDelivered } from "../domain/invoice"
 import { accessRequests } from "./access"
 import { billing } from "./billing"
 import { deliveryFeedback } from "./issue-feedback"
+import { refreshBilling } from "./refresh"
 
 type ActionResult = NonNullable<ActionState>
 
@@ -31,11 +31,6 @@ const VIEWING_AS_CLIENT: ActionResult = {
   message: "Team changes are turned off while you're viewing as a client.",
 }
 
-const refresh = (clientId: string) => {
-  revalidatePath("/dashboard/team")
-  revalidatePath(`/admin/billing/clients/${clientId}`)
-}
-
 const invite = async (
   clientId: string,
   input: InviteInput,
@@ -47,7 +42,7 @@ const invite = async (
     company: clientDisplayName(result.value),
     role: input.role,
   })
-  refresh(clientId)
+  refreshBilling({ clientId })
   return { ok: true, message: `Invited ${input.email}. We've emailed them.` }
 }
 
@@ -58,7 +53,7 @@ const changeRole = async (
   actor: TeamActor
 ): Promise<ActionResult> => {
   const result = await billing.setContactRole(clientId, email, role, actor)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Access updated.")
 }
 
@@ -68,7 +63,7 @@ const remove = async (
   actor: TeamActor
 ): Promise<ActionResult> => {
   const result = await billing.removeContact(clientId, email, actor)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, `Removed ${email}.`)
 }
 
@@ -137,7 +132,7 @@ export async function resendInvoiceAction(
 ): Promise<ActionResult> {
   const admin = await requirePermission("billing:write")
   const result = await billing.resendInvoice(invoiceId, admin.id)
-  revalidatePath(`/admin/billing/invoices/${invoiceId}`)
+  refreshBilling({ invoiceId })
   if (!result.ok) return { ok: false, message: result.error }
   return deliveryFeedback(
     wasDelivered(result.value, "sent"),

@@ -1,5 +1,6 @@
 import "server-only"
 
+import { database } from "@/lib/mongodb"
 import { onceUntilFailure } from "@/lib/once"
 
 import {
@@ -7,11 +8,10 @@ import {
   type SecurityEvent,
   type SecurityEventRepository,
 } from "../application/security-log"
-import { authDb } from "./database"
 
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60
 
-const events = () => authDb.collection<SecurityEvent>("security_events")
+const events = () => database().collection<SecurityEvent>("security_events")
 
 const ensureIndexes = onceUntilFailure(() =>
   Promise.all([

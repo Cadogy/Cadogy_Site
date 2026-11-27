@@ -1,15 +1,16 @@
 import "server-only"
 
 import { sendAccountLockedNotice } from "@/lib/email"
+import { database } from "@/lib/mongodb"
 import { onceUntilFailure } from "@/lib/once"
 
 import { createLockout, LOCKOUT } from "../application/lockout"
-import { authDb, users } from "./database"
+import { users } from "./database"
 import { securityLog } from "./security-log"
 
 type FailureDoc = { readonly email: string; readonly at: Date }
 
-const failures = () => authDb.collection<FailureDoc>("sign_in_failures")
+const failures = () => database().collection<FailureDoc>("sign_in_failures")
 
 const ensureIndexes = onceUntilFailure(() =>
   Promise.all([

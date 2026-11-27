@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { can, type Role } from "@/features/auth/domain/permissions"
 import { requirePermission } from "@/features/auth/server/session"
 
@@ -11,6 +10,7 @@ import { DAY_MS } from "../domain/dates"
 import { parseMoneyInput } from "../domain/format"
 import { CURRENCIES } from "../domain/schema"
 import { billing, credits } from "./billing"
+import { refreshBilling } from "./refresh"
 
 type Outcome = NonNullable<ActionState>
 
@@ -47,12 +47,6 @@ const readRequest = async (
   return { amount, reason }
 }
 
-const refresh = (path: string) => {
-  revalidatePath(path)
-  revalidatePath("/admin/billing/credit-notes")
-  revalidatePath("/dashboard/billing")
-}
-
 export async function adjustInvoiceAction(
   invoiceId: string,
   input: CreditInput & { readonly kind: string }
@@ -66,7 +60,7 @@ export async function adjustInvoiceAction(
   const result = refund
     ? await credits.refundInvoice({ invoiceId, ...request }, admin.id)
     : await credits.creditInvoice({ invoiceId, ...request }, admin.id)
-  refresh(`/admin/billing/invoices/${invoiceId}`)
+  refreshBilling({ invoiceId })
   if (!result.ok) return { ok: false, message: result.error }
   return {
     ok: true,
@@ -89,7 +83,7 @@ export async function creditBalanceAction(
     { clientId, currency, ...request },
     admin.id
   )
-  refresh(`/admin/billing/clients/${clientId}`)
+  refreshBilling({ clientId })
   if (!result.ok) return { ok: false, message: result.error }
   return {
     ok: true,
@@ -100,6 +94,6 @@ export async function creditBalanceAction(
 export async function applyBalanceAction(invoiceId: string): Promise<Outcome> {
   const admin = await requirePermission("billing:write")
   const result = await credits.applyBalance(invoiceId, admin.id)
-  refresh(`/admin/billing/invoices/${invoiceId}`)
+  refreshBilling({ invoiceId })
   return toState(result, "Credit balance applied.")
 }

@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import {
   requirePermission,
@@ -22,6 +21,7 @@ import {
   whole,
 } from "./form-fields"
 import { issuedFeedback } from "./issue-feedback"
+import { refreshBilling } from "./refresh"
 import {
   createBatchCheckout,
   createCardSetupCheckout,
@@ -31,15 +31,6 @@ import {
 const INVALID_PRICE: ActionState = {
   ok: false,
   message: "Enter a valid price, e.g. 150.00",
-}
-
-const refresh = (clientId?: string) => {
-  revalidatePath("/admin")
-  revalidatePath("/admin/billing/catalog")
-  revalidatePath("/admin/billing/invoices")
-  revalidatePath("/admin/billing/settings")
-  revalidatePath("/dashboard/billing")
-  if (clientId) revalidatePath(`/admin/billing/clients/${clientId}`)
 }
 
 export async function saveCatalogItemAction(
@@ -69,7 +60,7 @@ export async function saveCatalogItemAction(
   const result = itemId
     ? await billingEngine.updateCatalogItem(itemId, input)
     : await billingEngine.createCatalogItem(input)
-  refresh()
+  refreshBilling()
   return toState(
     result,
     itemId ? "Service updated." : "Service added to the catalog."
@@ -100,14 +91,14 @@ export async function saveCategoryAction(
   const result = categoryId
     ? await billingEngine.updateCategory(categoryId, input)
     : await billingEngine.createCategory(input)
-  refresh()
+  refreshBilling()
   return toState(result, categoryId ? "Category updated." : "Category added.")
 }
 
 export async function deleteCategoryAction(categoryId: string) {
   await requirePermission("billing:write")
   const result = await billingEngine.deleteCategory(categoryId)
-  refresh()
+  refreshBilling()
   return toState(
     result,
     "Category deleted. Its services are now uncategorized."
@@ -122,7 +113,7 @@ export async function setCatalogItemArchivedAction(
   const result = archived
     ? await billingEngine.archiveCatalogItem(itemId)
     : await billingEngine.restoreCatalogItem(itemId)
-  refresh()
+  refreshBilling()
   return toState(result, archived ? "Service archived." : "Service restored.")
 }
 
@@ -140,7 +131,7 @@ export async function addAddOnAction(
     quantity: whole(formData, "quantity"),
     startDate: optionalText(formData, "startDate"),
   })
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Service added. It bills on its start date.")
 }
 
@@ -161,7 +152,7 @@ export async function updateAddOnAction(
       ? { includedHours: optionalDecimal(formData, "includedHours") }
       : {}),
   })
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(
     result,
     "Service updated. Price and quantity changes apply from the next renewal."
@@ -182,7 +173,7 @@ export async function setAddOnStatusAction(
 ) {
   await requirePermission("billing:write")
   const result = await billingEngine.setAddOnStatus(addOnId, status)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, STATUS_MESSAGES[status])
 }
 
@@ -197,7 +188,7 @@ export async function addChargeAction(
     unitAmount: money(formData, "price"),
     quantity: whole(formData, "quantity"),
   })
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Charge added. It goes on the next invoice.")
 }
 
@@ -217,7 +208,7 @@ export async function logTimeAction(
     unitAmount: rate.value ?? undefined,
     billSeparately: formData.get("billSeparately") === "on",
   })
-  refresh(clientId)
+  refreshBilling({ clientId })
   if (!result.ok) return { ok: false, message: result.error }
   return { ok: true, message: loggedTimeMessage(result.value) }
 }
@@ -228,7 +219,7 @@ export async function removeTimeEntryAction(
 ): Promise<ActionState> {
   await requirePermission("billing:write")
   const result = await billingEngine.removeTimeEntry(entryId)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Time entry removed.")
 }
 
@@ -244,14 +235,14 @@ export async function updateChargeAction(
     unitAmount: money(formData, "price"),
     quantity: whole(formData, "quantity"),
   })
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Charge updated.")
 }
 
 export async function voidChargeAction(clientId: string, chargeId: string) {
   await requirePermission("billing:write")
   const result = await billingEngine.voidCharge(chargeId)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Charge removed.")
 }
 
@@ -265,7 +256,7 @@ export async function invoiceChargesAction(
     chargeIds,
     admin.id
   )
-  refresh(clientId)
+  refreshBilling({ clientId })
   if (!result.ok) return { ok: false, message: result.error }
   return issuedFeedback(result.value)
 }
@@ -273,7 +264,7 @@ export async function invoiceChargesAction(
 export async function setAutoBillAction(clientId: string, autoBill: boolean) {
   await requirePermission("billing:write")
   const result = await billing.setAutoBill(clientId, autoBill)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(
     result,
     autoBill
@@ -285,7 +276,7 @@ export async function setAutoBillAction(clientId: string, autoBill: boolean) {
 export async function removeCardAction(clientId: string) {
   await requirePermission("billing:write")
   const result = await billing.removeCard(clientId)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Saved card removed. Autopay is off.")
 }
 
@@ -312,14 +303,14 @@ export async function saveBillingSettingsAction(
     autoBillEnabled: formData.get("autoBillEnabled") === "on",
     defaultHourlyRate: defaultHourlyRate.value,
   })
-  refresh()
+  refreshBilling()
   return toState(result, "Billing settings saved.")
 }
 
 export async function runBillingNowAction(): Promise<ActionState> {
   await requirePermission("billing:write")
   const summary = await billingEngine.runBilling()
-  refresh()
+  refreshBilling()
   return {
     ok: summary.errors.length === 0,
     message:
@@ -372,7 +363,7 @@ export async function setPortalAutopayAction(
   const user = await requireSession("/dashboard/billing")
   if (user.impersonatedBy) return IMPERSONATING
   const result = await billing.setPortalAutopay(user.email, clientId, enabled)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(
     result,
     enabled
@@ -389,6 +380,6 @@ export async function removePortalCardAction(
   const allowed = await billing.requireBillingContact(user.email, clientId)
   if (!allowed.ok) return { ok: false, message: allowed.error }
   const result = await billing.removeCard(clientId)
-  refresh(clientId)
+  refreshBilling({ clientId })
   return toState(result, "Card removed. Autopay is off.")
 }
