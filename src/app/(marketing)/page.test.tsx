@@ -174,7 +174,7 @@ describe("home page", () => {
     })
   })
 
-  it("gives every case study a card with real figures from it", async () => {
+  it("gives every case study a card with what it promises its users", async () => {
     render(await HomePage())
     const work = screen.getByRole("region", { name: /Proof, not promises/ })
 
@@ -184,7 +184,7 @@ describe("home page", () => {
           name: new RegExp(`Read the ${study.name} case study`, "i"),
         })
       ).toHaveAttribute("href", `/work/${study.slug}`)
-      expect(within(work).getByText(study.facts[0]?.label ?? "")).toBeVisible()
+      expect(within(work).getByText(study.promises[0] ?? "")).toBeVisible()
     }
   })
 

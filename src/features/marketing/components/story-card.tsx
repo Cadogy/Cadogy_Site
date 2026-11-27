@@ -1,10 +1,9 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight } from "lucide-react"
+import { Check, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { RollingNumber } from "@/components/ui/rolling-number"
 
 import type { CaseStudy } from "../content"
 
@@ -41,16 +40,21 @@ export function StoryCard({
         <Heading className="mt-4 text-h2 text-white">
           {study.story.headline}
         </Heading>
-        <dl className="mt-10 grid grid-cols-2 gap-6">
-          {study.facts.slice(0, 2).map((fact) => (
-            <div key={fact.label} className="flex flex-col-reverse gap-1">
-              <dt className="text-sm text-white/80">{fact.label}</dt>
-              <dd className="text-h1 text-white tabular-nums">
-                <RollingNumber value={fact.value} />
-              </dd>
-            </div>
+        {/* What the product promises its users says more on a teaser card than
+            raw counts; the full facts live on the case study page. */}
+        <ul
+          aria-label={`What ${study.name} promises`}
+          className="mt-10 grid gap-3"
+        >
+          {study.promises.slice(0, 3).map((promise) => (
+            <li key={promise} className="flex items-start gap-3 text-white">
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-white/15">
+                <Check className="size-3.5" aria-hidden="true" />
+              </span>
+              <span className="text-base leading-snug">{promise}</span>
+            </li>
           ))}
-        </dl>
+        </ul>
         <Button
           asChild
           className="mt-10 self-start bg-white text-black hover:bg-white/90 md:mt-auto"

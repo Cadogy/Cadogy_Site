@@ -11,11 +11,12 @@ describe("Work page", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
   })
 
-  it("tells every case study as a story with its headline and real figures", () => {
+  it("tells every case study as a story with its headline and promises", () => {
     render(<WorkPage />)
-    const stories = within(
-      screen.getByRole("list", { name: "Case studies" })
-    ).getAllByRole("listitem")
+    // Only the cards themselves; each card has its own list of promises.
+    const stories = [
+      ...screen.getByRole("list", { name: "Case studies" }).children,
+    ] as HTMLElement[]
 
     expect(stories).toHaveLength(caseStudies.length)
     caseStudies.forEach((study, index) => {
@@ -23,7 +24,7 @@ describe("Work page", () => {
       expect(
         story.getByRole("heading", { level: 2, name: study.story.headline })
       ).toBeInTheDocument()
-      expect(story.getByText(study.facts[0]?.value ?? "")).toBeVisible()
+      expect(story.getByText(study.promises[0] ?? "")).toBeVisible()
       expect(
         story.getByRole("link", { name: `Read the ${study.name} case study` })
       ).toHaveAttribute("href", `/work/${study.slug}`)

@@ -5,11 +5,12 @@ import { caseStudies } from "../content"
 import { StoryCarousel } from "./story-carousel"
 
 describe("StoryCarousel", () => {
-  it("tells each case study as a story card with two real figures", () => {
+  it("tells each case study as a story card with what it promises its users", () => {
     render(<StoryCarousel studies={caseStudies} />)
-    const stories = within(
-      screen.getByRole("list", { name: "Case studies" })
-    ).getAllByRole("listitem")
+    // Only the cards themselves; each card has its own list of promises.
+    const stories = [
+      ...screen.getByRole("list", { name: "Case studies" }).children,
+    ] as HTMLElement[]
 
     expect(stories).toHaveLength(caseStudies.length)
     caseStudies.forEach((study, index) => {
@@ -17,10 +18,14 @@ describe("StoryCarousel", () => {
       expect(
         story.getByRole("heading", { name: study.story.headline })
       ).toBeInTheDocument()
-      for (const fact of study.facts.slice(0, 2)) {
-        expect(story.getByText(fact.value)).toBeVisible()
-        expect(story.getByText(fact.label)).toBeVisible()
-      }
+      const promises = story.getByRole("list", {
+        name: `What ${study.name} promises`,
+      })
+      expect(
+        within(promises)
+          .getAllByRole("listitem")
+          .map((item) => item.textContent)
+      ).toEqual(study.promises.slice(0, 3))
       expect(
         story.getByRole("link", { name: `Read the ${study.name} case study` })
       ).toHaveAttribute("href", `/work/${study.slug}`)
