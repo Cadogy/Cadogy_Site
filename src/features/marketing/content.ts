@@ -40,10 +40,12 @@ export type CaseStudy = {
     readonly tone: "playerbay" | "sidecar" | "graceful-era"
     readonly image?: string
   }
+  /** The situation, as prose. The first paragraph is set large. */
   readonly challenge: readonly string[]
   readonly productLabel: string
-  readonly promisesHeading: { readonly lead: string; readonly rest: string }
+  /** Short promises shown on the story cards. */
   readonly promises: readonly string[]
+  /** Verifiable figures, used in llms.txt and the proof strips, not the story. */
   readonly facts: readonly { readonly value: string; readonly label: string }[]
   readonly factsSource: string
   readonly flow: {
@@ -51,11 +53,18 @@ export type CaseStudy = {
     readonly intro: string
     readonly steps: readonly CaseStudyPoint[]
   }
+  /** The story itself: what was built and why, a few paragraphs each. */
   readonly chapters: readonly {
     readonly title: string
-    readonly intro: string
-    readonly points: readonly CaseStudyPoint[]
+    readonly paragraphs: readonly string[]
   }[]
+  /** One line, in our words, set large between chapters. */
+  readonly pullLine: string
+  /** Where the project stands now. */
+  readonly outcome: {
+    readonly title: string
+    readonly paragraphs: readonly string[]
+  }
   readonly stack: readonly string[]
 }
 
@@ -265,7 +274,7 @@ export const caseStudies: readonly CaseStudy[] = [
     links: [],
     category: "Marketplace",
     summary:
-      "A two-sided marketplace where players buy and sell game accounts, items, in-game currency, keys and top-ups, with buyer protection on every order and a storefront in 25 languages.",
+      "A marketplace where players buy and sell game accounts, items, in-game currency and keys, with the buyer's money held until the goods arrive. We designed it, built it and run it, in 25 languages.",
     role: "Product, engineering and operations — designed, built and run in-house.",
     image: "/images/studio/playerbay.webp",
     mobileImage: "/images/studio/playerbay-mobile.webp",
@@ -280,15 +289,11 @@ export const caseStudies: readonly CaseStudy[] = [
       image: "/images/studio/playerbay-storefront.webp",
     },
     challenge: [
-      "Digital-goods marketplaces live or die on trust. Buyers need to know they'll receive what they paid for, sellers need to know they'll get paid, and the platform has to resolve problems fairly when something goes wrong.",
-      "Digital goods are also hard to protect. There's no tracking number for a game account, delivery can take seconds or hours depending on the game, and stolen cards are a constant risk. Every rule has to be easy for honest buyers and sellers without opening a door for fraud.",
-      "PlayerBay needed the full machinery of a modern marketplace — listings, checkout, payouts, messaging and disputes — built to handle real money from day one, for players all over the world.",
+      "When you buy a game account from a stranger, there's no tracking number and no box on the doorstep. All you have is the platform's word that it'll be handled fairly.",
+      "PlayerBay is our own marketplace for game accounts, items, in-game currency, keys and top-ups. We started planning it in late 2024 around one idea: buyers and sellers who will never meet shouldn't have to trust each other, because the platform does the trusting for them.",
+      "Digital goods make that hard. Delivery can take seconds or hours depending on the game. Stolen cards turn up constantly, because a game key is easy to resell. And every rule that keeps fraud out has to stay out of the way of honest buyers and sellers, or they'll trade somewhere else.",
     ],
     productLabel: "Live product",
-    promisesHeading: {
-      lead: "What buyers are promised",
-      rest: "— and what the platform has to guarantee behind the scenes.",
-    },
     promises: [
       "Paid only when you confirm",
       "Late delivery? Automatic refund",
@@ -306,27 +311,27 @@ export const caseStudies: readonly CaseStudy[] = [
     flow: {
       title: "How an order works",
       intro:
-        "From checkout to payout, every step is designed so neither side has to trust the other.",
+        "From checkout to payout, the money waits in the middle until both sides have what they were promised.",
       steps: [
         {
           title: "Checkout",
-          body: "Card, wallets or crypto. Stock is reserved the moment checkout starts, so the last item can't sell twice.",
+          body: "The buyer pays by card, wallet or crypto. Stock is reserved as checkout starts, so the last item can't sell twice.",
         },
         {
           title: "Payment confirmed",
-          body: "Verified at the edge and processed exactly once. Riskier payments pause delivery for a closer look.",
+          body: "The payment is checked against the amount the server worked out itself. Riskier orders pause for a closer look.",
         },
         {
           title: "Delivery",
-          body: "Instant listings deliver automatically, others through the order chat. Account details are encrypted.",
+          body: "Keys and codes go out automatically. Everything else is handed over in the order chat, with account details encrypted.",
         },
         {
           title: "Protection period",
-          body: "The buyer checks the goods while the money stays held, for a period set per game and category.",
+          body: "The buyer checks what they received while the money stays held, for a period set by game and type of item.",
         },
         {
-          title: "Received",
-          body: "The buyer confirms, or the order completes when protection ends. Only then is the seller credited.",
+          title: "Completed",
+          body: "The buyer confirms, or the protection period ends without a problem. Only then is the seller credited.",
         },
         {
           title: "Payout",
@@ -336,160 +341,48 @@ export const caseStudies: readonly CaseStudy[] = [
     },
     chapters: [
       {
-        title: "Trust and safety",
-        intro:
-          "Every promise on the storefront is enforced in code, not left to policy.",
-        points: [
-          {
-            title: "Money held until delivery",
-            body: "A seller is credited only after the buyer confirms receipt or the protection period ends. A sale can be held while a dispute or chargeback is open.",
-          },
-          {
-            title: "Structured disputes",
-            body: "Dispute reasons fit what was bought. Both sides get deadlines and evidence, sellers can offer a refund or replacement, and it's all enforced automatically.",
-          },
-          {
-            title: "Layered fraud controls",
-            body: "Risk scores, purchase velocity and device signals decide whether an order delivers instantly or waits for review. Chargebacks land on the order.",
-          },
-          {
-            title: "Verified sellers",
-            body: "Sellers verify their identity before they can sell, as an individual or a company, including details of who owns the business.",
-          },
-          {
-            title: "Deals stay on the platform",
-            body: "Order chat blocks attempts to move a trade elsewhere, including email addresses and handles disguised with look-alike or hidden characters.",
-          },
-          {
-            title: "Modern sign-in",
-            body: "Passkeys, two-factor authentication, breached-password checks and one-click sign-in with Google, Discord, Facebook or Steam.",
-          },
+        title: "Holding the money in the middle",
+        paragraphs: [
+          "The core promise is simple: a seller isn't paid until the buyer has what they paid for. When an order is placed, the money is held. The buyer gets a protection period, set per game and type of item, to check the goods. When they confirm, or the period ends quietly, the seller is credited.",
+          "The details are what make the promise hold. Fees, the protection period and the promised delivery time are frozen onto each order at checkout, so a change we make in the admin next week never rewrites a sale already under way. Even the delivery time depends on whether the seller was online when the order came in, so the promise the buyer saw is the one the seller is held to.",
+          "When something goes wrong, opening a dispute holds the seller's earnings in place. A refund releases them at once. If the seller turns out to be in the right, they're released when the protection window closes, not before, so nobody can withdraw money that might still have to go back.",
         ],
       },
       {
-        title: "Money and payments",
-        intro:
-          "Balances, fees and payouts are handled like the real money they are.",
-        points: [
-          {
-            title: "A ledger, not a balance field",
-            body: "Every balance change is a ledger entry written in a transaction with its own idempotency key. Replaying an event changes nothing.",
-          },
-          {
-            title: "Webhooks at the edge",
-            body: "Payment events are verified by Cloudflare Workers, queued and processed once. Events that fail are kept so they can be replayed safely.",
-          },
-          {
-            title: "Terms fixed at checkout",
-            body: "Fee rates and the protection period are captured on each order when it's placed, so later changes never rewrite past sales.",
-          },
-          {
-            title: "Daily reconciliation",
-            body: "A daily check reads through the ledger looking for anything that doesn't add up, and records what it finds for the team to review.",
-          },
-          {
-            title: "Many ways to pay and get paid",
-            body: "Cards and wallets through Stripe, crypto through NOWPayments, and seven payout methods so sellers can be paid wherever they are.",
-          },
-          {
-            title: "Rewards for buyers",
-            body: "Buyers earn part of every purchase back as wallet credit they can spend on their next order.",
-          },
+        title: "Treating balances like money",
+        paragraphs: [
+          "Early on, a refund meant to return a buyer's store credit returned a hundredth of it: dollars and credit had been mixed up in one calculation. It was caught and put right, but it changed how PlayerBay handles money for good.",
+          "Today every change to a balance goes through a single function. It writes a ledger entry inside a database transaction, together with a key unique to that change, so replaying an event changes nothing. Every way of refunding an order shares the same key, so two refunds racing each other can't both pay out. A test fails the build if any other code touches a balance, and the old code that used to was deleted rather than left lying around.",
+          "Buyers and sellers are kept on separate books. Buyers earn a little back on every purchase as store credit to spend on PlayerBay. Sellers earn dollars they withdraw. Keeping the two apart stops credit from compounding into something the platform would eventually have to pay for.",
+          "Payment notifications from Stripe and NOWPayments land on Cloudflare Workers, which answer straight away and queue the work, so a slow moment on our side never means a lost or doubled payment. And an order only counts as paid when the server can show the payment covered the amount it calculated itself. If it doesn't, the order is refunded and flagged automatically.",
         ],
       },
       {
-        title: "Tools for sellers",
-        intro:
-          "Selling a hundred listings should take about as much effort as selling one.",
-        points: [
-          {
-            title: "Listing at scale",
-            body: "Drafts, bulk upload and editing from spreadsheets, exports, and bulk changes across many listings at once.",
-          },
-          {
-            title: "Instant delivery",
-            body: "Pools of game keys and gift-card codes, and accounts set up for automatic delivery, go out the moment payment clears.",
-          },
-          {
-            title: "Fees that reward growth",
-            body: "Seller fees step down in tiers as monthly sales grow, with a founding-seller program for early sellers.",
-          },
-          {
-            title: "A real-time inbox",
-            body: "Live chat per order with presence, reactions, attachments and edits, plus email digests of unread messages.",
-          },
+        title: "Keeping fraud out without slowing everyone down",
+        paragraphs: [
+          "Stolen cards come with selling digital goods. One evening a group tried more than ten cards from four countries in about half an hour. Our limits kept it from getting expensive, but the investigation turned up something more useful: behind Cloudflare, requests were being logged with Cloudflare's address instead of the visitor's, which had quietly weakened one of the checks built to catch exactly this. We fixed it and rebuilt the records it had affected.",
+          "That evening shaped the review tools. Payments now pass limits on attempts per buyer, per network address and per card. Riskier orders wait before delivery instead of going straight out, and suspicious ones reach staff with the signals laid out and a written assessment from an AI model, so a person can make the call quickly.",
+          "Sellers verify their identity before they can sell, as an individual or a company. In the order chat, messages are written by the server, not the browser, and attempts to move a deal off the platform are blocked, even when an email address or handle is disguised with look-alike or hidden characters. A trade that leaves the platform leaves its protection behind, so the chat keeps both sides where the safeguards still apply.",
         ],
       },
       {
-        title: "Running the marketplace",
-        intro:
-          "A small team can run a large marketplace when the tools do the routine work.",
-        points: [
-          {
-            title: "One admin for everything",
-            body: "Around 50 admin areas cover users, seller verification, orders, disputes, finance, withdrawals, the game catalog, campaigns, SEO and translations.",
-          },
-          {
-            title: "Accountable staff access",
-            body: "Named permissions per role. Sensitive actions need a fresh identity check, personal data is masked, and every action is audit-logged.",
-          },
-          {
-            title: "AI-assisted review",
-            body: "Suspicious orders and accounts arrive summarized with an AI assessment, and imports are enriched automatically, so staff spend time on decisions.",
-          },
-          {
-            title: "Work that runs itself",
-            body: "Scheduled jobs enforce deadlines, release held deliveries, complete orders and send reminders, on Vercel Cron and Cloudflare Workers.",
-          },
-        ],
-      },
-      {
-        title: "A global storefront",
-        intro:
-          "Players find PlayerBay in their own language, and pay in their own currency.",
-        points: [
-          {
-            title: "25 languages, 10 currencies",
-            body: "Every page is localized, with clean URLs (English has no prefix) and hreflang tags that match the sitemap exactly.",
-          },
-          {
-            title: "Built to be found",
-            body: "Per-language sitemaps, structured data, a Google Merchant feed and IndexNow, so search engines hear about changes quickly.",
-          },
-          {
-            title: "Search that understands players",
-            body: "Full-text search across games and listings, with an AI-assisted mode for questions asked in plain language.",
-          },
-          {
-            title: "Fast on every connection",
-            body: "Cached pages, and images served as AVIF and WebP from PlayerBay's own CDN.",
-          },
-        ],
-      },
-      {
-        title: "Engineering quality",
-        intro:
-          "A codebase this size stays healthy only if it's easy to change safely.",
-        points: [
-          {
-            title: "Rules you can test",
-            body: "Order, payment and dispute rules are pure, tested functions. Over 3,200 test files cover the platform, including whole dispute flows.",
-          },
-          {
-            title: "A modular monolith",
-            body: "41 feature modules with clear boundaries — orders, payments, messaging, sellers and more — in one deployable app, plus a separate real-time server.",
-          },
-          {
-            title: "Hardened by default",
-            body: "Strict security headers, sanitized rich text, signed links to private files, bot protection on sign-in and rate limits across servers.",
-          },
-          {
-            title: "Watched in production",
-            body: "Error tracking, product analytics and real-user performance monitoring show problems before players report them.",
-          },
+        title: "Running it with a small team",
+        paragraphs: [
+          "We run PlayerBay ourselves, so the routine work has to run itself. Scheduled jobs enforce dispute deadlines, release held deliveries, complete orders and send reminders. One admin covers users, seller verification, orders, disputes, payouts, the game catalog, campaigns and translations.",
+          "Staff access is granular: permissions per action, a fresh identity check before anything sensitive, personal data masked by default and every action recorded. We rebuilt it in 2026 after reviewing every operation the server exposes, and removed a good deal of old code that no longer needed to exist.",
+          "Sellers get tools that make a hundred listings about as much work as one: bulk upload and editing from spreadsheets, pools of keys and codes that deliver the moment payment clears, and fees that step down as their monthly sales grow. Every page works in 25 languages with prices in 10 currencies, and each language has its own sitemap, so listings can be found in all of them.",
         ],
       },
     ],
+    pullLine:
+      "A marketplace promise is only as good as the code that enforces it on its worst day.",
+    outcome: {
+      title: "Where it is now",
+      paragraphs: [
+        "PlayerBay is live at playerbay.com and we run it day to day: answering what users run into, tightening fraud rules as new patterns appear and improving it as we go. More than 3,200 test files cover it, many walking through whole orders and disputes, because that's what lets us change a system that moves money without holding our breath.",
+        "It's also why we take on this kind of work for clients. Marketplaces, payments and the operations behind them are things we've built, broken and fixed on our own platform, with our own money at stake.",
+      ],
+    },
     stack: [
       "Next.js",
       "React",
@@ -518,7 +411,7 @@ export const caseStudies: readonly CaseStudy[] = [
     ],
     category: "Developer tool",
     summary:
-      "A free, open-source VS Code extension that puts the OpenCode coding agent in a chat panel beside your code, with every step on one timeline and nothing approved without you.",
+      "A free, open-source VS Code extension that gives the OpenCode coding agent a proper chat panel beside your code, with every step it takes on one timeline and nothing approved without you.",
     role: "Product, design and engineering — built, released and maintained by Cadogy under the MIT license.",
     image: "/images/studio/sidecar.webp",
     mobileImage: "/images/studio/sidecar-mobile.webp",
@@ -540,15 +433,11 @@ export const caseStudies: readonly CaseStudy[] = [
       poster: "/images/studio/sidecar-video.webp",
     },
     challenge: [
-      "OpenCode is a capable open-source coding agent that runs in the terminal. Its official VS Code extension opens that terminal interface in a split pane. We wanted a graphical chat panel that shows everything the agent does and keeps the developer in charge, without leaving the editor.",
-      "An agent that reads files and runs commands has to be watched. Every tool call, subagent and permission request needs to be visible and answerable without breaking flow, and nothing can be approved behind the developer's back.",
-      "It also had to respect how OpenCode works: no lock-in, no separate account and no service of our own. A session started in Sidecar continues in OpenCode's terminal interface, and the other way around.",
+      "OpenCode is a capable coding agent that lives in the terminal. Its official VS Code extension opens that terminal in a split pane, where copying text, following links and keeping up with what the agent is doing all fight the terminal.",
+      "We wanted what you'd want from any tool that reads your files and runs commands on your machine: to see each step as it happens, to answer its requests for permission without losing your place, and to be sure nothing is ever approved behind your back.",
+      "Just as important was what it shouldn't do. No account, no service of ours, no telemetry and no lock-in. A session started in Sidecar carries on in OpenCode's own terminal interface, and the other way around.",
     ],
     productLabel: "Get the extension",
-    promisesHeading: {
-      lead: "What developers are promised",
-      rest: "— and what the extension has to guarantee behind the scenes.",
-    },
     promises: [
       "Nothing approved for you",
       "Every step on one timeline",
@@ -556,14 +445,14 @@ export const caseStudies: readonly CaseStudy[] = [
       "Your sessions stay OpenCode's",
     ],
     facts: [
-      { value: "414", label: "Unit tests" },
-      { value: "99", label: "Headless-browser tests" },
+      { value: "600+", label: "Unit tests" },
+      { value: "150+", label: "Headless-browser tests" },
       { value: "4", label: "Editors supported" },
       { value: "None", label: "Telemetry" },
       { value: "MIT", label: "Open-source license" },
     ],
     factsSource:
-      "Counted from Sidecar's source code and its test runs at version 0.1.4.",
+      "Counted from Sidecar's source code and test suite in November 2026.",
     flow: {
       title: "How a prompt works",
       intro:
@@ -571,23 +460,23 @@ export const caseStudies: readonly CaseStudy[] = [
       steps: [
         {
           title: "Prompt",
-          body: "Type with @ mentions, pasted screenshots and / commands. It goes to OpenCode running on your machine.",
+          body: "Type with @ mentions, pasted screenshots and / commands. It goes to the OpenCode service on your machine.",
         },
         {
           title: "Timeline",
-          body: "Every step appears as it happens: thinking time, each tool call with its input and output, and edits.",
+          body: "Each step appears as it happens: thinking time, every tool call with its input and output, and every edit.",
         },
         {
           title: "Subagents",
-          body: "Each subagent gets a live row with its activity, Stop and Open. Its report comes back as one line.",
+          body: "Each subagent gets a live row with its activity and a Stop button. Its report comes back as a single line.",
         },
         {
           title: "Permissions",
-          body: "Approval requests, even from deep inside a subagent, take the message box's place until you answer.",
+          body: "A request for permission, even from deep inside a subagent, takes the message box's place until you answer.",
         },
         {
           title: "Steer or queue",
-          body: "Steer the running task or queue the next message. Budget Guard stops runaway tasks at your limit.",
+          body: "Redirect the running task or queue your next message. Budget Guard stops a task at the limit you set.",
         },
         {
           title: "Review",
@@ -597,126 +486,44 @@ export const caseStudies: readonly CaseStudy[] = [
     },
     chapters: [
       {
-        title: "Visibility and control",
-        intro: "You see every step, and the agent never acts without you.",
-        points: [
-          {
-            title: "One timeline per prompt",
-            body: "A dot per step: text, thinking time, every tool call and every subagent. The prompt you're reading stays pinned while you scroll.",
-          },
-          {
-            title: "Answer where you type",
-            body: "Permission requests replace the message box until answered, with numbered choices or new instructions. Sensitive paths get a warning.",
-          },
-          {
-            title: "Budget Guard",
-            body: "A per-task limit on cost and steps. It warns at 80%, then stops the agent through OpenCode's own cancellation.",
-          },
-          {
-            title: "Agent changes kept apart",
-            body: "The agent's edits come from OpenCode's snapshots, so yours aren't counted. When they can't be told apart, Sidecar says so.",
-          },
-          {
-            title: "Rewind and fork",
-            body: "Rewind a session to just before any prompt, with or without its code changes, or fork from that point into a new session and keep the original.",
-          },
-          {
-            title: "Notifications that say why",
-            body: "Native notifications when a task completes, needs input, fails or is stopped, and a count on the icon for answers waiting while the panel is hidden.",
-          },
+        title: "A thin layer over OpenCode",
+        paragraphs: [
+          "Sidecar doesn't try to be a second agent. It talks to the OpenCode service already running on your machine, through OpenCode's own HTTP API and live event stream, so sessions, models, agents and permission rules all stay OpenCode's. Change something in the terminal or in another window and Sidecar shows it as it happens.",
+          "Everything that talks to OpenCode sits behind a single interface, and nothing from the wire reaches the screen directly. Saved history is replayed through the same events as a live session, so a conversation you reopen tomorrow looks exactly as it did while it ran. That boundary is also why most of the extension can be tested in plain Node, without starting VS Code at all.",
         ],
       },
       {
-        title: "Built on OpenCode, not around it",
-        intro:
-          "Sidecar is a thin interface. OpenCode stays the engine and the source of truth.",
-        points: [
-          {
-            title: "OpenCode's own API",
-            body: "Sidecar uses OpenCode 2's v2 HTTP API and live event stream. Sessions, models, agents, skills and permission rules stay OpenCode's.",
-          },
-          {
-            title: "Followed live",
-            body: "New sessions, renames, rewinds, agent and model changes made in OpenCode's terminal interface or another window show up in Sidecar as they happen.",
-          },
-          {
-            title: "One adapter boundary",
-            body: "Everything that talks to OpenCode goes through a single client interface, so another transport could replace it without touching the interface.",
-          },
-          {
-            title: "Setup that disappears",
-            body: "A setup card offers Install, Start and Sign in to OpenCode when something is missing, and goes away once everything is ready.",
-          },
+        title: "Keeping the developer in charge",
+        paragraphs: [
+          "Every prompt gets its own timeline: each thought, tool call, edit and subagent, as it happens. Subagents were the hard part. A subagent runs in its own child session, and when it needs permission the request belongs to that child while the parent sits waiting. Sidecar brings those requests into the chat you're actually looking at, in place of the message box, and sends your answer back to the right session.",
+          "Edits open in VS Code's own diff editor, rebuilt from OpenCode's snapshots so your changes and the agent's aren't mixed together. When a patch is partial or binary, Sidecar says the diff isn't available rather than guessing at one. Budget Guard follows the same rule: it counts only what OpenCode reports, warns at 80% of your limit and stops the task before the step that would cross it.",
+          "If a run goes wrong, you can rewind to just before any prompt, with or without its code changes, or fork from that point into a new session and keep the original.",
         ],
       },
       {
-        title: "Private and secure by design",
-        intro:
-          "An extension that watches an agent at work shouldn't become another thing to watch.",
-        points: [
-          {
-            title: "Local only",
-            body: "Sidecar connects only to your local OpenCode service, on loopback unless you allow a remote one. It has no telemetry and no service of its own.",
-          },
-          {
-            title: "No credentials",
-            body: "Sign-in stays with OpenCode. The service password lives in memory, and files are sent only when you attach them or the agent reads them.",
-          },
-          {
-            title: "A locked-down view",
-            body: "A strict content security policy with a per-load nonce, validated messages, and logs that leave out prompts and redact secrets.",
-          },
-          {
-            title: "Trusted workspaces only",
-            body: "Because OpenCode can read files and run commands, Sidecar is disabled in VS Code's Restricted Mode.",
-          },
+        title: "Private by default",
+        paragraphs: [
+          "An extension that watches an agent at work shouldn't become one more thing to watch. Sidecar connects only to your local OpenCode service, sends no telemetry and leaves sign-in to OpenCode. The panel runs under a strict content security policy, never inserts raw HTML and checks every message it receives against a schema. Because OpenCode can run commands, Sidecar stays switched off in workspaces VS Code doesn't trust.",
         ],
       },
       {
-        title: "Engineering quality",
-        intro: "Built to be changed safely, and tested against the real thing.",
-        points: [
-          {
-            title: "Layers that test in plain Node",
-            body: "The session controller, transcript, adapter and shared model don't depend on VS Code, so most behavior runs in 414 fast unit tests.",
-          },
-          {
-            title: "The real interface, in a real browser",
-            body: "99 click-through tests drive the production chat bundle in headless Chrome, with VS Code's messaging reproduced exactly.",
-          },
-          {
-            title: "Acceptance against live OpenCode",
-            body: "Scenarios run in isolated VS Code windows against real OpenCode. A read-only run checks the repository is byte-for-byte unchanged.",
-          },
-          {
-            title: "Native to VS Code",
-            body: "Theme colors only, in dark, light and high-contrast themes, a layout from a 300 px side bar to a full tab, and full keyboard access.",
-          },
-        ],
-      },
-      {
-        title: "Shipping it",
-        intro: "One build, published everywhere VS Code runs.",
-        points: [
-          {
-            title: "One release workflow",
-            body: "A tagged release builds the extension once and publishes the same package to GitHub Releases, the Visual Studio Marketplace and Open VSX.",
-          },
-          {
-            title: "Trusted publishing",
-            body: "The Marketplace release authenticates with short-lived OpenID Connect credentials from GitHub Actions instead of a stored access token.",
-          },
-          {
-            title: "Every VS Code editor",
-            body: "VS Code installs it from the Marketplace. Cursor, Windsurf and VSCodium install it from Open VSX.",
-          },
-          {
-            title: "Five releases in two days",
-            body: "Versions 0.1.0 through 0.1.4 shipped in the first two days after launch, each with its changes in the changelog.",
-          },
+        title: "Shipping in public",
+        paragraphs: [
+          "Version 0.1.0 went out on November 23, 2026, published from one workflow to GitHub, the Visual Studio Marketplace and Open VSX, so it installs in VS Code, Cursor, Windsurf and VSCodium alike. Three more releases followed that day as we used it and fixed what we found, like a warning strip that appeared in folders without git snapshots and a cache countdown that made no sense for models without a prompt cache.",
+          "The first issues filed on GitHub were the kind you only find in the wild. On Windows, VS Code reports the drive as c: while OpenCode records C:, so sessions started in the terminal were missing from Sidecar's history. A service listening on 0.0.0.0 was mistaken for a remote one. And OpenCode 2.4 changed how subagent reports arrive, so Sidecar learned to read both forms. All of it shipped within the first eight releases, over four days.",
+          "The test suite grew alongside it: more than 600 unit tests, over 150 tests that drive the real chat panel in a headless browser, and scenarios that run against a live OpenCode service in a real VS Code window. One of them gives the agent a read-only task in a real repository and fails if a single byte changes.",
         ],
       },
     ],
+    pullLine:
+      "An agent that reads your files and runs your commands should never act where you can't see it.",
+    outcome: {
+      title: "Where it is now",
+      paragraphs: [
+        "Sidecar is free and MIT-licensed, with its source on GitHub and a live demo on opencodesidecar.com built from the extension's real interface code. We keep developing it in the open, and the next round of work, including pasted-text chips, quick side questions that don't interrupt a running task and an agents panel, comes from the most requested features in OpenCode's own issue tracker.",
+        "For us it's a working example of how we like to build: a small, focused tool, tested against the real thing, released early and improved from what people actually report.",
+      ],
+    },
     stack: [
       "TypeScript",
       "VS Code Extension API",
@@ -753,15 +560,11 @@ export const caseStudies: readonly CaseStudy[] = [
       image: "/images/studio/graceful-era-home-story.webp",
     },
     challenge: [
-      "Graceful Era Vitality is a new wellness brand for women in midlife. It needed a website that feels warm and personal, carries the brand's botanical identity and can grow into a place women come back to, not a one-page bottle shop.",
-      "Supplement copy is regulated territory. Words like treats, cures and prevents are off limits, and every statement about origin and quality has to be one the brand can stand behind. The site had to make careful wording easy to keep and hard to lose.",
-      "It also had to launch in stages: shared privately while products and copy were finalized, visible to search engines the whole time, and collecting a waitlist before anything goes on sale.",
+      "A new wellness brand for women in midlife needed a website that felt like the brand itself: warm, personal and botanical, somewhere women come back to rather than a one-page bottle shop.",
+      "Supplements also come with rules. Words like treats, cures and prevents are off limits, and every statement about where the products come from has to be one the brand can stand behind. The site had to make careful wording easy to keep and hard to lose, including months from now, when someone edits a page in a hurry.",
+      "And it had to launch in stages: shared privately while the products and copy were finalized, visible to search engines the whole time, and collecting a waitlist before anything went on sale.",
     ],
     productLabel: "Status",
-    promisesHeading: {
-      lead: "What visitors are promised",
-      rest: "— and what the site has to guarantee behind the scenes.",
-    },
     promises: [
       "No treatment or cure claims",
       "Clear reasons, not overclaims",
@@ -784,135 +587,70 @@ export const caseStudies: readonly CaseStudy[] = [
       steps: [
         {
           title: "Private preview",
-          body: "Every page sits behind a viewing password. Locked visitors get the preview page from the server, so the real content never reaches their browser.",
+          body: "Every page sits behind a viewing password, checked on the server, so the real content never reaches a locked visitor.",
         },
         {
           title: "Found early",
-          body: "Search engines and link previews pass the lock, so pages are indexed and shared links unfurl properly before launch.",
+          body: "Search engines and link previews are let through, so pages are indexed and shared links look right before launch.",
         },
         {
           title: "Waitlist",
-          body: "Visitors join with an email and a Cloudflare Turnstile check. Repeat sign-ups are recognized, and a confirmation email goes out.",
+          body: "Visitors join with an email address behind a bot check. Repeat sign-ups are recognized and a confirmation goes out.",
         },
         {
           title: "Feedback rounds",
-          body: "Client feedback ships in reviewed rounds, and the tests that describe each section change with it.",
+          body: "The brand's feedback ships in reviewed rounds, and the tests describing each section change with it.",
         },
         {
           title: "Self-serve settings",
-          body: "The team edits SEO titles, the footer, contact details and social links from an admin page, with no deploy.",
+          body: "The team edits page titles, the footer, contact details and social links from an admin page, with no deploy.",
         },
         {
           title: "Launch",
-          body: "Opening the site is one environment setting. Pages, sitemap, structured data and llms.txt are already in place.",
+          body: "Opening the site is one setting. The pages, sitemap and structured data are already in place.",
         },
       ],
     },
     chapters: [
       {
-        title: "A brand you can feel",
-        intro:
-          "The site carries the brand's calm, botanical identity onto every screen.",
-        points: [
-          {
-            title: "Art-directed for every screen",
-            body: "The hero photo is framed separately for phones, tablets and desktops, using a cropping tool we built into development mode.",
-          },
-          {
-            title: "Botanicals that frame the words",
-            body: "Hand-drawn botanicals are cut out as transparent layers and placed around each section, so they frame the content instead of sitting behind it.",
-          },
-          {
-            title: "Type with character",
-            body: "A classical serif for headings, a handwritten script for a few signature lines and a clean sans for reading.",
-          },
-          {
-            title: "One palette everywhere",
-            body: "Parchment cream, deep forest and warm gold are defined once as design tokens and used on every page.",
-          },
-          {
-            title: "Gentle motion",
-            body: "Soft parallax on the story page and an animated journey through the formulas. Both hold still for visitors who prefer reduced motion.",
-          },
-          {
-            title: "An origin seal",
-            body: "A Costa Rican Origin seal carries the brand's story through the site, from the story page to the contact form and footer.",
-          },
+        title: "Carrying the brand onto every screen",
+        paragraphs: [
+          "The brand came with a clear identity: parchment cream, deep forest green and warm gold, a classical serif for headings and a handwritten script for a few signature lines. We defined those once as design tokens, so every page draws on the same palette and type, and paired them with a clean sans-serif for comfortable reading.",
+          "Photography got the most care. The hero image is framed separately for phones, tablets and desktops, using a cropping tool we built into the site's development mode so each crop could be judged on the real layout. Hand-drawn botanicals are cut out as transparent layers and placed around each section, so they frame the words instead of sitting behind them. Motion is gentle, a soft parallax on the story page, and it holds still for visitors who prefer reduced motion.",
+          "A Costa Rican Origin seal carries the brand's story through the site, from the story page to the contact form and the footer.",
         ],
       },
       {
-        title: "Claims you can stand behind",
-        intro:
-          "Supplement copy is regulated. The site makes careful wording the default.",
-        points: [
-          {
-            title: "Supportive, never curative",
-            body: "Copy says supports and helps you feel. It never says treats, cures or prevents.",
-          },
-          {
-            title: "Guarded by tests",
-            body: "Tests check the FAQ, the product content and llms.txt for the required disclaimer and careful wording, so a later edit can't quietly overclaim.",
-          },
-          {
-            title: "Origin stated precisely",
-            body: "Costa Rica is described as the brand's formulation and manufacturing relationship, never as a claim that every botanical is grown there.",
-          },
-          {
-            title: "One source for product content",
-            body: "Product copy lives in one typed catalog, where each botanical carries notes on what it may not claim.",
-          },
+        title: "Making careful wording the default",
+        paragraphs: [
+          "The copy says supports and helps you feel. It never says treats, cures or prevents. Origin is described as it really is: Costa Rica is the brand's formulation and manufacturing relationship, not a claim that every botanical is grown there.",
+          "Rules like these wear away one edit at a time, so we wrote them into the site. Product content lives in a single typed catalog, where each botanical carries notes on what it may not claim. Tests read the FAQ, the product content and the site's plain-language description for AI assistants, and fail if the required disclaimer goes missing or a stronger claim creeps in.",
         ],
       },
       {
-        title: "Ready before launch",
-        intro: "Launch-day work is done before launch day.",
-        points: [
-          {
-            title: "A preview you can't peek behind",
-            body: "The lock runs on the server, in the request proxy. Locked visitors are served the preview page in place of the real one, so there's no overlay to remove in the browser.",
-          },
-          {
-            title: "Bots kept off every form",
-            body: "Sign-in, the waitlist and the contact form all verify a Cloudflare Turnstile check on the server.",
-          },
-          {
-            title: "Messages that reach a person",
-            body: "Contact messages are validated and delivered by email through Resend, with a clear error if anything fails.",
-          },
-          {
-            title: "Built to be found",
-            body: "Page titles, descriptions, the sitemap, Open Graph images and FAQ structured data all come from one SEO config.",
-          },
-          {
-            title: "Readable by AI assistants",
-            body: "An llms.txt file describes the brand in plain language, including what it does not claim.",
-          },
+        title: "A launch that's ready early",
+        paragraphs: [
+          "While the brand finished its products and copy, every page sat behind a viewing password. The lock runs on the server, so a locked visitor is sent the preview page in place of the real one. There's no overlay to remove in the browser and nothing to find in the page source. Search engines and link previews are let through, so pages were indexed and shared links looked right well before launch.",
+          "Visitors can join the waitlist with an email address, and every form on the site, from sign-in to the waitlist and contact form, checks for bots on the server. The brand's team edits page titles, the footer, contact details and social links from a small admin page without waiting on a deploy. Opening the site on launch day is a single setting.",
         ],
       },
       {
-        title: "Engineering quality",
-        intro:
-          "A brand site still deserves a codebase that's easy to change safely.",
-        points: [
-          {
-            title: "261 behavior tests",
-            body: "Tests across 52 files cover the page sections, the forms, the preview gate and the admin guards.",
-          },
-          {
-            title: "No dead code",
-            body: "The typecheck fails on unused code and a dead-code guard runs with the tests. The cleanup removed 72 unused files and 37 unused packages.",
-          },
-          {
-            title: "A current stack",
-            body: "Upgraded to Next.js 16 and React 19 with Turbopack, along with Mongoose 9, Zod 4 and TypeScript 6.",
-          },
-          {
-            title: "Accounts only where needed",
-            body: "The starter's public signup, billing and dashboards were removed. What's left is staff sign-in, password reset and a guarded settings page.",
-          },
+        title: "A codebase that stays easy to change",
+        paragraphs: [
+          "The site began from a starter template with public sign-up, billing and dashboards that a brand site doesn't need. We took them out, 72 unused files and 37 unused packages in all, leaving staff sign-in, password reset and a guarded settings page. Then we upgraded to Next.js 16 and React 19 and made the typecheck fail on unused code, so the cleanup stays clean.",
+          "The brand's feedback arrives in rounds, and each round ships with the tests that describe the sections it touches, 261 of them so far. A change to one page can't quietly break another.",
         ],
       },
     ],
+    pullLine:
+      "Careful wording only lasts if the website makes it the easy thing to do.",
+    outcome: {
+      title: "Where it is now",
+      paragraphs: [
+        "The site is in private preview while the brand prepares to launch. It's already indexed, collecting its waitlist and ready to open with a single setting.",
+        "We'll link to it here once it's public. Until then, the launch is the brand's to announce.",
+      ],
+    },
     stack: [
       "Next.js",
       "React",

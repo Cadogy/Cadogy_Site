@@ -1,15 +1,16 @@
+import { Fragment } from "react"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { CaseStudyHero } from "@/features/marketing/components/case-study/case-study-hero"
 import {
-  AtAGlance,
-  Chapters,
+  Challenge,
   Demo,
   Flow,
-  Problem,
+  Outcome,
   ProjectDetails,
-  Promises,
+  PullLine,
+  StoryChapter,
 } from "@/features/marketing/components/case-study/case-study-sections"
 import { CtaBand } from "@/features/marketing/components/cta-band"
 import { caseStudies } from "@/features/marketing/content"
@@ -48,6 +49,7 @@ export default async function CaseStudyPage({ params }: Props) {
   const links = [study.website, ...study.links].filter(
     (href) => href !== undefined
   )
+  const [first, ...rest] = study.chapters
 
   return (
     <>
@@ -59,13 +61,18 @@ export default async function CaseStudyPage({ params }: Props) {
       />
       <article>
         <CaseStudyHero study={study} />
-        <AtAGlance study={study} />
         <ProjectDetails study={study} links={links} />
-        <Promises study={study} />
-        <Problem study={study} />
+        <Challenge study={study} />
+        {first ? <StoryChapter chapter={first} index={0} /> : null}
         <Flow study={study} />
         <Demo study={study} />
-        <Chapters study={study} />
+        {rest.map((chapter, index) => (
+          <Fragment key={chapter.title}>
+            <StoryChapter chapter={chapter} index={index + 1} />
+            {index === 0 ? <PullLine text={study.pullLine} /> : null}
+          </Fragment>
+        ))}
+        <Outcome study={study} />
 
         {next && next.slug !== study.slug ? (
           <nav aria-label="More work" className="border-t">

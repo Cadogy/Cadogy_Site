@@ -54,7 +54,7 @@ describe("home page", () => {
     ).toHaveAttribute("href", "/work/playerbay")
     expect(
       within(strip).getByRole("link", {
-        name: /Sidecar for OpenCode.*414 unit tests/,
+        name: /Sidecar for OpenCode.*600\+ unit tests/,
       })
     ).toHaveAttribute("href", "/work/opencode-sidecar")
   })

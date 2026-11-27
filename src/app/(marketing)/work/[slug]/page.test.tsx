@@ -17,14 +17,17 @@ describe("PlayerBay case study", () => {
       expect(link).toHaveAttribute("href", "https://playerbay.com")
   })
 
-  it("states facts we can verify from the codebase", async () => {
+  it("tells the story in prose instead of a wall of figures", async () => {
     await renderPlayerBay()
-    const facts = screen.getByRole("region", { name: "At a glance" })
 
-    expect(within(facts).getByText("Languages")).toBeInTheDocument()
-    expect(within(facts).getByText("25")).toBeInTheDocument()
-    expect(within(facts).getByText("Currencies")).toBeInTheDocument()
-    expect(within(facts).getByText("10")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("region", { name: "At a glance" })
+    ).not.toBeInTheDocument()
+    const challenge = screen.getByRole("region", { name: "The challenge" })
+    expect(within(challenge).getAllByRole("paragraph").length).toBe(3)
+    expect(
+      screen.getByRole("region", { name: "Where it is now" })
+    ).toHaveTextContent(/playerbay\.com/)
   })
 
   it("walks through an order from checkout to payout, step by step", async () => {
@@ -36,20 +39,28 @@ describe("PlayerBay case study", () => {
     )
   })
 
-  it("covers trust, payments, sellers, operations and reach in depth", async () => {
+  it("explains held funds, the ledger, fraud and operations in depth", async () => {
     await renderPlayerBay()
 
     for (const chapter of [
-      "Trust and safety",
-      "Money and payments",
-      "Tools for sellers",
-      "Running the marketplace",
-      "A global storefront",
-      "Engineering quality",
-    ])
+      "Holding the money in the middle",
+      "Treating balances like money",
+      "Keeping fraud out without slowing everyone down",
+      "Running it with a small team",
+    ]) {
+      const section = screen.getByRole("region", { name: chapter })
       expect(
-        screen.getByRole("heading", { level: 2, name: chapter })
-      ).toBeInTheDocument()
+        within(section).getAllByRole("paragraph").length
+      ).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it("sets one line large between chapters", async () => {
+    await renderPlayerBay()
+
+    expect(
+      screen.getByRole("complementary", { name: "Key point" })
+    ).toHaveTextContent(/marketplace promise/)
   })
 
   it("keeps to our voice: no hype and no pitching our own use of AI", async () => {
@@ -102,13 +113,12 @@ describe("Sidecar for OpenCode case study", () => {
     expect(story).not.toMatch(/buyer|order works|PlayerBay/i)
   })
 
-  it("states figures counted from the extension's code and tests", async () => {
+  it("tells the release story, including what early users ran into", async () => {
     await renderSidecar()
-    const facts = screen.getByRole("region", { name: "At a glance" })
+    const shipping = screen.getByRole("region", { name: "Shipping in public" })
 
-    expect(within(facts).getByText("Unit tests")).toBeInTheDocument()
-    expect(within(facts).getByText("414")).toBeInTheDocument()
-    expect(within(facts).getByText("99")).toBeInTheDocument()
+    expect(shipping).toHaveTextContent(/November 23, 2026/)
+    expect(shipping).toHaveTextContent(/Windows/)
   })
 
   it("keeps to our voice", async () => {
@@ -152,13 +162,16 @@ describe("Graceful Era Vitality case study", () => {
     expect(within(details).queryAllByRole("link")).toHaveLength(0)
   })
 
-  it("states figures counted from the site's code and tests", async () => {
+  it("explains how careful wording is kept, in prose", async () => {
     await renderGracefulEra()
-    const facts = screen.getByRole("region", { name: "At a glance" })
+    const wording = screen.getByRole("region", {
+      name: "Making careful wording the default",
+    })
 
-    expect(within(facts).getByText("Automated tests")).toBeInTheDocument()
-    expect(within(facts).getByText("261")).toBeInTheDocument()
-    expect(within(facts).getByText("Treatment claims")).toBeInTheDocument()
+    expect(wording).toHaveTextContent(/never says treats, cures or prevents/)
+    expect(
+      screen.queryByRole("region", { name: "At a glance" })
+    ).not.toBeInTheDocument()
   })
 
   it("walks through the launch, from private preview to opening day", async () => {

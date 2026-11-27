@@ -50,7 +50,7 @@ describe("About page", () => {
         name: /PlayerBay/,
       })
     ).toHaveAttribute("href", "/work/playerbay")
-    expect(within(figure("Unit tests")).getByText("414")).toBeVisible()
+    expect(within(figure("Unit tests")).getByText("600+")).toBeVisible()
     expect(
       within(figure("Unit tests")).getByRole("link", {
         name: /Sidecar for OpenCode/,
