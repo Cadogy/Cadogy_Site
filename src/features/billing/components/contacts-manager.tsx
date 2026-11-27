@@ -7,7 +7,7 @@ import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 
 import type { ContactRole } from "../domain/contacts"
 
@@ -105,7 +105,7 @@ export function ContactsManager({
                 <label htmlFor={`access-${contact.email}`} className="sr-only">
                   Access for {contact.email}
                 </label>
-                <NativeSelect
+                <Select
                   id={`access-${contact.email}`}
                   value={contact.role}
                   disabled={pending}
@@ -118,7 +118,7 @@ export function ContactsManager({
                 >
                   <option value="billing">Billing</option>
                   <option value="viewer">Viewer</option>
-                </NativeSelect>
+                </Select>
                 <Button
                   variant="ghost"
                   disabled={pending}
@@ -164,10 +164,10 @@ export function ContactsManager({
             </Field>
             <Field id="invite-role" label="Access">
               {(control) => (
-                <NativeSelect {...control} name="role" defaultValue="viewer">
+                <Select {...control} name="role" defaultValue="viewer">
                   <option value="viewer">Viewer</option>
                   <option value="billing">Billing</option>
-                </NativeSelect>
+                </Select>
               )}
             </Field>
           </div>

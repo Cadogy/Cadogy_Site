@@ -16,8 +16,8 @@ import {
 } from "@/components/ui/dialog"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
 import { PendingButton } from "@/components/ui/pending-button"
+import { Select } from "@/components/ui/select"
 import { PortalSection } from "@/components/portal/portal-section"
 
 import { isoDay } from "../domain/dates"
@@ -73,11 +73,7 @@ function RecordPaymentDialog({
           </Field>
           <Field id="method" label="Method">
             {(control) => (
-              <NativeSelect
-                {...control}
-                name="method"
-                defaultValue="bank_transfer"
-              >
+              <Select {...control} name="method" defaultValue="bank_transfer">
                 {PAYMENT_METHODS.filter((method) => method !== "credit").map(
                   (method) => (
                     <option key={method} value={method}>
@@ -85,7 +81,7 @@ function RecordPaymentDialog({
                     </option>
                   )
                 )}
-              </NativeSelect>
+              </Select>
             )}
           </Field>
           <Field id="paidAt" label="Date received">

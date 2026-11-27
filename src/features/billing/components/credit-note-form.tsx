@@ -6,8 +6,8 @@ import type { ActionState } from "@/lib/action-state"
 import { ActionMessage } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
 import { PendingButton } from "@/components/ui/pending-button"
+import { Select } from "@/components/ui/select"
 
 import type { InvoiceAdjustment } from "../domain/invoice"
 
@@ -69,7 +69,7 @@ export function CreditNoteForm({
       {both ? (
         <Field id="credit-kind" label="Type">
           {(control) => (
-            <NativeSelect
+            <Select
               {...control}
               value={kind}
               onChange={(event) =>
@@ -82,7 +82,7 @@ export function CreditNoteForm({
               <option value="invoice_credit">
                 {COPY.invoice_credit.label}
               </option>
-            </NativeSelect>
+            </Select>
           )}
         </Field>
       ) : null}

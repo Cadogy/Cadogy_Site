@@ -1,7 +1,7 @@
 import { ActionButton, ActionForm } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 import { PortalSection } from "@/components/portal/portal-section"
 
 import type { PlanAllowance } from "../application/engine"
@@ -147,18 +147,14 @@ export function ClientHours({
                   hint="Sets the rate for any billed hours."
                 >
                   {(control) => (
-                    <NativeSelect
-                      {...control}
-                      name="catalogItemId"
-                      defaultValue=""
-                    >
+                    <Select {...control} name="catalogItemId" defaultValue="">
                       <option value="">Default hourly rate</option>
                       {hourly.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name} — {catalogPriceLabel(item)}
                         </option>
                       ))}
-                    </NativeSelect>
+                    </Select>
                   )}
                 </Field>
                 <PriceField

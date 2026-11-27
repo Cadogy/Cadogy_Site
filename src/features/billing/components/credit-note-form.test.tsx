@@ -1,3 +1,4 @@
+import { chooseOption } from "@/test/choose-option"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
@@ -41,7 +42,7 @@ describe("CreditNoteForm", () => {
     const user = userEvent.setup()
     render(<CreditNoteForm {...given} />)
 
-    await user.selectOptions(screen.getByLabelText("Type"), "invoice_credit")
+    await chooseOption(user, screen.getByLabelText("Type"), "invoice_credit")
     await user.type(screen.getByLabelText("Reason"), "Late delivery")
     await user.click(screen.getByRole("button", { name: "Issue credit" }))
 

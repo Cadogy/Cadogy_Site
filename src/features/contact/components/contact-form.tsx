@@ -11,8 +11,8 @@ import { CheckCircle2 } from "lucide-react"
 import { siteConfig } from "@/config/site"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
 import { PendingButton } from "@/components/ui/pending-button"
+import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { HumanCheck } from "@/components/security/human-check"
 import {
@@ -118,12 +118,7 @@ export function ContactForm({
         error={errors.projectType}
       >
         {(control) => (
-          <NativeSelect
-            {...control}
-            name="projectType"
-            required
-            defaultValue=""
-          >
+          <Select {...control} name="projectType" required defaultValue="">
             <option value="" disabled>
               Choose one
             </option>
@@ -132,33 +127,33 @@ export function ContactForm({
                 {option.label}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         )}
       </Field>
 
       <div className="grid gap-6 sm:grid-cols-2">
         <Field id="budget" label="Budget" optional error={errors.budget}>
           {(control) => (
-            <NativeSelect {...control} name="budget" defaultValue="">
+            <Select {...control} name="budget" defaultValue="">
               <option value="">Select a range</option>
               {BUDGETS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           )}
         </Field>
         <Field id="timeline" label="Timeline" optional error={errors.timeline}>
           {(control) => (
-            <NativeSelect {...control} name="timeline" defaultValue="">
+            <Select {...control} name="timeline" defaultValue="">
               <option value="">Select a timeline</option>
               {TIMELINES.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
-            </NativeSelect>
+            </Select>
           )}
         </Field>
       </div>

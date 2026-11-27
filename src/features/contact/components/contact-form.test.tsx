@@ -1,3 +1,4 @@
+import { chooseOption } from "@/test/choose-option"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -39,7 +40,8 @@ const enter = async (
 const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
   await enter(user, "Name", "Grace Hopper")
   await enter(user, "Work email", "grace@navy.example")
-  await user.selectOptions(
+  await chooseOption(
+    user,
     screen.getByLabelText("What do you need help with?"),
     "payments"
   )

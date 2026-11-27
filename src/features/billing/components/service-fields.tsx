@@ -1,6 +1,6 @@
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 
 import type { CatalogCategory, CatalogItem } from "../application/engine-ports"
 import { intervalLabel, toMoneyInput } from "../domain/format"
@@ -70,7 +70,7 @@ export function IntervalField({
   return (
     <Field id={id} label="Billing" optional={optional}>
       {(control) => (
-        <NativeSelect
+        <Select
           {...control}
           name="interval"
           defaultValue={defaultValue ?? (optional ? "" : "month")}
@@ -81,7 +81,7 @@ export function IntervalField({
               {intervalLabel(interval)}
             </option>
           ))}
-        </NativeSelect>
+        </Select>
       )}
     </Field>
   )
@@ -166,11 +166,11 @@ export function CurrencyField({
   return (
     <Field id={id} label="Currency">
       {(control) => (
-        <NativeSelect {...control} name="currency" defaultValue={defaultValue}>
+        <Select {...control} name="currency" defaultValue={defaultValue}>
           {CURRENCIES.map((currency) => (
             <option key={currency}>{currency}</option>
           ))}
-        </NativeSelect>
+        </Select>
       )}
     </Field>
   )
@@ -232,7 +232,7 @@ export function CatalogItemFields({
       </Field>
       <Field id={`${prefix}-category`} label="Category" optional>
         {(control) => (
-          <NativeSelect
+          <Select
             {...control}
             name="categoryId"
             defaultValue={item?.categoryId ?? ""}
@@ -243,12 +243,12 @@ export function CatalogItemFields({
                 {category.name}
               </option>
             ))}
-          </NativeSelect>
+          </Select>
         )}
       </Field>
       <Field id={`${prefix}-pricing`} label="Pricing">
         {(control) => (
-          <NativeSelect
+          <Select
             {...control}
             name="pricing"
             defaultValue={item?.pricing ?? "fixed"}
@@ -256,7 +256,7 @@ export function CatalogItemFields({
             <option value="fixed">Fixed price</option>
             <option value="hourly">Hourly</option>
             <option value="at_cost">At cost (third-party expense)</option>
-          </NativeSelect>
+          </Select>
         )}
       </Field>
       <PriceField

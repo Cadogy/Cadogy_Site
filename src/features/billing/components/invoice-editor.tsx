@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { PortalSection } from "@/components/portal/portal-section"
 
@@ -174,7 +174,7 @@ export function InvoiceEditor({
           <div className="grid gap-5 sm:grid-cols-3">
             <Field id="clientId" label="Client" className="sm:col-span-3">
               {(control) => (
-                <NativeSelect
+                <Select
                   {...control}
                   value={state.clientId}
                   onChange={(event) => changeClient(event.target.value)}
@@ -184,12 +184,12 @@ export function InvoiceEditor({
                       {client.label}
                     </option>
                   ))}
-                </NativeSelect>
+                </Select>
               )}
             </Field>
             <Field id="currency" label="Currency">
               {(control) => (
-                <NativeSelect
+                <Select
                   {...control}
                   value={state.currency}
                   onChange={(event) => {
@@ -202,7 +202,7 @@ export function InvoiceEditor({
                   {CURRENCIES.map((currency) => (
                     <option key={currency}>{currency}</option>
                   ))}
-                </NativeSelect>
+                </Select>
               )}
             </Field>
             <Field id="termsDays" label="Payment terms (days)">
@@ -367,7 +367,7 @@ export function InvoiceEditor({
               }
             >
               {(control) => (
-                <NativeSelect
+                <Select
                   {...control}
                   value=""
                   disabled={inCurrency.length === 0}
@@ -386,7 +386,7 @@ export function InvoiceEditor({
                       ))}
                     </optgroup>
                   ))}
-                </NativeSelect>
+                </Select>
               )}
             </Field>
             <Button
@@ -407,7 +407,7 @@ export function InvoiceEditor({
           <div className="grid max-w-2xl gap-5 sm:grid-cols-2">
             <Field id="discountType" label="Discount">
               {(control) => (
-                <NativeSelect
+                <Select
                   {...control}
                   value={state.discountType}
                   onChange={(event) => {
@@ -419,7 +419,7 @@ export function InvoiceEditor({
                   <option value="none">No discount</option>
                   <option value="percent">Percentage</option>
                   <option value="amount">Fixed amount</option>
-                </NativeSelect>
+                </Select>
               )}
             </Field>
             {state.discountType !== "none" ? (

@@ -9,7 +9,7 @@ import { UserActions } from "@/features/users/user-actions"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 import { PortalPageHeader } from "@/components/portal/portal-shell"
 
 export const metadata: Metadata = { title: "Users" }
@@ -48,22 +48,18 @@ export default async function UsersPage({ searchParams }: Props) {
         <label htmlFor="user-role" className="sr-only">
           Role
         </label>
-        <NativeSelect
-          id="user-role"
-          name="role"
-          defaultValue={filter.role ?? ""}
-        >
+        <Select id="user-role" name="role" defaultValue={filter.role ?? ""}>
           <option value="">All roles</option>
           {ROLES.map((role) => (
             <option key={role} value={role}>
               {ROLE_LABELS[role]}
             </option>
           ))}
-        </NativeSelect>
+        </Select>
         <label htmlFor="user-status" className="sr-only">
           Status
         </label>
-        <NativeSelect
+        <Select
           id="user-status"
           name="status"
           defaultValue={filter.status ?? ""}
@@ -71,7 +67,7 @@ export default async function UsersPage({ searchParams }: Props) {
           <option value="">Any status</option>
           <option value="banned">Banned</option>
           <option value="unverified">Unverified</option>
-        </NativeSelect>
+        </Select>
         <Button type="submit" variant="outline">
           Filter
         </Button>

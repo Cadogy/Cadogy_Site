@@ -3,7 +3,7 @@
 import { useTransition } from "react"
 
 import { isOneOf } from "@/lib/is-one-of"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 
 import { INQUIRY_STATUSES, type InquiryStatus } from "../domain/schema"
 import { updateInquiryStatusAction } from "../server/admin"
@@ -19,7 +19,7 @@ export function InquiryStatusSelect({
 }) {
   const [pending, startTransition] = useTransition()
   return (
-    <NativeSelect
+    <Select
       aria-label="Inquiry status"
       className="w-36 capitalize"
       defaultValue={status}
@@ -35,6 +35,6 @@ export function InquiryStatusSelect({
           {value}
         </option>
       ))}
-    </NativeSelect>
+    </Select>
   )
 }

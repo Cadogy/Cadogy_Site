@@ -10,7 +10,7 @@ import {
 import type { ActionState } from "@/lib/action-state"
 import { ActionMessage } from "@/components/ui/action-controls"
 import { Button } from "@/components/ui/button"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 
 import { changeRoleAction } from "./actions"
 
@@ -43,7 +43,7 @@ export function RoleSelect({
         <label htmlFor={`role-${userId}`} className="sr-only">
           Role for {email}
         </label>
-        <NativeSelect
+        <Select
           id={`role-${userId}`}
           value={next}
           onChange={(event) =>
@@ -56,7 +56,7 @@ export function RoleSelect({
               {ROLE_LABELS[option]}
             </option>
           ))}
-        </NativeSelect>
+        </Select>
         <Button
           variant="outline"
           onClick={save}

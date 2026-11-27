@@ -1,3 +1,4 @@
+import { chooseOption } from "@/test/choose-option"
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
@@ -40,7 +41,7 @@ describe("ContactsManager", () => {
 
     await user.type(screen.getByLabelText("Email"), "ap@acme.example")
     await user.type(screen.getByLabelText(/^Name/), "Accounts Payable")
-    await user.selectOptions(screen.getByLabelText("Access"), "billing")
+    await chooseOption(user, screen.getByLabelText("Access"), "billing")
     await user.click(screen.getByRole("button", { name: "Invite" }))
 
     expect(given.onInvite).toHaveBeenCalledWith({
@@ -60,7 +61,8 @@ describe("ContactsManager", () => {
     const user = userEvent.setup()
     render(<ContactsManager {...given} />)
 
-    await user.selectOptions(
+    await chooseOption(
+      user,
       screen.getByLabelText("Access for lead@acme.example"),
       "billing"
     )

@@ -5,8 +5,8 @@ import { useTransition } from "react"
 import { isOneOf } from "@/lib/is-one-of"
 import { ActionMessage, useFormAction } from "@/components/ui/action-controls"
 import { Field } from "@/components/ui/field"
-import { NativeSelect } from "@/components/ui/native-select"
 import { PendingButton } from "@/components/ui/pending-button"
+import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
 import {
@@ -67,7 +67,7 @@ export function TicketStatusSelect({
 }) {
   const [pending, startStatus] = useTransition()
   return (
-    <NativeSelect
+    <Select
       aria-label="Ticket status"
       defaultValue={status}
       disabled={pending}
@@ -83,6 +83,6 @@ export function TicketStatusSelect({
           {value.replace("-", " ")}
         </option>
       ))}
-    </NativeSelect>
+    </Select>
   )
 }

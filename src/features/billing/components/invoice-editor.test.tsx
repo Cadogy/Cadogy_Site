@@ -1,3 +1,4 @@
+import { chooseOption } from "@/test/choose-option"
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -79,15 +80,15 @@ const picker = () => screen.getByLabelText("Add from your services")
 describe("InvoiceEditor catalog picker", () => {
   beforeEach(() => vi.mocked(saveDraftAction).mockClear())
 
-  it("groups services by category and hides other currencies", () => {
+  it("groups services by category and hides other currencies", async () => {
+    const user = userEvent.setup()
     renderEditor()
-    const groups = within(picker()).getAllByRole("group")
-    expect(groups.map((group) => group.getAttribute("label"))).toEqual([
-      "Development",
-      "Uncategorized",
-    ])
+    await user.click(picker())
+    const list = screen.getByRole("listbox")
+
+    expect(list).toHaveTextContent(/Development.*Engineering.*Uncategorized/)
     expect(
-      within(picker()).queryByRole("option", { name: /Euro audit/ })
+      within(list).queryByRole("option", { name: /Euro audit/ })
     ).not.toBeInTheDocument()
     expect(
       screen.getByText(/1 service priced in other currencies is hidden/)
@@ -98,7 +99,7 @@ describe("InvoiceEditor catalog picker", () => {
     const user = userEvent.setup()
     renderEditor()
 
-    await user.selectOptions(picker(), "eng")
+    await chooseOption(user, picker(), "eng")
 
     expect(screen.getAllByLabelText(/^Line \d description$/)).toHaveLength(1)
     expect(screen.getByLabelText("Line 1 description")).toHaveValue(
@@ -106,15 +107,15 @@ describe("InvoiceEditor catalog picker", () => {
     )
     expect(screen.getAllByLabelText("Unit price")[0]).toHaveValue("150.00")
     expect(screen.getByText("hrs")).toBeInTheDocument()
-    expect(picker()).toHaveValue("")
+    expect(picker()).toHaveValue("Choose a service…")
   })
 
   it("saves hourly lines with their unit and the hours entered", async () => {
     const user = userEvent.setup()
     renderEditor()
 
-    await user.selectOptions(picker(), "eng")
-    await user.selectOptions(picker(), "host")
+    await chooseOption(user, picker(), "eng")
+    await chooseOption(user, picker(), "host")
     const [hours] = screen.getAllByLabelText("Quantity")
     await user.clear(hours!)
     await user.type(hours!, "2.5")
@@ -140,15 +141,17 @@ describe("InvoiceEditor catalog picker", () => {
     const user = userEvent.setup()
     renderEditor()
 
-    await user.selectOptions(screen.getByLabelText("Client"), "c2")
+    await chooseOption(user, screen.getByLabelText("Client"), "c2")
 
     expect(screen.getByLabelText("Currency")).toHaveValue("EUR")
     expect(screen.getByLabelText("Payment terms (days)")).toHaveValue("30")
+    await user.click(picker())
+    const list = screen.getByRole("listbox")
     expect(
-      within(picker()).getByRole("option", { name: /Euro audit/ })
+      within(list).getByRole("option", { name: /Euro audit/ })
     ).toBeInTheDocument()
     expect(
-      within(picker()).queryByRole("option", { name: /Engineering/ })
+      within(list).queryByRole("option", { name: /Engineering/ })
     ).not.toBeInTheDocument()
   })
 
@@ -156,7 +159,7 @@ describe("InvoiceEditor catalog picker", () => {
     const user = userEvent.setup()
     renderEditor()
 
-    await user.selectOptions(picker(), "host")
+    await chooseOption(user, picker(), "host")
     const [quantity] = screen.getAllByLabelText("Quantity")
     await user.clear(quantity!)
     await user.type(quantity!, "1.555")
@@ -173,8 +176,8 @@ describe("InvoiceEditor catalog picker", () => {
   it("reorders lines with the move buttons", async () => {
     const user = userEvent.setup()
     renderEditor()
-    await user.selectOptions(picker(), "eng")
-    await user.selectOptions(picker(), "host")
+    await chooseOption(user, picker(), "eng")
+    await chooseOption(user, picker(), "host")
 
     expect(
       screen.getByRole("button", { name: "Move line 1 up" })
@@ -195,7 +198,7 @@ describe("InvoiceEditor catalog picker", () => {
   it("sends a fixed due date when one is set", async () => {
     const user = userEvent.setup()
     renderEditor()
-    await user.selectOptions(picker(), "host")
+    await chooseOption(user, picker(), "host")
 
     await user.type(screen.getByLabelText(/Due date/), "2026-12-31")
     await user.click(screen.getByRole("button", { name: "Save draft" }))

@@ -2,7 +2,7 @@ import { ActionButton, ActionForm } from "@/components/ui/action-controls"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Field } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/native-select"
+import { Select } from "@/components/ui/select"
 import { PortalSection } from "@/components/portal/portal-section"
 
 import type { PlanAllowance } from "../application/engine"
@@ -269,11 +269,7 @@ export function ClientBilling({
                   hint="Or leave empty and fill in a custom service."
                 >
                   {(control) => (
-                    <NativeSelect
-                      {...control}
-                      name="catalogItemId"
-                      defaultValue=""
-                    >
+                    <Select {...control} name="catalogItemId" defaultValue="">
                       <option value="">Custom service</option>
                       {groupByCategory(
                         catalog,
@@ -295,7 +291,7 @@ export function ClientBilling({
                           ))}
                         </optgroup>
                       ))}
-                    </NativeSelect>
+                    </Select>
                   )}
                 </Field>
                 <Field
