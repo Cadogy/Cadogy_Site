@@ -196,8 +196,8 @@ export default function AboutPage() {
               <SectionHeading
                 tick={false}
                 id="proof-title"
-                title="Numbers we can show you."
-                lead="Counted from the code of products we built and run. Each one links to the case study it comes from."
+                title="The track record."
+                lead="What two senior engineers have built, shipped and kept running."
               />
               <div className="mt-10">
                 <ProofFigures />

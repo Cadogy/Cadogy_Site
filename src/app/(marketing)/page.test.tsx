@@ -45,30 +45,26 @@ describe("home page", () => {
     ).toBeInTheDocument()
   })
 
-  it("names the products we run under the hero, each with one real figure", async () => {
+  it("shows the studio's track record under the hero, linked to the About page", async () => {
     render(await HomePage())
-    const strip = screen.getByRole("region", { name: "In production" })
+    const strip = screen.getByRole("region", { name: "Track record" })
 
     expect(
-      within(strip).getByRole("link", { name: /PlayerBay.*3,200\+ test files/ })
-    ).toHaveAttribute("href", "/work/playerbay")
+      within(strip).getByRole("link", { name: /15\+\s*years of experience/ })
+    ).toHaveAttribute("href", "/who-we-are#proof")
     expect(
-      within(strip).getByRole("link", {
-        name: /Sidecar for OpenCode.*600\+ unit tests/,
-      })
-    ).toHaveAttribute("href", "/work/opencode-sidecar")
+      within(strip).getByRole("link", { name: /100\+\s*projects shipped/ })
+    ).toHaveAttribute("href", "/who-we-are#proof")
   })
 
   it("loops the strip on phones without repeating it to screen readers or the keyboard", async () => {
     render(await HomePage())
-    const strip = screen.getByRole("region", { name: /^In production$/ })
+    const strip = screen.getByRole("region", { name: /^Track record$/ })
 
     expect(
-      within(strip).getAllByRole("link", { name: /PlayerBay/ })
+      within(strip).getAllByRole("link", { name: /projects shipped/ })
     ).toHaveLength(1)
-    const copy = strip.querySelector(
-      '[aria-hidden="true"] a[href="/work/playerbay"]'
-    )
+    const copy = strip.querySelector('[aria-hidden="true"] a')
     expect(copy).not.toBeNull()
     expect(copy).toHaveAttribute("tabindex", "-1")
   })

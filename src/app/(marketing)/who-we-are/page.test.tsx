@@ -34,27 +34,20 @@ describe("About page", () => {
     expect(within(index).getAllByRole("link")).toHaveLength(5)
   })
 
-  it("backs its claims with figures from the case studies, each linked to its source", () => {
+  it("shows the studio's track record", () => {
     render(<AboutPage />)
-    const proof = screen.getByRole("region", {
-      name: /Numbers we can show you/,
-    })
+    const proof = screen.getByRole("region", { name: /The track record/ })
     const figure = (label: string) =>
       within(proof).getByText(label).closest("div") ?? document.body
 
     expect(
-      within(figure("Automated test files")).getByText("3,200+")
+      within(figure("Years of combined experience")).getByText("15+")
     ).toBeVisible()
-    expect(
-      within(figure("Automated test files")).getByRole("link", {
-        name: /PlayerBay/,
-      })
-    ).toHaveAttribute("href", "/work/playerbay")
-    expect(within(figure("Unit tests")).getByText("600+")).toBeVisible()
-    expect(
-      within(figure("Unit tests")).getByRole("link", {
-        name: /Sidecar for OpenCode/,
-      })
-    ).toHaveAttribute("href", "/work/opencode-sidecar")
+    expect(within(figure("Projects shipped")).getByText("100+")).toBeVisible()
+    expect(within(figure("Clients served")).getByText("25+")).toBeVisible()
+    expect(within(figure("Industries served")).getByText("10+")).toBeVisible()
+    expect(figure("Years in business")).toHaveTextContent(
+      String(new Date().getFullYear() - 2020)
+    )
   })
 })

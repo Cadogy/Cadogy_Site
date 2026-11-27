@@ -1,3 +1,4 @@
+import { siteConfig } from "@/config/site"
 import type { Video } from "@/components/media/video-embed"
 
 export type Service = {
@@ -722,19 +723,18 @@ export const faqs: readonly Faq[] = [
 export const displayHost = (url: string) =>
   new URL(url).host.replace(/^www\./, "")
 
-const PROOF = [
-  ["playerbay", "Automated test files", "test files"],
-  ["playerbay", "Languages", "languages"],
-  ["playerbay", "Currencies", "currencies"],
-  ["opencode-sidecar", "Unit tests", "unit tests"],
-  ["opencode-sidecar", "Headless-browser tests", "browser tests"],
-  ["opencode-sidecar", "Editors supported", "editors"],
-] as const
-
-export const proofFigures = PROOF.flatMap(([slug, label, short]) => {
-  const study = caseStudies.find((candidate) => candidate.slug === slug)
-  const fact = study?.facts.find((candidate) => candidate.label === label)
-  return study && fact
-    ? [{ value: fact.value, label, short, study: { name: study.name, slug } }]
-    : []
-})
+export const studioFigures = [
+  {
+    value: "15+",
+    label: "Years of combined experience",
+    short: "years of experience",
+  },
+  { value: "100+", label: "Projects shipped", short: "projects shipped" },
+  { value: "25+", label: "Clients served", short: "clients" },
+  { value: "10+", label: "Industries served", short: "industries" },
+  {
+    value: String(new Date().getFullYear() - siteConfig.foundingYear),
+    label: "Years in business",
+    short: "years in business",
+  },
+] as const satisfies readonly { value: string; label: string; short: string }[]
